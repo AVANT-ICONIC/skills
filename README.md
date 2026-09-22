@@ -18,16 +18,27 @@ It can also run the exact same quake set against two refs to answer a sharper qu
 
 See [`futurequake/SKILL.md`](./futurequake/SKILL.md).
 
+### `seo-aiseo`
+
+**Evidence-led SEO and AI-search optimization for real websites.**
+
+SEO + AI SEO audits technical eligibility, search intent, content quality, information gain, entity clarity, local relevance, structured data, AI retrieval/citation visibility, conversion readiness, and measurement. It separates first-party platform guidance from observational research and experiments, and treats AI discovery as an extension of search rather than a separate collection of hacks.
+
+See [`seo-aiseo/SKILL.md`](./seo-aiseo/SKILL.md).
+
 ## Repository layout
 
 ```text
 skills/
 ├── README.md
-└── futurequake/
+├── futurequake/
+│   ├── SKILL.md
+│   ├── examples/
+│   ├── references/
+│   └── scripts/
+└── seo-aiseo/
     ├── SKILL.md
-    ├── examples/
-    ├── references/
-    └── scripts/
+    └── references/
 ```
 
 Each skill is self-contained. The root stays deliberately small as the collection grows.
@@ -47,47 +58,48 @@ Then copy or symlink the skill folder into the skills directory used by your age
 Common project-local locations include:
 
 ```text
-Claude Code   .claude/skills/futurequake/
-Codex         .agents/skills/futurequake/
-OpenCode      .opencode/skills/futurequake/
+Claude Code   .claude/skills/<skill-name>/
+Codex         .agents/skills/<skill-name>/
+OpenCode      .opencode/skills/<skill-name>/
 ```
 
-OpenCode also discovers the portable `.agents/skills/` location. If your runtime provides a UI for importing skills, import the `futurequake` folder or its `SKILL.md` according to that runtime's instructions.
+OpenCode also discovers the portable `.agents/skills/` location. If your runtime provides a UI for importing skills, import the desired skill folder or its `SKILL.md` according to that runtime's instructions.
 
 ## Example prompts
+
+### Futurequake
 
 ```text
 Run Futurequake on this repository before we commit to the architecture.
 ```
 
 ```text
-Futurequake this refactor with five plausible future changes.
-```
-
-```text
 Compare main against this PR with Futurequake. Use the same quake set on both refs.
 ```
 
+### SEO + AI SEO
+
 ```text
-The provider layer keeps hurting us. Run a targeted Futurequake around provider evolution.
+Run a full SEO + AI SEO audit on this site and produce a prioritized implementation plan.
+```
+
+```text
+Audit why competitors are being cited by AI search and this site is not.
+```
+
+```text
+Optimize this service page for classic search, answer engines, and conversion without inventing claims.
 ```
 
 ## Design principles
 
-- **Evidence over aesthetics.** Architecture is tested through attempted change, not judged from diagrams alone.
-- **Disposable experiments.** Quake implementations are measurements, not product work. They are removed after evidence is captured.
-- **No magic score.** Report the change fingerprint and recurring resistance instead of hiding judgment inside one horoscope number.
-- **Same experiment for comparisons.** Compare refs only with the same scenarios, constraints, and verification expectations.
-- **Do not reward agent failure as architecture failure.** Environment problems, misunderstanding, and model mistakes are separated from structural resistance.
-- **No automatic production refactor.** Futurequake diagnoses. Any real architecture change belongs in the project's normal planning and development workflow.
-
-## Intellectual lineage
-
-Futurequake is not claiming that change-scenario architecture analysis is new. It builds on decades of work around scenario-based architecture analysis, modifiability analysis, evolutionary architecture, and stressor-based architecture thinking.
-
-Its specific move is to make change scenarios **executable** in the agent era: coding agents can cheaply attempt several bounded future changes against a real repository, allowing modifiability to be observed instead of merely estimated.
-
-See [`futurequake/references/foundations.md`](./futurequake/references/foundations.md).
+- **Evidence over assertion.** Skills should produce inspectable evidence and distinguish facts from inference.
+- **Scoped activation.** Each skill must say when it applies, when it does not, and what it is allowed to change.
+- **Portable by default.** Avoid runtime-specific behavior unless the skill explicitly requires it.
+- **Progressive disclosure.** Keep the core operating law in `SKILL.md`; load detailed references, examples, or scripts only when needed.
+- **No magic scores.** Prefer observable measurements and explicit tradeoffs over opaque composite ratings.
+- **No hidden side effects.** Diagnostic skills should not silently mutate production work or external systems.
+- **Current sources for changing domains.** When a skill depends on live platform behavior, it should re-check primary documentation instead of freezing folklore into the skill.
 
 ## Standard
 
@@ -98,11 +110,11 @@ The repository follows the open Agent Skills convention: each skill is a folder 
 
 ## Status
 
-`futurequake` is the first skill in this collection.
+The collection currently includes `futurequake` and `seo-aiseo`.
 
 ## Development
 
-Run the bundled helper tests with:
+Futurequake includes a bundled metrics helper. Run its tests with:
 
 ```bash
 python -m unittest discover -s futurequake/scripts -p 'test_*.py' -v
