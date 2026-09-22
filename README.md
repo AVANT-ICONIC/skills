@@ -93,20 +93,13 @@ Optimize this service page for classic search, answer engines, and conversion wi
 
 ## Design principles
 
-- **Evidence over aesthetics.** Architecture is tested through attempted change, not judged from diagrams alone.
-- **Disposable experiments.** Quake implementations are measurements, not product work. They are removed after evidence is captured.
-- **No magic score.** Report the change fingerprint and recurring resistance instead of hiding judgment inside one horoscope number.
-- **Same experiment for comparisons.** Compare refs only with the same scenarios, constraints, and verification expectations.
-- **Do not reward agent failure as architecture failure.** Environment problems, misunderstanding, and model mistakes are separated from structural resistance.
-- **No automatic production refactor.** Futurequake diagnoses. Any real architecture change belongs in the project's normal planning and development workflow.
-
-## Intellectual lineage
-
-Futurequake is not claiming that change-scenario architecture analysis is new. It builds on decades of work around scenario-based architecture analysis, modifiability analysis, evolutionary architecture, and stressor-based architecture thinking.
-
-Its specific move is to make change scenarios **executable** in the agent era: coding agents can cheaply attempt several bounded future changes against a real repository, allowing modifiability to be observed instead of merely estimated.
-
-See [`futurequake/references/foundations.md`](./futurequake/references/foundations.md).
+- **Evidence over assertion.** Skills should produce inspectable evidence and distinguish facts from inference.
+- **Scoped activation.** Each skill must say when it applies, when it does not, and what it is allowed to change.
+- **Portable by default.** Avoid runtime-specific behavior unless the skill explicitly requires it.
+- **Progressive disclosure.** Keep the core operating law in `SKILL.md`; load detailed references, examples, or scripts only when needed.
+- **No magic scores.** Prefer observable measurements and explicit tradeoffs over opaque composite ratings.
+- **No hidden side effects.** Diagnostic skills should not silently mutate production work or external systems.
+- **Current sources for changing domains.** When a skill depends on live platform behavior, it should re-check primary documentation instead of freezing folklore into the skill.
 
 ## Standard
 
@@ -121,7 +114,7 @@ The collection currently includes `futurequake` and `seo-aiseo`.
 
 ## Development
 
-Run the bundled helper tests with:
+Futurequake includes a bundled metrics helper. Run its tests with:
 
 ```bash
 python -m unittest discover -s futurequake/scripts -p 'test_*.py' -v
