@@ -18,16 +18,27 @@ It can also run the exact same quake set against two refs to answer a sharper qu
 
 See [`futurequake/SKILL.md`](./futurequake/SKILL.md).
 
+### `seo-aiseo`
+
+**Evidence-led SEO and AI-search optimization for real websites.**
+
+SEO + AI SEO audits technical eligibility, search intent, content quality, information gain, entity clarity, local relevance, structured data, AI retrieval/citation visibility, conversion readiness, and measurement. It separates first-party platform guidance from observational research and experiments, and treats AI discovery as an extension of search rather than a separate collection of hacks.
+
+See [`seo-aiseo/SKILL.md`](./seo-aiseo/SKILL.md).
+
 ## Repository layout
 
 ```text
 skills/
 ├── README.md
-└── futurequake/
+├── futurequake/
+│   ├── SKILL.md
+│   ├── examples/
+│   ├── references/
+│   └── scripts/
+└── seo-aiseo/
     ├── SKILL.md
-    ├── examples/
-    ├── references/
-    └── scripts/
+    └── references/
 ```
 
 Each skill is self-contained. The root stays deliberately small as the collection grows.
@@ -47,29 +58,37 @@ Then copy or symlink the skill folder into the skills directory used by your age
 Common project-local locations include:
 
 ```text
-Claude Code   .claude/skills/futurequake/
-Codex         .agents/skills/futurequake/
-OpenCode      .opencode/skills/futurequake/
+Claude Code   .claude/skills/<skill-name>/
+Codex         .agents/skills/<skill-name>/
+OpenCode      .opencode/skills/<skill-name>/
 ```
 
-OpenCode also discovers the portable `.agents/skills/` location. If your runtime provides a UI for importing skills, import the `futurequake` folder or its `SKILL.md` according to that runtime's instructions.
+OpenCode also discovers the portable `.agents/skills/` location. If your runtime provides a UI for importing skills, import the desired skill folder or its `SKILL.md` according to that runtime's instructions.
 
 ## Example prompts
+
+### Futurequake
 
 ```text
 Run Futurequake on this repository before we commit to the architecture.
 ```
 
 ```text
-Futurequake this refactor with five plausible future changes.
-```
-
-```text
 Compare main against this PR with Futurequake. Use the same quake set on both refs.
 ```
 
+### SEO + AI SEO
+
 ```text
-The provider layer keeps hurting us. Run a targeted Futurequake around provider evolution.
+Run a full SEO + AI SEO audit on this site and produce a prioritized implementation plan.
+```
+
+```text
+Audit why competitors are being cited by AI search and this site is not.
+```
+
+```text
+Optimize this service page for classic search, answer engines, and conversion without inventing claims.
 ```
 
 ## Design principles
@@ -98,7 +117,7 @@ The repository follows the open Agent Skills convention: each skill is a folder 
 
 ## Status
 
-`futurequake` is the first skill in this collection.
+The collection currently includes `futurequake` and `seo-aiseo`.
 
 ## Development
 
