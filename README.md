@@ -6,6 +6,14 @@ The goal is not to publish another pile of prompts. Each skill should introduce 
 
 ## Skills
 
+### `intent-mode`
+
+**Intent reconstruction before planning, specification, or implementation.**
+
+Intent Mode turns brain dumps, ambiguous goals, hidden constraints, contradictions, and premature solution choices into an inspectable Intent Brief with observable success criteria. It asks only questions that can materially change the result.
+
+See [`intent-mode/SKILL.md`](./intent-mode/SKILL.md).
+
 ### `futurequake`
 
 **Executable modifiability testing for real codebases.**
@@ -31,6 +39,8 @@ See [`seo-aiseo/SKILL.md`](./seo-aiseo/SKILL.md).
 ```text
 skills/
 ├── README.md
+├── intent-mode/
+│   └── SKILL.md
 ├── futurequake/
 │   ├── SKILL.md
 │   ├── examples/
@@ -66,6 +76,16 @@ OpenCode      .opencode/skills/<skill-name>/
 OpenCode also discovers the portable `.agents/skills/` location. If your runtime provides a UI for importing skills, import the desired skill folder or its `SKILL.md` according to that runtime's instructions.
 
 ## Example prompts
+
+### Intent Mode
+
+```text
+Reconstruct my intent from this brain dump before we plan anything.
+```
+
+```text
+Run Intent Mode on this feature request. Separate the real outcome from my proposed implementation.
+```
 
 ### Futurequake
 
