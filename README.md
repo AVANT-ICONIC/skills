@@ -130,7 +130,7 @@ The repository follows the open Agent Skills convention: each skill is a folder 
 
 ## Status
 
-The collection currently includes `futurequake` and `seo-aiseo`.
+The collection currently includes `intent-mode`, `futurequake`, and `seo-aiseo`.
 
 ## Development
 
@@ -141,3 +141,11 @@ python -m unittest discover -s futurequake/scripts -p 'test_*.py' -v
 ```
 
 The metrics helper intentionally uses only the Python standard library and git.
+
+## Contributing
+
+Contributions are welcome when they remain portable, inspectable, and small. See [CONTRIBUTING.md](./CONTRIBUTING.md).
+
+## License
+
+MIT. See [LICENSE](./LICENSE).
