@@ -1,0 +1,71 @@
+name: Validate skills
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate skill structure
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+          import sys
+
+          root = Path(".")
+          readme = (root / "README.md").read_text(encoding="utf-8")
+          ignored = {".git", ".github"}
+          skill_dirs = sorted(
+              p for p in root.iterdir()
+              if p.is_dir() and p.name not in ignored and not p.name.startswith(".")
+          )
+
+          errors = []
+
+          for folder in skill_dirs:
+              skill = folder / "SKILL.md"
+
+              if not skill.exists():
+                  errors.append(f"{folder}: missing SKILL.md")
+                  continue
+
+              text = skill.read_text(encoding="utf-8")
+
+              if not text.startswith("---\n"):
+                  errors.append(f"{skill}: missing YAML frontmatter")
+                  continue
+
+              parts = text.split("---", 2)
+              if len(parts) < 3:
+                  errors.append(f"{skill}: malformed YAML frontmatter")
+                  continue
+
+              match = re.search(r"(?m)^name:\s*([^\n]+?)\s*$", parts[1])
+              if not match:
+                  errors.append(f"{skill}: missing frontmatter name")
+                  continue
+
+              declared_name = match.group(1).strip().strip('"').strip("'")
+              if declared_name != folder.name:
+                  errors.append(
+                      f"{skill}: frontmatter name '{declared_name}' "
+                      f"does not match folder '{folder.name}'"
+                  )
+
+              if f"./{folder.name}/SKILL.md" not in readme:
+                  errors.append(f"README.md: missing link to {skill}")
+
+          if errors:
+              print("\n".join(f"ERROR: {error}" for error in errors))
+              sys.exit(1)
+
+          print(f"Validated {len(skill_dirs)} skill folders.")
