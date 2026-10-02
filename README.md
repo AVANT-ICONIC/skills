@@ -14,6 +14,14 @@ Intent Mode turns brain dumps, ambiguous goals, hidden constraints, contradictio
 
 See [`intent-mode/SKILL.md`](./intent-mode/SKILL.md).
 
+### `openspec-workflow`
+
+**OpenSpec-first routing for non-trivial coding changes.**
+
+OpenSpec Workflow routes substantial features, behavioral fixes, refactors, migrations, and architecture changes through the project's native OpenSpec lifecycle instead of treating OpenSpec as a documentation step after planning. It chooses Explore vs Propose from uncertainty, preserves the planning/implementation boundary, avoids duplicate shadow specs, and continues existing changes rather than restarting them.
+
+See [`openspec-workflow/SKILL.md`](./openspec-workflow/SKILL.md).
+
 ### `futurequake`
 
 **Executable modifiability testing for real codebases.**
@@ -40,6 +48,8 @@ See [`seo-aiseo/SKILL.md`](./seo-aiseo/SKILL.md).
 skills/
 ├── README.md
 ├── intent-mode/
+│   └── SKILL.md
+├── openspec-workflow/
 │   └── SKILL.md
 ├── futurequake/
 │   ├── SKILL.md
@@ -87,6 +97,16 @@ Reconstruct my intent from this brain dump before we plan anything.
 Run Intent Mode on this feature request. Separate the real outcome from my proposed implementation.
 ```
 
+### OpenSpec Workflow
+
+```text
+Use OpenSpec for this feature before implementation.
+```
+
+```text
+Spec this change, then implement it from the agreed OpenSpec change.
+```
+
 ### Futurequake
 
 ```text
@@ -130,7 +150,7 @@ The repository follows the open Agent Skills convention: each skill is a folder 
 
 ## Status
 
-The collection currently includes `intent-mode`, `futurequake`, and `seo-aiseo`.
+The collection currently includes `intent-mode`, `openspec-workflow`, `futurequake`, and `seo-aiseo`.
 
 ## Development
 
