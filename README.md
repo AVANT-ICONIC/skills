@@ -34,6 +34,35 @@ SEO + AI SEO audits technical eligibility, search intent, content quality, infor
 
 See [`seo-aiseo/SKILL.md`](./seo-aiseo/SKILL.md).
 
+### `visual-output`
+
+**Portable visual presentation companion for agent responses.**
+
+Visual Output makes substantial agent responses easier to scan using semantic status markers, progress bars, ASCII/Unicode structure, compact operator panels, diagrams, tables, and explicit ownership/evidence separation. It changes presentation only and never alters exact code, commands, specs, data, or other copy-paste artifacts.
+
+Use it alongside another skill when richer presentation is useful:
+
+```text
+task skill       = what to do
+visual-output    = how to present it
+```
+
+See [`visual-output/SKILL.md`](./visual-output/SKILL.md).
+
+## Skill composition
+
+Skills remain self-contained. Some skills can also act as optional **companions** that add cross-cutting behavior without changing another skill's domain rules.
+
+```text
+intent-mode  ─┐
+futurequake  ─┼─ optional companion → visual-output
+seo-aiseo    ─┘
+```
+
+Do not make task skills depend on a companion being installed. If a runtime supports loading multiple skills, explicitly load both. If it does not, the task skill must still work correctly on its own.
+
+Shared cross-cutting behavior belongs in one companion skill rather than being copied into every task skill.
+
 ## Repository layout
 
 ```text
@@ -46,9 +75,11 @@ skills/
 │   ├── examples/
 │   ├── references/
 │   └── scripts/
-└── seo-aiseo/
-    ├── SKILL.md
-    └── references/
+├── seo-aiseo/
+│   ├── SKILL.md
+│   └── references/
+└── visual-output/
+    └── SKILL.md
 ```
 
 Each skill is self-contained. The root stays deliberately small as the collection grows.
@@ -111,11 +142,22 @@ Audit why competitors are being cited by AI search and this site is not.
 Optimize this service page for classic search, answer engines, and conversion without inventing claims.
 ```
 
+### Visual Output
+
+```text
+Use visual-output alongside Futurequake and make the final report highly scannable.
+```
+
+```text
+Run SEO + AI SEO with visual-output so blockers, evidence, and priorities are visually obvious.
+```
+
 ## Design principles
 
 - **Evidence over assertion.** Skills should produce inspectable evidence and distinguish facts from inference.
 - **Scoped activation.** Each skill must say when it applies, when it does not, and what it is allowed to change.
 - **Portable by default.** Avoid runtime-specific behavior unless the skill explicitly requires it.
+- **Composable cross-cutting behavior.** Put shared presentation or workflow behavior in optional companion skills instead of duplicating it across task skills.
 - **Progressive disclosure.** Keep the core operating law in `SKILL.md`; load detailed references, examples, or scripts only when needed.
 - **No magic scores.** Prefer observable measurements and explicit tradeoffs over opaque composite ratings.
 - **No hidden side effects.** Diagnostic skills should not silently mutate production work or external systems.
@@ -130,7 +172,7 @@ The repository follows the open Agent Skills convention: each skill is a folder 
 
 ## Status
 
-The collection currently includes `intent-mode`, `futurequake`, and `seo-aiseo`.
+The collection currently includes `intent-mode`, `futurequake`, `seo-aiseo`, and `visual-output`.
 
 ## Development
 
