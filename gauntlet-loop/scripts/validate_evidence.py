@@ -56,11 +56,11 @@ def validate(record: object) -> list[str]:
         if not is_text(record.get(field)):
             errors.append(f"{field} must be a nonempty string")
     artifact_type = record.get("artifact_type")
-    if artifact_type not in ARTIFACTS:
+    if not isinstance(artifact_type, str) or artifact_type not in ARTIFACTS:
         errors.append(f"artifact_type must be one of {', '.join(sorted(ARTIFACTS))}")
 
     verdict = record.get("verdict")
-    if verdict not in VERDICTS:
+    if not isinstance(verdict, str) or verdict not in VERDICTS:
         errors.append(f"verdict must be one of {', '.join(sorted(VERDICTS))}")
 
     contract = record.get("contract")
@@ -146,7 +146,7 @@ def validate(record: object) -> list[str]:
             errors.append(f"critical requirement {rid!r} has no observed PASS at final_revision")
         if record.get("next_action") is not None:
             errors.append("PASS next_action must be null")
-    elif verdict in VERDICTS and not is_text(record.get("next_action")):
+    elif isinstance(verdict, str) and verdict in VERDICTS and not is_text(record.get("next_action")):
         errors.append(f"{verdict} needs a specific nonempty next_action")
 
     critic = record.get("critic")
@@ -170,14 +170,14 @@ def validate(record: object) -> list[str]:
             continue
         if not is_text(defect.get("id")):
             errors.append(f"{loc}.id must be nonempty")
-        if defect.get("severity") not in SEVERITIES:
+        if not isinstance(defect.get("severity"), str) or defect["severity"] not in SEVERITIES:
             errors.append(f"{loc}.severity invalid")
-        if defect.get("status") not in DEFECT_STATES:
+        if not isinstance(defect.get("status"), str) or defect["status"] not in DEFECT_STATES:
             errors.append(f"{loc}.status invalid")
         if not is_text(defect.get("evidence")):
             errors.append(f"{loc}.evidence must describe a real failure")
         rid = defect.get("requirement_id")
-        if rid is not None and rid not in ids:
+        if rid is not None and (not isinstance(rid, str) or rid not in ids):
             errors.append(f"{loc}.requirement_id unknown")
         if (
             verdict == "PASS"
