@@ -20,6 +20,7 @@ The optional validator expects one object, roughly:
   "run_id": "example-local-001",
   "artifact_type": "interactive",
   "source_ref": "local-revision-r2",
+  "final_revision": "r2",
   "contract": {
     "requirements": [
       {"id": "R1", "critical": true, "test": "CTA action changes visible state"}
