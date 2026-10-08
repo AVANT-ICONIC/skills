@@ -69,3 +69,5 @@ jobs:
               sys.exit(1)
 
           print(f"Validated {len(skill_dirs)} skill folders.")
+      - name: Test Gauntlet evidence validator
+        run: python3 gauntlet-loop/scripts/test_validate_evidence.py
