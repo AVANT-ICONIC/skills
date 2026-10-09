@@ -89,6 +89,8 @@ python3 gauntlet-loop/scripts/audit_aggregate.py \
 
 Return codes: **0** = `CHECKS_PASS_SOURCE_RECONCILED` (source/report agree; not proof source is true or chart visually correct), **1** = `CHECKS_FAIL` with mismatched quantities, **2** = `BLOCKED_DATA` for malformed/ambiguous source or report. A duplicate event ID with differing row content must not be silently discarded. This intentionally narrow tool is **not** appropriate for money/floats, arbitrary spreadsheets, or domain-specific accounting without a separately designed contract and tests. See [other artifacts](references/other-artifacts.md) for broader verification.
 
+**Security note:** Optional synthetic browser inspection sets Chromium offline before loading HTML to block external requests. Offline mode is **not** a complete sandbox: untrusted HTML can still run JavaScript and consume local resources. Inspect only trusted synthetic/authorized fixtures in an isolated, low-privilege environment; do not run unknown hostile documents on a privileged machine or assume that offline means harmless.
+
 **This does not automate a critic.** The caller must open and inspect captured screenshots, motion samples and the actual browser-test JSON, and must never treat `CHECKS_PASS_REVIEW_PIXELS` as verified PASS. `page.set_content` renders self-contained HTML only, not a deployment's origin, CSP, service worker, network or external asset behavior. The probe is optional; unsupported platforms use equivalent suitable tools or an honest non-PASS handoff. Never call a schema-valid record proof that the screenshots or tests were genuine.
 
 **Verdicts:**
