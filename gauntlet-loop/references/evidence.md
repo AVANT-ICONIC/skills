@@ -1,14 +1,18 @@
 # Critic discipline, run evidence, state and verdict
 
-## Critic protocol
+## Single-agent inspection protocol (default)
 
-Separate builder rationale from criticism. Give a critic:
-- the original brief and locked user reference;
-- which artifact revision must be inspected and how to obtain real output;
-- observable pass/fail conditions and relevant test matrix;
-- an explicit mandate to find falsifiable critical defects, not praise the builder.
+**The same coding agent owns the entire loop:** CODE → CHECK → FIX → CHECK → POLISH → CHECK, then repeat if the actual artifact is still off. No second or third agent is needed to deliver normal QA.
 
-**Do not include:** the builder's claim "this is already perfect", a list of excuses, or a prefabricated PASS verdict. The independent critic must operate in a distinct context/process when support truly exists. Otherwise label a same-context review **self-review**. If multiple specialists are used, include an unguided holistic review of the whole artifact. Require concrete location/timestamp/test/evidence for alleged failures and record why suggestions were accepted or rejected.
+After a coding/editing pass, deliberately change perspective to inspection rather than defending the implementation. Work from:
+- the original brief, locked user reference and critical requirements;
+- the current actual artifact revision, rendered output, and available real test commands;
+- observable pass/fail conditions for each artifact type;
+- a skeptical attempt to find genuine mismatches, not to produce a flattering PASS.
+
+Record measured discrepancies with screenshots, coordinates, timestamps, test output or source-data comparisons. Fix the highest-impact one, **rerun the artifact**, inspect the affected behavior and previously passing paths, improve polish where required, and inspect the integrated result again. Repeat until every critical gate actually passes or a real blocker exists. The number of inspections is not the number of agents, and completing three passes never automatically grants PASS.
+
+**Optional external review:** A separate critic may add another perspective if one is genuinely available and the task merits it. Provide the artifact and contract, not the builder's self-justification. It must use a truly distinct context before being called independent; otherwise describe the work as **self-review**. Never gate or pause the normal same-agent loop merely because a second model isn't installed. When specialists are used, still evaluate the whole artifact. Reject criticism unsupported by actual evidence or contrary to the owner's locked reference.
 
 ## Run record: minimal JSON-compatible format
 
