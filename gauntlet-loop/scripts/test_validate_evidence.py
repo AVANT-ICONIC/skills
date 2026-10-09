@@ -167,6 +167,47 @@ class EvidenceValidatorTests(unittest.TestCase):
         messages = validate(r)
         self.assertTrue(messages)
 
+    def test_pass_with_conflicting_final_failure_rejected(self) -> None:
+        r = valid_record()
+        r["inspections"].append({
+            "revision": "r2",
+            "method": "mobile screenshot + click",
+            "artifact_ref": "private/mobile-r2.png",
+            "state": "observed",
+            "conditions": {"viewport": "390x844"},
+            "requirements_checked": ["R1"],
+            "result": "fail",
+        })
+        self.reject(r, "has a failing or unrun inspection at final_revision")
+
+    def test_pass_with_explicit_final_not_run_rejected(self) -> None:
+        r = valid_record()
+        r["inspections"].append({
+            "revision": "r2",
+            "method": "unavailable animation renderer",
+            "artifact_ref": "not-captured",
+            "state": "not_run",
+            "conditions": {},
+            "requirements_checked": ["R2"],
+            "result": "inconclusive",
+        })
+        self.reject(r, "has a failing or unrun inspection at final_revision")
+
+    def test_pass_with_no_critical_gates_rejected(self) -> None:
+        r = valid_record()
+        for item in r["contract"]["requirements"]:
+            item["critical"] = False
+        self.reject(r, "at least one critical observable requirement")
+
+    def test_malformed_inspection_value_does_not_crash(self) -> None:
+        r = valid_record()
+        r["inspections"][0]["result"] = []
+        r["inspections"][0]["requirements_checked"] = [[]]
+        errs = validate(r)
+        self.assertTrue(errs)
+        self.assertTrue(any("result must be" in e for e in errs))
+        self.assertTrue(any("unknown requirement" in e for e in errs))
+
     def test_cli_good_and_bad(self) -> None:
         validator = Path(__file__).with_name("validate_evidence.py")
         with tempfile.TemporaryDirectory() as tmp:
