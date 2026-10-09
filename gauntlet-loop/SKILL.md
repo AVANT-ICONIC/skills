@@ -72,6 +72,8 @@ python3 gauntlet-loop/scripts/web_probe.py \
   --target '#primary-action' --action '#primary-action' --state '#status'
 ~~~
 
+If keyboard activation is a critical requirement for the selected action, add `--keyboard` (together with `--action` and `--state`): the probe checks **real Tab traversal and Enter-triggered state change** in a fresh Chromium page at each viewport and captures focused/after-Enter screenshots. A clickable `div role="button"` can pass mouse checks while ignoring Enter; merely adding `tabindex` does not make it keyboard-operable. The saved screenshots still require actual visual inspection for focus-ring quality. Do not apply this flag to actions for which Enter is not an expected input.
+
 **This does not automate a critic.** The caller must open and inspect captured screenshots, motion samples and the actual browser-test JSON, and must never treat `CHECKS_PASS_REVIEW_PIXELS` as verified PASS. `page.set_content` renders self-contained HTML only, not a deployment's origin, CSP, service worker, network or external asset behavior. The probe is optional; unsupported platforms use equivalent suitable tools or an honest non-PASS handoff. Never call a schema-valid record proof that the screenshots or tests were genuine.
 
 **Verdicts:**
