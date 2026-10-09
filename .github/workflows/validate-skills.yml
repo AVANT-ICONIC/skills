@@ -71,3 +71,5 @@ jobs:
           print(f"Validated {len(skill_dirs)} skill folders.")
       - name: Test Gauntlet evidence validator
         run: python3 gauntlet-loop/scripts/test_validate_evidence.py
+      - name: Test optional Gauntlet browser probe
+        run: python3 gauntlet-loop/scripts/test_web_probe.py
