@@ -14,13 +14,6 @@ Intent Mode turns brain dumps, ambiguous goals, hidden constraints, contradictio
 
 See [`intent-mode/SKILL.md`](./intent-mode/SKILL.md).
 
-### `openspec-workflow`
-
-**OpenSpec-first routing for non-trivial coding changes.**
-
-OpenSpec Workflow routes substantial features, behavioral fixes, refactors, migrations, and architecture changes through the project's native OpenSpec lifecycle instead of treating OpenSpec as a documentation step after planning. It chooses Explore vs Propose from uncertainty, preserves the planning/implementation boundary, avoids duplicate shadow specs, and continues existing changes rather than restarting them.
-
-See [`openspec-workflow/SKILL.md`](./openspec-workflow/SKILL.md).
 ### `gauntlet-loop`
 
 **Evidence-driven QA for real artifacts, not just nice-looking source files.**
@@ -47,9 +40,17 @@ See [`futurequake/SKILL.md`](./futurequake/SKILL.md).
 
 **Portable game design, concept rescue, and explicitly requested production.**
 
-Game Studio converts a playable fantasy into actual inputs, meaningful tradeoffs, systemic progression and falsifiable playtest hypotheses. Open-ended ideas get **three comparably complete, mechanically distinct concepts**; refining one idea doesn't restart a trio. Review and rescue are read-only by default; prototypes, builds and production require explicit write authority. Nine canonical concept-core references cover 22 mapped disciplines without forcing 22 separate questionnaires. An optional stdlib package tool produces a deterministic allowlisted SHA-256 snapshot for future adapters; no WebUI skill is included in this S3 change.
+Game Studio converts a playable fantasy into actual inputs, meaningful tradeoffs, systemic progression and falsifiable playtest hypotheses. Open-ended ideas get **three comparably complete, mechanically distinct concepts**; refining one idea doesn't restart a trio. Review and rescue are read-only by default; prototypes, builds and production require explicit write authority. Nine canonical concept-core references cover 22 mapped disciplines without forcing 22 separate questionnaires. An optional stdlib package tool produces a deterministic allowlisted SHA-256 snapshot for future adapters..
 
 See [`game-studio/SKILL.md`](./game-studio/SKILL.md).
+
+### `openspec-workflow`
+
+**Native OpenSpec change routing from intent to verified implementation.**
+
+OpenSpec Workflow uses a project's installed commands and schemas, explores uncertain changes, proposes clear changes, keeps implementation aligned with the current change, and verifies before archiving. It does not silently initialize OpenSpec or create competing shadow specifications.
+
+See [`openspec-workflow/SKILL.md`](./openspec-workflow/SKILL.md).
 
 ### `seo-aiseo`
 
@@ -93,20 +94,13 @@ Shared cross-cutting behavior belongs in one companion skill rather than being c
 ```text
 skills/
 ├── README.md
-├── intent-mode/
-│   └── SKILL.md
-├── openspec-workflow/
-│   └── SKILL.md
-├── futurequake/
-│   ├── SKILL.md
-│   ├── examples/
-│   ├── references/
-│   └── scripts/
-├── seo-aiseo/
-│   ├── SKILL.md
-│   └── references/
-└── visual-output/
-    └── SKILL.md
+├── futurequake/        # Modifiability experiments; references, examples, metrics helper
+├── game-studio/        # Game design; concept-core references and packaging helper
+├── gauntlet-loop/      # Artifact QA; references and optional executable checks
+├── intent-mode/        # Intent reconstruction
+├── openspec-workflow/  # Native OpenSpec lifecycle routing
+├── seo-aiseo/          # Search audits; references
+└── visual-output/      # Presentation companion
 ```
 
 Each skill is self-contained. The root stays deliberately small as the collection grows.
@@ -145,16 +139,6 @@ Reconstruct my intent from this brain dump before we plan anything.
 Run Intent Mode on this feature request. Separate the real outcome from my proposed implementation.
 ```
 
-### OpenSpec Workflow
-
-```text
-Use OpenSpec for this feature before implementation.
-```
-
-```text
-Spec this change, then implement it from the agreed OpenSpec change.
-```
-
 ### Futurequake
 
 ```text
@@ -173,6 +157,12 @@ Design three mechanically distinct nonviolent game concepts for a one-button han
 
 ```text
 Audit the player choices in this existing game without changing source, then propose three distinct rescue loops.
+```
+
+### OpenSpec Workflow
+
+```text
+Use the existing OpenSpec change for this feature; verify the implementation before archiving it.
 ```
 
 ### SEO + AI SEO
@@ -219,7 +209,7 @@ The repository follows the open Agent Skills convention: each skill is a folder 
 
 ## Status
 
-The collection currently includes `intent-mode`, `futurequake`, `game-studio`, `seo-aiseo`, and `visual-output`.
+The collection currently includes seven skills: `futurequake`, `game-studio`, `gauntlet-loop`, `intent-mode`, `openspec-workflow`, `seo-aiseo`, and `visual-output`.
 
 ## Development
 
