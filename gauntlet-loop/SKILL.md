@@ -78,6 +78,17 @@ For a user-requested **modal dialog** with required keyboard accessibility, add 
 
 For an expected **Canvas 2D** graphic, add `--canvas2d '#scene'` and optionally `--canvas-min-colors N` (default 2). The probe checks **actual drawn non-transparent pixels** in a bounded downsampled 2D Canvas image rather than trusting element geometry or CSS background decoration. This catches a visible, styled but empty canvas, but does **not** certify graphics correctness, animation quality, matching reference shapes, or WebGL output; inspect the actual screenshots. A blank or monochrome canvas can be intentional, so enable this only when real multicolor 2D content is required (set `--canvas-min-colors 1` if one color is legitimate). A different/tainted/unavailable 2D context must not be mistaken for a successful canvas inspection. **WebGL requires a suitable real GPU/software graphics environment and a separate validated pixel capture path.**
 
+For **source-to-summary data integrity**, the optional zero-dependency [JSON aggregate auditor](scripts/audit_aggregate.py) recomputes signed integer event totals by group from raw records, detects identical duplicate events, counts negative adjustments, and compares every declared metric to the published summary. Use it only if the source data **actually fits its event-ledger contract**. Example:
+
+~~~bash
+python3 gauntlet-loop/scripts/audit_aggregate.py \
+  --source /private/raw-events.json \
+  --report /private/published-summary.json \
+  --out /private/data-audit.json
+~~~
+
+Return codes: **0** = `CHECKS_PASS_SOURCE_RECONCILED` (source/report agree; not proof source is true or chart visually correct), **1** = `CHECKS_FAIL` with mismatched quantities, **2** = `BLOCKED_DATA` for malformed/ambiguous source or report. A duplicate event ID with differing row content must not be silently discarded. This intentionally narrow tool is **not** appropriate for money/floats, arbitrary spreadsheets, or domain-specific accounting without a separately designed contract and tests. See [other artifacts](references/other-artifacts.md) for broader verification.
+
 **This does not automate a critic.** The caller must open and inspect captured screenshots, motion samples and the actual browser-test JSON, and must never treat `CHECKS_PASS_REVIEW_PIXELS` as verified PASS. `page.set_content` renders self-contained HTML only, not a deployment's origin, CSP, service worker, network or external asset behavior. The probe is optional; unsupported platforms use equivalent suitable tools or an honest non-PASS handoff. Never call a schema-valid record proof that the screenshots or tests were genuine.
 
 **Verdicts:**
