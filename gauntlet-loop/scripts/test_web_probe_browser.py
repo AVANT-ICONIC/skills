@@ -61,15 +61,17 @@ class RealBrowserProbeTests(unittest.TestCase):
             from playwright.sync_api import sync_playwright
         except ImportError:
             raise unittest.SkipTest("optional Python Playwright absent") from None
-        paths = tool_candidates(None)
-        if not paths:
-            raise unittest.SkipTest("optional Chromium unavailable")
+        # System Chromium is optional; the free Playwright-managed browser works too.
         with sync_playwright() as p:
-            try:
-                browser = p.chromium.launch(executable_path=paths[0], headless=True, timeout=5000)
-                browser.close()
-            except Exception:
-                raise unittest.SkipTest("no suitable Chromium launched") from None
+            for binary in [*tool_candidates(None), None]:
+                try:
+                    kwargs = {"executable_path": binary} if binary else {}
+                    browser = p.chromium.launch(headless=True, timeout=8000, **kwargs)
+                    browser.close()
+                    return
+                except Exception:
+                    continue
+        raise unittest.SkipTest("no suitable Chromium launched")
 
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory(prefix="gauntlet-browser-test-")
