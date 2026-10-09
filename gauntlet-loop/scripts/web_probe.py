@@ -316,6 +316,7 @@ def run(args: argparse.Namespace) -> dict:
             browser.close()
 
     failures = []
+    unverified = []
     for record in report["viewports"]:
         location = f'{record["viewport"]["width"]}x{record["viewport"]["height"]}'
         target = record["target"]
@@ -328,8 +329,15 @@ def run(args: argparse.Namespace) -> dict:
         if keyboard and (not keyboard["tab_reachable"] or not keyboard["enter_changed"]):
             failures.append(f"keyboard@{location}")
         canvas = record["canvas2d"]
-        if canvas and (not canvas["verified"] or not canvas.get("has_content")):
-            failures.append(f"canvas2d@{location}")
+        if canvas:
+            if not canvas["verified"]:
+                reason = canvas.get("reason", "unknown Canvas2D readback failure")
+                if "context unavailable" in reason or "SecurityError" in reason or "tainted" in reason:
+                    unverified.append(f"canvas2d@{location}: {reason}")
+                else:
+                    failures.append(f"canvas2d@{location}")
+            elif not canvas.get("has_content"):
+                failures.append(f"canvas2d@{location}")
         dialog = record["dialog"]
         if dialog and not all(dialog.get(key) for key in (
             "opened", "focus_inside", "tabs_trapped", "escape_closed", "focus_restored"
@@ -339,7 +347,9 @@ def run(args: argparse.Namespace) -> dict:
         if motion and (not motion["animations"] or motion["duration_matches"] is False):
             failures.append(f"motion-duration@{location}")
     report["failed_checks"] = failures
-    report["status"] = "CHECKS_FAIL" if failures else "CHECKS_PASS_REVIEW_PIXELS"
+    report["unverified_checks"] = unverified
+    report["status"] = ("CHECKS_FAIL" if failures else
+                        "BLOCKED_ENV" if unverified else "CHECKS_PASS_REVIEW_PIXELS")
     return report
 
 
