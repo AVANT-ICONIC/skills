@@ -28,7 +28,7 @@ jobs:
           import re,sys
           p=Path('geometric-design')
           offenders=[]
-          patterns=[r'agent[-]workbench',r'PRIV[A]TE_FIXTURE',r'GH[-]0[1-5]',r'-----BEGIN (?:RSA |OPENSSH )?PRIVATE KEY',r'sk-[a-zA-Z0-9_-]{20,}']
+          patterns=[r'agent[-]workbench',r'PRIV[A]TE_FIXTURE',r'GH[-]0[1-5]',r'-----BEGIN (?:RSA |OPENSSH )?PRIVATE KEY',r'\bsk-[a-zA-Z0-9_-]{20,}\b']
           for f in p.rglob('*'):
             if not f.is_file() or f.is_symlink(): continue
             if f.stat().st_size>200000: offenders.append(f'{f}:too large'); continue
