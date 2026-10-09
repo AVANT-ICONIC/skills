@@ -40,9 +40,17 @@ See [`futurequake/SKILL.md`](./futurequake/SKILL.md).
 
 **Portable game design, concept rescue, and explicitly requested production.**
 
-Game Studio converts a playable fantasy into actual inputs, meaningful tradeoffs, systemic progression and falsifiable playtest hypotheses. Open-ended ideas get **three comparably complete, mechanically distinct concepts**; refining one idea doesn't restart a trio. Review and rescue are read-only by default; prototypes, builds and production require explicit write authority. Nine canonical concept-core references cover 22 mapped disciplines without forcing 22 separate questionnaires. An optional stdlib package tool produces a deterministic allowlisted SHA-256 snapshot for future adapters..
+Game Studio converts a playable fantasy into actual inputs, meaningful tradeoffs, systemic progression and falsifiable playtest hypotheses. Open-ended ideas get **three comparably complete, mechanically distinct concepts**; refining one idea doesn't restart a trio. Review and rescue are read-only by default; prototypes, builds and production require explicit write authority. Nine canonical concept-core references cover 22 mapped disciplines without forcing 22 separate questionnaires. An optional stdlib package tool produces a deterministic allowlisted SHA-256 snapshot for future adapters.
 
 See [`game-studio/SKILL.md`](./game-studio/SKILL.md).
+
+### `geometric-design`
+
+**Source-backed geometry and visual QA (experimental alpha).**
+
+Geometric Design covers monochrome symbol construction, nested layout regions, standalone geometry auditing, responsive UI tokens and design grammar. It ships a self-contained offline Node 22+ engine; a browser or renderer is optional and no paid service or API key is needed. Limits: a bounded SVG subset (no general curved Booleans or alpha-transparent counters) and no accessibility certification.
+
+See [`geometric-design/SKILL.md`](./geometric-design/SKILL.md).
 
 ### `openspec-workflow`
 
@@ -75,6 +83,14 @@ visual-output    = how to present it
 
 See [`visual-output/SKILL.md`](./visual-output/SKILL.md).
 
+### `video-watch`
+
+**Frame-aware video inspection with timestamped evidence.**
+
+Video Watch combines actual visual frames, available captions and focused detail checks without depending on a particular agent UI. An optional local Python helper extracts hybrid frame samples and contact sheets with ffmpeg; native tools work too. Sampling limits and missing evidence remain explicit.
+
+See [`video-watch/SKILL.md`](./video-watch/SKILL.md).
+
 ## Skill composition
 
 Skills remain self-contained. Some skills can also act as optional **companions** that add cross-cutting behavior without changing another skill's domain rules.
@@ -97,9 +113,11 @@ skills/
 ├── futurequake/        # Modifiability experiments; references, examples, metrics helper
 ├── game-studio/        # Game design; concept-core references and packaging helper
 ├── gauntlet-loop/      # Artifact QA; references and optional executable checks
+├── geometric-design/   # Geometry audits and tokens; offline Node tools
 ├── intent-mode/        # Intent reconstruction
 ├── openspec-workflow/  # Native OpenSpec lifecycle routing
 ├── seo-aiseo/          # Search audits; references
+├── video-watch/        # Video evidence; optional extraction helper and tests
 └── visual-output/      # Presentation companion
 ```
 
@@ -209,7 +227,7 @@ The repository follows the open Agent Skills convention: each skill is a folder 
 
 ## Status
 
-The collection currently includes seven skills: `futurequake`, `game-studio`, `gauntlet-loop`, `intent-mode`, `openspec-workflow`, `seo-aiseo`, and `visual-output`.
+The collection currently includes nine skills: `futurequake`, `game-studio`, `gauntlet-loop`, `geometric-design`, `intent-mode`, `openspec-workflow`, `seo-aiseo`, `video-watch`, and `visual-output`.
 
 ## Development
 
