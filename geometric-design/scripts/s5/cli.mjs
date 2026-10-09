@@ -1,0 +1,12 @@
+#!/usr/bin/env node
+// Portable S5, explicit no-clobber output paths and offline generation.
+import { readFile, writeFile, link, rm, stat } from 'node:fs/promises';
+import { resolve } from 'node:path';
+import { randomBytes } from 'node:crypto';
+import { generateCompositions } from './composition.mjs';
+import { generateTokens } from './tokens.mjs';
+import { renderPreview } from './preview.mjs';
+async function save(path,body){const p=resolve(path),tmp=p+'.tmp-'+randomBytes(8).toString('hex');try{await stat(p);throw Error('Refusing existing output: '+p)}catch(e){if(e.code!=='ENOENT')throw e}try{await writeFile(tmp,body,{flag:'wx'});await link(tmp,p)}finally{await rm(tmp,{force:true}).catch(()=>{})}}
+export async function run(argv){let [cmd,file,...rest]=argv;const flags={};for(let i=0;i<rest.length;i+=2){if(!rest[i]?.startsWith('--')||rest[i+1]===undefined)throw Error('Explicit --key value pairs required');const k=rest[i].slice(2);if(!['out','family','report'].includes(k)||Object.hasOwn(flags,k))throw Error('Unknown/duplicate flag '+k);flags[k]=rest[i+1]}
+if(!['compose','tokens','preview'].includes(cmd)||!file)throw Error('Usage: compose|tokens|preview INPUT.json --out NEW_OUTPUT [--report REPORT]');if(!flags.out)throw Error('Explicit --out required');const source=resolve(file);const raw=await readFile(source,'utf8');if(raw.length>100000)throw Error('Input too large');const input=JSON.parse(raw);let text,report;if(cmd==='compose'){report=generateCompositions(input);text=JSON.stringify(report,null,2)+'\n'}else if(cmd==='tokens'){report=generateTokens(input).manifest;text=generateTokens(input).css}else{const out=renderPreview(input,{family:flags.family??'media-lead'});text=out.html;report={plan:out.plan,tokens:out.tokens.manifest}};const paths=[resolve(flags.out),...(flags.report?[resolve(flags.report)]:[])];if(new Set([source,...paths]).size!==paths.length+1)throw Error('Source/output path collision');for(const target of paths){try{await stat(target);throw Error('Refusing existing output: '+target)}catch(e){if(e.code!=='ENOENT')throw e}}await save(flags.out,text);if(flags.report)await save(flags.report,JSON.stringify(report,null,2)+'\n');return {status:'CREATED',command:cmd,output:resolve(flags.out),report:flags.report??null}}
+if(process.argv[1]&&resolve(process.argv[1])===resolve(new URL(import.meta.url).pathname))run(process.argv.slice(2)).then(v=>console.log(JSON.stringify(v))).catch(e=>{console.error(JSON.stringify({status:'ERROR',error:e.code??'INVALID_INPUT',message:e.message}));process.exitCode=2});

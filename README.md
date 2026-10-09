@@ -44,6 +44,14 @@ Game Studio converts a playable fantasy into actual inputs, meaningful tradeoffs
 
 See [`game-studio/SKILL.md`](./game-studio/SKILL.md).
 
+### `geometric-design`
+
+**Source-backed geometry and visual QA (experimental alpha).**
+
+Geometric Design covers monochrome symbol construction, nested layout regions, standalone geometry auditing, responsive UI tokens and design grammar. It ships a self-contained offline Node 22+ engine; a browser or renderer is optional and no paid service or API key is needed. Limits: a bounded SVG subset (no general curved Booleans or alpha-transparent counters) and no accessibility certification.
+
+See [`geometric-design/SKILL.md`](./geometric-design/SKILL.md).
+
 ### `openspec-workflow`
 
 **Native OpenSpec change routing from intent to verified implementation.**
@@ -105,6 +113,7 @@ skills/
 ├── futurequake/        # Modifiability experiments; references, examples, metrics helper
 ├── game-studio/        # Game design; concept-core references and packaging helper
 ├── gauntlet-loop/      # Artifact QA; references and optional executable checks
+├── geometric-design/   # Geometry audits and tokens; offline Node tools
 ├── intent-mode/        # Intent reconstruction
 ├── openspec-workflow/  # Native OpenSpec lifecycle routing
 ├── seo-aiseo/          # Search audits; references
@@ -218,7 +227,7 @@ The repository follows the open Agent Skills convention: each skill is a folder 
 
 ## Status
 
-The collection currently includes eight skills: `futurequake`, `game-studio`, `gauntlet-loop`, `intent-mode`, `openspec-workflow`, `seo-aiseo`, `video-watch`, and `visual-output`.
+The collection currently includes nine skills: `futurequake`, `game-studio`, `gauntlet-loop`, `geometric-design`, `intent-mode`, `openspec-workflow`, `seo-aiseo`, `video-watch`, and `visual-output`.
 
 ## Development
 

@@ -1,0 +1,62 @@
+{
+  "schema": "geometry-composition/1",
+  "id": "synthetic-notes",
+  "seed": 17,
+  "content": {
+    "title": "Ideas acquire shape through deliberate space",
+    "intro": "A study in careful hierarchy, meaningful proportions and room for unexpected detail. Every compositional decision has a role.",
+    "cta": "Explore the geometric demonstration",
+    "mediaLabel": "Generated abstract media · no licensed photography",
+    "quote": "Good structure is not a collection of grids; it is a relationship among things.",
+    "cards": [
+      {
+        "title": "Rhythm / 1",
+        "body": "Synthetic editorial content for card 1, measured for legibility and safe reflow."
+      },
+      {
+        "title": "Counterspace / 2",
+        "body": "Synthetic editorial content for card 2, measured for legibility and safe reflow."
+      },
+      {
+        "title": "Focal study / 3",
+        "body": "Synthetic editorial content for card 3, measured for legibility and safe reflow."
+      },
+      {
+        "title": "Proportion / 4",
+        "body": "Synthetic editorial content for card 4, measured for legibility and safe reflow."
+      },
+      {
+        "title": "Intent / 5",
+        "body": "Synthetic editorial content for card 5, measured for legibility and safe reflow."
+      },
+      {
+        "title": "Continuity / 6",
+        "body": "Synthetic editorial content for card 6, measured for legibility and safe reflow."
+      },
+      {
+        "title": "Rhythm / 7",
+        "body": "Synthetic editorial content for card 7, measured for legibility and safe reflow."
+      },
+      {
+        "title": "Counterspace / 8",
+        "body": "Synthetic editorial content for card 8, measured for legibility and safe reflow."
+      },
+      {
+        "title": "Focal study / 9",
+        "body": "Synthetic editorial content for card 9, measured for legibility and safe reflow."
+      },
+      {
+        "title": "Proportion / 10",
+        "body": "Synthetic editorial content for card 10, measured for legibility and safe reflow."
+      },
+      {
+        "title": "Intent / 11",
+        "body": "Synthetic editorial content for card 11, measured for legibility and safe reflow."
+      },
+      {
+        "title": "Continuity / 12",
+        "body": "Synthetic editorial content for card 12, measured for legibility and safe reflow."
+      }
+    ]
+  }
+}
