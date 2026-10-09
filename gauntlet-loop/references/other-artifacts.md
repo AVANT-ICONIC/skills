@@ -20,6 +20,12 @@ Universal QA is **artifact-specific**. A generic quality score or a screenshot i
 - Check chart labels, scales, data coverage and output rendered/readable form; a pretty chart with wrong source totals is a FAIL.
 - Avoid fake numeric confidence. When samples are partial, label coverage rather than saying "verified all".
 
+### Source lineage versus self-consistent summaries
+
+A published chart/report can have **internally correct arithmetic** and still disagree with its raw source. For every critical number, compare source-event inclusion/exclusion rules, sign conventions, duplicate IDs, grouping, temporal scope and units with the actual report. Do not merely test that dashboard bars sum to the dashboard total: a consistent but inflated dataset will pass that superficial test. Use a **separate computation strategy** (e.g., SQL group/window expression independent of the report generator) when feasible.
+
+For **signed integer JSON event ledgers only**, the optional [`audit_aggregate.py`](../scripts/audit_aggregate.py) provides a reproducible reconciliation check, with `CHECKS_FAIL` for source/report disagreement and `BLOCKED_DATA` for ambiguous/invalid inputs. It does not validate source completeness, monetary rounding, real-world truth or the visual dashboard; these are separate critical gates. For incompatible data formats, choose an appropriate independent method instead of changing the real input just to satisfy the script.
+
 ## Documents, slides and PDFs
 
 - Check semantic content, ordering, headings, tables, page breaks, dimensions and any relevant accessibility.
