@@ -76,7 +76,7 @@ def package(source: Path, output: Path, *, check: bool = False, source_revision:
     expected = {**payload, MANIFEST: manifest_for(payload, source_revision)}
     if output.resolve() == source.resolve() or source.resolve() in output.resolve().parents:
         raise ValueError("output must not overwrite the canonical core or nest inside it")
-    if output.exists() and output.is_symlink():
+    if output.is_symlink():
         raise ValueError("refusing symlink destination")
     existing = {p.name for p in output.iterdir()} if output.is_dir() else set()
     # A snapshot directory must contain exactly the allowlisted entries, no unknown files.
@@ -98,6 +98,10 @@ def package(source: Path, output: Path, *, check: bool = False, source_revision:
     # Fail without touching any file when one existing destination is unsafe.
     if any((output / name).is_symlink() for name in expected):
         raise ValueError("refusing symlink destination file")
+    # Reject non-regular destinations before making any snapshot changes.
+    invalid = [name for name in expected if (output / name).exists() and not (output / name).is_file()]
+    if invalid:
+        raise ValueError('non-regular destination: ' + ', '.join(sorted(invalid)))
     output.mkdir(parents=True, exist_ok=True)
     for name, data in expected.items():
         path = output / name
