@@ -1,0 +1,38 @@
+name: Geometric Design tests
+on:
+  pull_request:
+    paths:
+      - 'geometric-design/**'
+      - '.github/workflows/geometric-design.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'geometric-design/**'
+      - '.github/workflows/geometric-design.yml'
+permissions:
+  contents: read
+jobs:
+  node-offline:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Standalone source and real CLI smoke tests
+        run: node --test geometric-design/tests/*.test.mjs
+      - name: Fresh isolated consumer install and offline tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          dest="$(mktemp -d)"
+          cp -a geometric-design/. "$dest/"
+          ( cd "$dest" && node --test tests/*.test.mjs )
+      - name: Real Chromium responsive browser smoke
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m venv "$RUNNER_TEMP/geo-browser"
+          "$RUNNER_TEMP/geo-browser/bin/pip" install --disable-pip-version-check playwright==1.56.0
+          "$RUNNER_TEMP/geo-browser/bin/python" -m playwright install chromium
+          "$RUNNER_TEMP/geo-browser/bin/python" geometric-design/tests/browser-smoke.py
