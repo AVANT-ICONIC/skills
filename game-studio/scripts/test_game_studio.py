@@ -62,6 +62,7 @@ class Coverage(unittest.TestCase):
         self.assertIn("no writes", main)
         self.assertIn("rescue", main)
         self.assertIn("first 60 seconds", main)
+        self.assertNotIn("`gauntlet-loop`0", main)
 
     def test_no_control_chars_in_public_source(self):
         for p in ROOT.rglob("*"):
@@ -171,6 +172,26 @@ class Packaging(unittest.TestCase):
                 mod.package(CORE, out)
             self.assertEqual((out / "framing.md").read_text(), "do not modify yet")
             self.assertEqual(victim.read_text(), "untouched")
+
+    def test_directory_as_allowed_destination_fails_without_partial_write(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp) / "out"
+            mod.package(CORE, out)
+            (out / "framing.md").write_text("preserve original")
+            (out / "systems-and-economy.md").unlink()
+            (out / "systems-and-economy.md").mkdir()
+            with self.assertRaisesRegex(ValueError, "non-regular destination"):
+                mod.package(CORE, out)
+            self.assertEqual((out / "framing.md").read_text(), "preserve original")
+
+    def test_dangling_symlink_output_root_rejected(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp) / "absent"
+            out = Path(tmp) / "snapshot"
+            out.symlink_to(target, target_is_directory=True)
+            with self.assertRaisesRegex(ValueError, "symlink destination"):
+                mod.package(CORE, out)
+            self.assertFalse(target.exists())
 
     def test_source_directory_cannot_be_overwritten(self):
         with self.assertRaisesRegex(ValueError, "must not overwrite"):
