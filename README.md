@@ -36,6 +36,14 @@ It can also run the exact same quake set against two refs to answer a sharper qu
 
 See [`futurequake/SKILL.md`](./futurequake/SKILL.md).
 
+### `game-studio`
+
+**Portable game design, concept rescue, and explicitly requested production.**
+
+Game Studio converts a playable fantasy into actual inputs, meaningful tradeoffs, systemic progression and falsifiable playtest hypotheses. Open-ended ideas get **three comparably complete, mechanically distinct concepts**; refining one idea doesn't restart a trio. Review and rescue are read-only by default; prototypes, builds and production require explicit write authority. Nine canonical concept-core references cover 22 mapped disciplines without forcing 22 separate questionnaires. An optional stdlib package tool produces a deterministic allowlisted SHA-256 snapshot for future adapters; no WebUI skill is included in this S3 change.
+
+See [`game-studio/SKILL.md`](./game-studio/SKILL.md).
+
 ### `seo-aiseo`
 
 **Evidence-led SEO and AI-search optimization for real websites.**
@@ -138,6 +146,16 @@ Run Futurequake on this repository before we commit to the architecture.
 Compare main against this PR with Futurequake. Use the same quake set on both refs.
 ```
 
+### Game Studio
+
+```text
+Design three mechanically distinct nonviolent game concepts for a one-button handheld.
+```
+
+```text
+Audit the player choices in this existing game without changing source, then propose three distinct rescue loops.
+```
+
 ### SEO + AI SEO
 
 ```text
@@ -182,7 +200,7 @@ The repository follows the open Agent Skills convention: each skill is a folder 
 
 ## Status
 
-The collection currently includes `intent-mode`, `futurequake`, `seo-aiseo`, and `visual-output`.
+The collection currently includes `intent-mode`, `futurequake`, `game-studio`, `seo-aiseo`, and `visual-output`.
 
 ## Development
 

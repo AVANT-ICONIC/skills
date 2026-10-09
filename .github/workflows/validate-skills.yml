@@ -69,6 +69,12 @@ jobs:
               sys.exit(1)
 
           print(f"Validated {len(skill_dirs)} skill folders.")
+      - name: Test Game Studio canonical coverage and packaging
+        run: python3 -m unittest discover -s game-studio/scripts -p 'test_*.py' -v
+      - name: Verify deterministic Game Studio snapshot
+        run: |
+          python3 game-studio/scripts/package_concept_core.py --out "$RUNNER_TEMP/game-concept-core"
+          python3 game-studio/scripts/package_concept_core.py --out "$RUNNER_TEMP/game-concept-core" --check
       - name: Test Gauntlet evidence validator
         run: python3 gauntlet-loop/scripts/test_validate_evidence.py
       - name: Test optional Gauntlet browser probe
