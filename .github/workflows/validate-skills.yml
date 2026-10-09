@@ -69,6 +69,8 @@ jobs:
               sys.exit(1)
 
           print(f"Validated {len(skill_dirs)} skill folders.")
+      - name: Test Futurequake metrics helper
+        run: python3 -m unittest discover -s futurequake/scripts -p 'test_*.py' -v
       - name: Test Game Studio canonical coverage and packaging
         run: python3 -m unittest discover -s game-studio/scripts -p 'test_*.py' -v
       - name: Verify deterministic Game Studio snapshot
