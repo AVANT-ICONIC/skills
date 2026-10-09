@@ -119,7 +119,7 @@ def run(args: argparse.Namespace) -> dict:
                         "viewport": viewport, "screenshot": str(screenshot),
                         "sha256": hashlib.sha256(screenshot.read_bytes()).hexdigest(),
                         "target": page.evaluate(LAYOUT_JS, args.target),
-                        "interaction": None, "motion": None,
+                        "interaction": None, "motion": None, "keyboard": None,
                     }
                     if args.action and args.state:
                         state = page.locator(args.state).first
@@ -158,6 +158,55 @@ def run(args: argparse.Namespace) -> dict:
                                 "screenshot": str(capture),
                                 "sha256": hashlib.sha256(capture.read_bytes()).hexdigest(),
                             }
+                    if args.keyboard:
+                        keyboard_page = browser.new_page(viewport=viewport, device_scale_factor=1)
+                        try:
+                            keyboard_page.set_content(html, wait_until="load", timeout=10000)
+                            kb_state = keyboard_page.locator(args.state).first
+                            kb_action = keyboard_page.locator(args.action).first
+                            found = kb_state.count() > 0 and kb_action.count() > 0
+                            before = kb_state.inner_text(timeout=1500) if found else None
+                            reached = False
+                            focus_shot = None
+                            after_shot = None
+                            after = None
+                            if found:
+                                for _ in range(30):
+                                    keyboard_page.keyboard.press("Tab")
+                                    reached = keyboard_page.evaluate(
+                                        "selector => document.activeElement === document.querySelector(selector)",
+                                        args.action,
+                                    )
+                                    if reached:
+                                        break
+                                if reached:
+                                    focus_shot = args.out / f'keyboard_focus_{viewport["width"]}x{viewport["height"]}.png'
+                                    keyboard_page.screenshot(path=str(focus_shot), full_page=True)
+                                    keyboard_page.keyboard.press("Enter")
+                                    try:
+                                        keyboard_page.wait_for_function(
+                                            "({selector,before}) => {const e=document.querySelector(selector); return e && e.textContent.trim() !== before;}",
+                                            arg={"selector": args.state, "before": before},
+                                            timeout=1500,
+                                        )
+                                    except PlaywrightTimeoutError:
+                                        pass
+                                    after = kb_state.inner_text(timeout=1500)
+                                    after_shot = args.out / f'keyboard_after_{viewport["width"]}x{viewport["height"]}.png'
+                                    keyboard_page.screenshot(path=str(after_shot), full_page=True)
+                            record["keyboard"] = {
+                                "tab_reachable": reached,
+                                "before": before,
+                                "after": after,
+                                "enter_changed": bool(reached and before != after),
+                                "focus_screenshot": str(focus_shot) if focus_shot else None,
+                                "after_screenshot": str(after_shot) if after_shot else None,
+                                "reason": "action/state selector missing" if not found else
+                                          "action cannot be reached by Tab" if not reached else
+                                          None if before != after else "Enter did not change visible state",
+                            }
+                        finally:
+                            keyboard_page.close()
                     if args.motion:
                         duration = page.evaluate("""selector => {
                            const node=document.querySelector(selector);
@@ -199,6 +248,9 @@ def run(args: argparse.Namespace) -> dict:
         interaction = record["interaction"]
         if interaction and (not interaction["changed"] or interaction["error"]):
             failures.append(f"interaction@{location}")
+        keyboard = record["keyboard"]
+        if keyboard and (not keyboard["tab_reachable"] or not keyboard["enter_changed"]):
+            failures.append(f"keyboard@{location}")
         motion = record["motion"]
         if motion and (not motion["animations"] or motion["duration_matches"] is False):
             failures.append(f"motion-duration@{location}")
@@ -216,6 +268,8 @@ def main(argv: list[str] | None = None) -> int:
                         help="CSS selector for a critical visible element")
     parser.add_argument("--action", help="CSS selector to click")
     parser.add_argument("--state", help="CSS selector whose visible text must change")
+    parser.add_argument("--keyboard", action="store_true",
+                        help="also require Tab reachability and Enter-triggered visible state change")
     parser.add_argument("--motion", help="CSS selector with animation(s) to sample")
     parser.add_argument("--expected-duration", type=int,
                         help="required animation duration in milliseconds")
@@ -225,6 +279,8 @@ def main(argv: list[str] | None = None) -> int:
         parser.error("--action and --state must be used together")
     if args.expected_duration is not None and not args.motion:
         parser.error("--expected-duration requires --motion")
+    if args.keyboard and not (args.action and args.state):
+        parser.error("--keyboard requires --action and --state")
     if not args.viewport:
         args.viewport = [{"width": 1280, "height": 800},
                          {"width": 390, "height": 844}]
