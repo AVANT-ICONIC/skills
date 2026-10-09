@@ -23,7 +23,7 @@ Do not accept a freshly invented design as a substitute for the actual supplied 
 
 ## Temporal inspection
 
-A static-good frame is insufficient for a moving artifact. Inspect:
+A static-good frame is insufficient for a moving artifact. **An especially useful negative control is an animation whose first frame matches the reference exactly while its speed differs**. Where the browser supports the Web Animations API, pause both animations and sample their actual rendered states at *matched absolute elapsed times* (for example 0, 250, 500 ms), not matched percentages of differently sized cycles. Sample real screenshots, open them, and compare; `getComputedStyle`/animation metadata alone does not prove pixel fidelity. Inspect:
 - opening/loop start, quarter, midpoint, three-quarter, loop seam, and notable transitions; sample more densely for fast motion or changes;
 - deformation pattern, speed, easing, acceleration, synchronization, direction, periodicity and continuity;
 - state-dependent behavior (idle/working/busy, hover, animation enablement), and whether variations actually differ;
