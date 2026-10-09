@@ -25,6 +25,27 @@ TEMPLATE = '''<!doctype html><html><head><style>
 <div id="pulse"></div></section></main></body></html>'''
 
 
+DIALOG_HTML = """<!doctype html><html lang="en"><style>
+#modal[hidden]{display:none}#modal{position:fixed;inset:25%;background:#173b4b;color:white;padding:20px}
+</style><main id="main"><button id="act">Open</button><span id="state">Closed</span>
+<button id="behind">Behind</button></main>
+<section id="modal" role="dialog" aria-modal="true" hidden>
+<button id="cancel">Cancel</button><button id="confirm">Confirm</button>
+</section><script>
+const good=GOOD;
+const action=document.querySelector('#act'), modal=document.querySelector('#modal'), main=document.querySelector('#main');
+action.onclick=()=>{modal.hidden=false;document.querySelector('#state').textContent='Open';if(good){main.inert=true;document.querySelector('#cancel').focus()}};
+function close(){modal.hidden=true;main.inert=false;action.focus()}
+document.querySelector('#cancel').onclick=close;
+if(good)document.addEventListener('keydown',e=>{if(modal.hidden)return;if(e.key==='Escape'){close();}
+if(e.key==='Tab'){e.preventDefault();const els=Array.from(modal.querySelectorAll('button'));els[(els.indexOf(document.activeElement)+(e.shiftKey?-1:1)+els.length)%els.length].focus()}});
+</script></html>"""
+
+
+def make_dialog_html(good=False):
+    return DIALOG_HTML.replace("const good=GOOD;", f"const good={'true' if good else 'false'};")
+
+
 def make_html(duration="2s", width="100%", style=""):
     return (TEMPLATE.replace("DURATION", duration)
             .replace("MOBILE_WIDTH", width)
@@ -53,14 +74,14 @@ class RealBrowserProbeTests(unittest.TestCase):
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name)
 
-    def probe(self, html, target="#panel", action="#act", state="#state", motion="#pulse", browser="/missing/chromium", keyboard=False):
+    def probe(self, html, target="#panel", action="#act", state="#state", motion="#pulse", browser="/missing/chromium", keyboard=False, dialog=None):
         fixture = self.root / "case.html"
         fixture.write_text(html, encoding="utf-8")
         out = self.root / "evidence"
         out.mkdir()
         args = argparse.Namespace(html=fixture, out=out,
             viewport=[{"width":390,"height":844}], target=target, action=action,
-            state=state, motion=motion, expected_duration=2000, browser=browser, keyboard=keyboard)
+            state=state, motion=motion, expected_duration=2000, browser=browser, keyboard=keyboard, dialog=dialog)
         return run(args)
 
     def test_broken_fixture_fails_layout_and_motion_and_recovers_binary(self):
@@ -109,6 +130,34 @@ class RealBrowserProbeTests(unittest.TestCase):
         record = report["viewports"][0]["keyboard"]
         self.assertTrue(record["tab_reachable"])
         self.assertFalse(record["enter_changed"])
+
+    def test_dialog_negative_focus_escape_restore_fail(self):
+        html = make_dialog_html(good=False)
+        report = self.probe(html, target="#act", action="#act", state="#state", motion=None, dialog="#modal")
+        self.assertEqual("CHECKS_FAIL", report["status"])
+        self.assertIn("dialog@390x844", report["failed_checks"])
+        modal = report["viewports"][0]["dialog"]
+        self.assertTrue(modal["opened"])
+        self.assertFalse(modal["focus_inside"])
+        self.assertFalse(modal["tabs_trapped"])
+        self.assertFalse(modal["escape_closed"])
+        self.assertFalse(modal["focus_restored"])
+        self.assertTrue(Path(modal["open_screenshot"]).is_file())
+
+    def test_dialog_positive_focus_escape_restore_pass(self):
+        html = make_dialog_html(good=True)
+        report = self.probe(html, target="#act", action="#act", state="#state", motion=None, dialog="#modal")
+        self.assertEqual("CHECKS_PASS_REVIEW_PIXELS", report["status"])
+        modal = report["viewports"][0]["dialog"]
+        for name in ("opened", "focus_inside", "tabs_trapped", "escape_closed", "focus_restored"):
+            self.assertTrue(modal[name], name)
+        self.assertTrue(Path(modal["after_escape_screenshot"]).is_file())
+
+    def test_dialog_missing_selector_fails_not_blocked(self):
+        html = make_dialog_html(good=True)
+        report = self.probe(html, target="#act", action="#act", state="#state", motion=None, dialog="#missing-dialog")
+        self.assertEqual("CHECKS_FAIL", report["status"])
+        self.assertIn("dialog@390x844", report["failed_checks"])
 
     def test_missing_motion_target_is_failing_check(self):
         report = self.probe(make_html(), motion="#nonexistent")
