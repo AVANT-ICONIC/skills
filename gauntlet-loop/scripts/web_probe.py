@@ -67,6 +67,32 @@ LAYOUT_JS = r"""selector => {
 }"""
 
 
+CANVAS_2D_JS = r"""({selector,minColors}) => {
+  const canvas=document.querySelector(selector);
+  if (!canvas) return {verified:false,reason:"canvas selector missing"};
+  if (!(canvas instanceof HTMLCanvasElement)) return {verified:false,reason:"target is not canvas"};
+  if (!canvas.width || !canvas.height) return {verified:false,reason:"canvas has no drawing dimensions"};
+  const ctx=canvas.getContext("2d");
+  if (!ctx) return {verified:false,reason:"2D context unavailable; possible WebGL or unsupported renderer"};
+  const size=256;
+  const width=Math.min(size,canvas.width),height=Math.min(size,canvas.height);
+  try {
+    const temp=document.createElement("canvas");temp.width=width;temp.height=height;
+    const dst=temp.getContext("2d",{willReadFrequently:true});
+    dst.drawImage(canvas,0,0,width,height);
+    const pixels=dst.getImageData(0,0,width,height).data;
+    let drawn=0;const colors=new Set();
+    for(let i=0;i<pixels.length;i+=4){
+      if(pixels[i+3]>=16){drawn++;colors.add([pixels[i],pixels[i+1],pixels[i+2],pixels[i+3]].join(","))}
+    }
+    return {verified:true,drawn_pixels:drawn,unique_colors:colors.size,
+            minimum_colors:minColors,has_content:drawn>0 && colors.size>=minColors,
+            sampled:{width,height},original:{width:canvas.width,height:canvas.height},
+            limitations:"Downsampled canvas pixel presence only; does not establish desired shapes, GPU/WebGL fidelity, or reference parity"};
+  } catch(error){return {verified:false,reason:String(error).slice(0,260)}};
+}"""
+
+
 def run(args: argparse.Namespace) -> dict:
     report = {
         "method": "Chromium page.set_content (isolated self-contained HTML)",
@@ -119,7 +145,7 @@ def run(args: argparse.Namespace) -> dict:
                         "viewport": viewport, "screenshot": str(screenshot),
                         "sha256": hashlib.sha256(screenshot.read_bytes()).hexdigest(),
                         "target": page.evaluate(LAYOUT_JS, args.target),
-                        "interaction": None, "motion": None, "keyboard": None, "dialog": None,
+                        "interaction": None, "motion": None, "keyboard": None, "dialog": None, "canvas2d": None,
                     }
                     if args.action and args.state:
                         state = page.locator(args.state).first
@@ -207,6 +233,10 @@ def run(args: argparse.Namespace) -> dict:
                             }
                         finally:
                             keyboard_page.close()
+                    if args.canvas2d:
+                        record["canvas2d"] = page.evaluate(CANVAS_2D_JS, {
+                            "selector": args.canvas2d, "minColors": args.canvas_min_colors
+                        })
                     if args.dialog:
                         dialog_page = browser.new_page(viewport=viewport, device_scale_factor=1)
                         try:
@@ -297,6 +327,9 @@ def run(args: argparse.Namespace) -> dict:
         keyboard = record["keyboard"]
         if keyboard and (not keyboard["tab_reachable"] or not keyboard["enter_changed"]):
             failures.append(f"keyboard@{location}")
+        canvas = record["canvas2d"]
+        if canvas and (not canvas["verified"] or not canvas.get("has_content")):
+            failures.append(f"canvas2d@{location}")
         dialog = record["dialog"]
         if dialog and not all(dialog.get(key) for key in (
             "opened", "focus_inside", "tabs_trapped", "escape_closed", "focus_restored"
@@ -321,6 +354,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--state", help="CSS selector whose visible text must change")
     parser.add_argument("--keyboard", action="store_true",
                         help="also require Tab reachability and Enter-triggered visible state change")
+    parser.add_argument("--canvas2d", help="CSS selector for required 2D Canvas pixel content (not WebGL)")
+    parser.add_argument("--canvas-min-colors", type=int, default=2,
+                        help="Minimum distinct nontransparent colors in downsampled Canvas2D pixels (default: 2)")
     parser.add_argument("--dialog", help="CSS selector for an expected modal dialog; verify focus trap, Escape and restoration")
     parser.add_argument("--motion", help="CSS selector with animation(s) to sample")
     parser.add_argument("--expected-duration", type=int,
@@ -335,6 +371,8 @@ def main(argv: list[str] | None = None) -> int:
         parser.error("--keyboard requires --action and --state")
     if args.dialog and not (args.action and args.state):
         parser.error("--dialog requires --action and --state")
+    if args.canvas_min_colors < 1 or args.canvas_min_colors > 65536:
+        parser.error("--canvas-min-colors must be between 1 and 65536")
     if not args.viewport:
         args.viewport = [{"width": 1280, "height": 800},
                          {"width": 390, "height": 844}]
