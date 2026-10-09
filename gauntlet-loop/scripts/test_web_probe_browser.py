@@ -106,6 +106,27 @@ class RealBrowserProbeTests(unittest.TestCase):
         self.assertTrue(Path(interaction["screenshot"]).is_file())
         self.assertIsNone(interaction["error"])
 
+    def test_delayed_visible_state_with_hidden_text_is_not_false_failed(self):
+        html = make_html().replace(
+            '<strong id="state">0</strong>',
+            '<strong id="state"><span style="display:none">Hidden</span>0</strong>',
+        )
+        report = self.probe(html)
+        self.assertEqual("CHECKS_PASS_REVIEW_PIXELS", report["status"])
+        self.assertEqual(("0", "1"), (
+            report["viewports"][0]["interaction"]["before"],
+            report["viewports"][0]["interaction"]["after"],
+        ))
+
+    def test_keyboard_delayed_visible_state_with_hidden_text_is_not_false_failed(self):
+        html = make_html().replace(
+            '<strong id="state">0</strong>',
+            '<strong id="state"><span style="display:none">Hidden</span>0</strong>',
+        )
+        report = self.probe(html, keyboard=True)
+        self.assertEqual("CHECKS_PASS_REVIEW_PIXELS", report["status"])
+        self.assertTrue(report["viewports"][0]["keyboard"]["enter_changed"])
+
     def test_hidden_control_not_treated_as_visible(self):
         report = self.probe(make_html(style='style="visibility:hidden"'), target="#act", action=None, state=None)
         self.assertIn("layout@390x844", report["failed_checks"])
@@ -156,6 +177,31 @@ class RealBrowserProbeTests(unittest.TestCase):
         for name in ("opened", "focus_inside", "tabs_trapped", "escape_closed", "focus_restored"):
             self.assertTrue(modal[name], name)
         self.assertTrue(Path(modal["after_escape_screenshot"]).is_file())
+
+    def test_dialog_focus_escape_after_seven_buttons_is_detected(self):
+        buttons = "".join(f'<button id="m{i}">Item{i}</button>' for i in range(7))
+        html = (
+            '<button id="act">Open</button><span id="state">Closed</span>'
+            '<section id="modal" role="dialog" hidden>' + buttons + '</section>'
+            '<button id="outside">Outside</button>'
+            '<script>'
+            'const act=document.querySelector("#act"), modal=document.querySelector("#modal");'
+            'act.onclick=()=>{modal.hidden=false;document.querySelector("#state").textContent="Open";'
+            'document.querySelector("#m0").focus()};'
+            'document.addEventListener("keydown",e=>{if(e.key==="Escape"){modal.hidden=true;act.focus()}});'
+            '</script>'
+        )
+        report = self.probe(
+            html, target="#act", action="#act", state="#state", motion=None, dialog="#modal"
+        )
+        self.assertEqual("CHECKS_FAIL", report["status"])
+        self.assertIn("dialog@390x844", report["failed_checks"])
+        modal = report["viewports"][0]["dialog"]
+        self.assertTrue(modal["opened"])
+        self.assertTrue(modal["focus_inside"])
+        self.assertFalse(modal["tabs_trapped"])
+        self.assertTrue(modal["escape_closed"])
+        self.assertTrue(modal["focus_restored"])
 
     def test_dialog_missing_selector_fails_not_blocked(self):
         html = make_dialog_html(good=True)
