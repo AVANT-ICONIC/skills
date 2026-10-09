@@ -172,7 +172,7 @@ The repository follows the open Agent Skills convention: each skill is a folder 
 
 ## Status
 
-The collection currently includes `intent-mode`, `futurequake`, `seo-aiseo`, and `visual-output`.
+The collection includes `intent-mode`, `futurequake`, `seo-aiseo`, and `visual-output`; `geometric-design` is an **experimental alpha candidate** pending a separate merge approval.
 
 ## Development
 
@@ -192,8 +192,10 @@ Contributions are welcome when they remain portable, inspectable, and small. See
 
 MIT. See [LICENSE](./LICENSE).
 
-### `geometric-design`
+### `geometric-design` (EXPERIMENTAL ALPHA candidate, draft/unmerged)
 
 **Source-backed proportional geometry and visual QA for monochrome symbols, nested layouts, standalone auditing, responsive UI tokens and design grammar.** Includes a self-contained offline Node 22+ engine, synthetic smoke tests and truthful unsupported/raster limits. No mandatory API keys or paid services.
 
 See [`geometric-design/SKILL.md`](./geometric-design/SKILL.md).
+
+**Alpha limitations:** Node 22+ verified target; optional free renderer/browser for raster and UI checks. No general SVG curved Booleans, genuine alpha-transparent counters, universal accessibility guarantee or independently demonstrated aesthetic/agent advantage. Spacing Option 0 keeps existing CSS: model gap is the proportional rem value, not fixed 20px. Source audits and blind creative evaluation are different kinds of evidence. This draft is not an official published release.

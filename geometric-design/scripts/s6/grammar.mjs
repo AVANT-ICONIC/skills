@@ -13,10 +13,9 @@ function paths(n,base='') {const path=base+'/'+n.role;return [path,...n.children
 const rule=(id,kind,status,details,hard=false)=>({id,kind,status,hard,details});
 
 /**
- * Reversible cross-lane policy proposal. The rendered S5 family uses a fixed
- * 20px gap while the token generator defaults to a phi-derived 12.944px.
- * This suggests CSS that reconciles the *token* to the approved-layout value,
- * but does not apply it, edit S5 files, or claim owner approval or browser QA.
+ * Option 0: source model uses the existing responsive gap-card rem token.
+ * An exact default match needs no CSS patch. Custom token/model mismatches
+ * remain reversible proposals, never owner-approved browser changes.
  */
 export function proposeCardGapBridge(candidates,tokens){
  const primitive=tokens.manifest.primitives.find(x=>x.id==='gap-card');
@@ -27,8 +26,8 @@ export function proposeCardGapBridge(candidates,tokens){
  if(gaps.some(x=>Math.abs(x-fixed)>1e-6))return {status:'NEEDS_MANUAL_DECISION',reason:'Different layout families declare incompatible card gaps',css:null,declaredGapsPx:[...new Set(gaps)]};
  if(Math.abs(fixed-primitive.actualPx)<=0.01)return {status:'NOT_NEEDED',css:null,token:'gap-card',declaredGapPx:fixed,tokenActualPx:primitive.actualPx};
  const value=Number(fixed.toFixed(6));
- const css=`/* Proposed only; preserve tested S5 20px visual gap, not a phi claim. */\n:root { --geo-gap-card: ${value}px; }\n`;
- const data={schema:'geometry-token-bridge/1',status:'PENDING_OWNER_REVIEW',source:'S5 declared layout model, not actual DOM',token:'gap-card',layoutDeclaredPx:value,sourceTokenDesiredPx:primitive.desiredPx,sourceTokenActualPx:primitive.actualPx,deltaPx:Number((value-primitive.actualPx).toFixed(6)),kind:'declared-fixed-spacing-exception',reason:'Preserve previously browser-tested fixed card spacing while aligning the optional token CSS',applied:false,css,browserReverification:'NOT_EVALUATED',ownerApproval:'NOT_GIVEN'};
+ const css=`/* Proposed only; requires owner approval and browser checks, not applied. */\n:root { --geo-gap-card: ${value}px; }\n`;
+ const data={schema:'geometry-token-bridge/1',status:'PENDING_OWNER_REVIEW',source:'S5 declared layout model, not actual DOM',token:'gap-card',layoutDeclaredPx:value,sourceTokenDesiredPx:primitive.desiredPx,sourceTokenActualPx:primitive.actualPx,deltaPx:Number((value-primitive.actualPx).toFixed(6)),kind:'declared-fixed-spacing-exception',reason:'Custom spacing options diverge from default reference-root composition spacing; do not apply CSS automatically',applied:false,css,browserReverification:'NOT_EVALUATED',ownerApproval:'NOT_GIVEN'};
  return {...data,proposalDigest:digest(data)};
 }
 
@@ -88,6 +87,6 @@ export function inspectGrammar(input){
   for(const c of geometry.constraints??[])rules.push(rule(`declared:${c.id}`,'declared-constraint',c.status==='PASS'?'PASS':c.status==='FAIL'?'FAIL':'INDETERMINATE',{provenance:c.provenance??'declared',unit:c.measureUnits??null,residual:c.absoluteResidual??null,featureId:c.id},c.severity==='hard'));
  }else rules.push(rule('geometry:source','topology','NOT_EVALUATED',{reason:'No logo/SVG input supplied',notRequiredToEvaluateComposition:true}));
  const failures=rules.filter(r=>r.hard&&r.status==='FAIL');
- const report={schema:'geometry-grammar-report/1',sourceDigest:digest(input),policy:'L1-symbol L2-composition L3-audit L4-tokens L5-grammar',referenceLocked:Boolean(lock),candidateFamilies:candidates.map(x=>x.family),candidateTreeHashes:candidates.map(x=>digest(x.tree)),compositionInputDigest:compositions.inputDigest,tokenManifestDigest:tokens.digest,rhythmBridgeProposal:tokenBridgeProposal,geometrySourceDigest:geometry?.sourceDigest??null,requiredChecks:rules.length,hardFailures:failures.map(r=>r.id),rules,exceptionLedger:[...tokens.manifest.exceptions,...(gapToken&&candidates.some(c=>c.layouts.some(l=>Math.abs(l.negativeSpace.cardGap-gapToken.actualPx)>0.01))?[{id:'cross-lane-card-gap-divergence',kind:'soft-rule-mismatch',declaredToken:'gap-card',tokenActualPx:gapToken.actualPx,layoutDeclaredGapPx:20,reason:'S5 layout gap was not linked to token family',status:'NEEDS_DECISION'}]:[]),...candidates.flatMap(c=>c.layouts.flatMap(l=>l.exceptions.map(e=>({...e,family:c.family}))))],verdict:failures.length?'NEEDS_WORK':'PASS_TECHNICAL_PARTIAL',verified:{math:'SOURCE_CHECKED',browser:'NOT_EVALUATED',raster:'NOT_EVALUATED',creativeRecognition:'NOT_EVALUATED',humanApproval:'NOT_GIVEN',referenceVisualFidelity:'NOT_EVALUATED'},limitations:['No automatic assessment of actual content meaning, focus image saliency or user brand identity','No real browser/PNG check is performed by this grammar coordinator','S2 non-general curved booleans and white-painted counters remain explicit limitations','Layout whitespace estimate is not exact union area'],independentGauntlet:true};
+ const report={schema:'geometry-grammar-report/1',sourceDigest:digest(input),policy:'L1-symbol L2-composition L3-audit L4-tokens L5-grammar',referenceLocked:Boolean(lock),candidateFamilies:candidates.map(x=>x.family),candidateTreeHashes:candidates.map(x=>digest(x.tree)),compositionInputDigest:compositions.inputDigest,tokenManifestDigest:tokens.digest,rhythmBridgeProposal:tokenBridgeProposal,geometrySourceDigest:geometry?.sourceDigest??null,requiredChecks:rules.length,hardFailures:failures.map(r=>r.id),rules,exceptionLedger:[...tokens.manifest.exceptions,...(gapToken&&candidates.some(c=>c.layouts.some(l=>Math.abs(l.negativeSpace.cardGap-gapToken.actualPx)>0.01))?[{id:'cross-lane-card-gap-divergence',kind:'soft-rule-mismatch',declaredToken:'gap-card',tokenActualPx:gapToken.actualPx,layoutDeclaredGapPx:candidates[0].layouts[0].negativeSpace.cardGap,reason:'Custom token gap diverges from default reference-root composition model',status:'NEEDS_DECISION'}]:[]),...candidates.flatMap(c=>c.layouts.flatMap(l=>l.exceptions.map(e=>({...e,family:c.family}))))],verdict:failures.length?'NEEDS_WORK':'PASS_TECHNICAL_PARTIAL',verified:{math:'SOURCE_CHECKED',browser:'NOT_EVALUATED',raster:'NOT_EVALUATED',creativeRecognition:'NOT_EVALUATED',humanApproval:'NOT_GIVEN',referenceVisualFidelity:'NOT_EVALUATED'},limitations:['No automatic assessment of actual content meaning, focus image saliency or user brand identity','No real browser/PNG check is performed by this grammar coordinator','S2 non-general curved booleans and white-painted counters remain explicit limitations','Layout whitespace estimate is not exact union area'],independentGauntlet:true};
  return {report,compositions,tokens,tokenBridgeProposal};
 }

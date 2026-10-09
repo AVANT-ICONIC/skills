@@ -6,6 +6,8 @@ compatibility: Portable Agent Skills; optional Node.js 22+ for bundled offline J
 
 # Geometric Design
 
+**EXPERIMENTAL ALPHA candidate.** Technical-preview scope only; not yet merged or published. No independent blinded creative-superiority evidence (T3/T4 `NOT_EVALUATED`).
+
 ## Workflow and activation
 
 Inspect the request, original artifacts and allowed changes. If a locked design/reference exists, preserve it. Read [canonical geometry policy](references/geometry-policy.md), choose only the relevant specialist mode and preserve untouched input. The bundled CLI requires Node.js 22+ and creates **new output paths** only. For any visual result, actually render/open/inspect it; source mathematics is never proof of recognition, aesthetics or WCAG compliance.
@@ -21,7 +23,7 @@ Inspect the request, original artifacts and allowed changes. If a locked design/
 | HTML preview | `node scripts/s5/cli.mjs preview BRIEF.json --out NEW.html` | Inspect real browser output; no screenshot assertions from generated HTML alone |
 | Cross-domain grammar | `node scripts/s6/cli.mjs grammar INPUT.json --out NEW.json` | Explicit rules and unresolved soft deviations; no universal beauty scoring |
 
-Start with [synthetic sample brief](examples/brief.json) or [grammar input](examples/grammar-input.json). Do not assume arbitrary real artwork fits the limited subset. A documented `gap-card` 20px layout vs φ-derived token difference is offered as an **unapplied, reversible CSS token exception** (`PENDING_OWNER_REVIEW`), not a silent S5 change.
+Start with [synthetic sample brief](examples/brief.json) or [grammar input](examples/grammar-input.json). Do not assume arbitrary real artwork fits the limited subset. Owner-approved Spacing Option 0 preserves the existing preview CSS and uses the current φ-derived `gap-card` rem token as the *reference-root* composition contract. At a 16px root the gap is ~12.944px; at a 32px root it computes ~25.888px. Proportional region models are not live DOM measurements; inspect actual browser pixels independently.
 
 ## Evidence and operating discipline
 

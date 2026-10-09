@@ -29,9 +29,16 @@ test('phi token and three distinct semantic trees execute',()=>{
  assert.equal(new Set(c.candidates.map(x=>JSON.stringify(x.tree))).size,3);
  assert.ok(t.manifest.primitives.some(x=>x.id==='gap-card'));
 });
-test('unapplied spacing discrepancy remains visible and reversible',()=>{
- const report=inspectGrammar(grammar);assert.equal(report.tokenBridgeProposal.status,'PENDING_OWNER_REVIEW');
- assert.equal(report.tokenBridgeProposal.layoutDeclaredPx,20);assert.equal(report.tokenBridgeProposal.applied,false);
+test('owner Option 0: source model matches existing responsive rem token without CSS override',()=>{
+ const tokens=generateTokens(),model=generateCompositions(sample),report=inspectGrammar(grammar);
+ const primitive=tokens.manifest.primitives.find(x=>x.id==='gap-card');
+ assert.equal(primitive.unit,'rem');assert.equal(model.cardGapContract.cssValue,primitive.cssValue);
+ assert.equal(model.cardGapContract.referencePx,primitive.actualPx);
+ assert.equal(model.cardGapContract.expectedPxAt32Root,Number((primitive.actualPx*2).toFixed(6)));
+ assert.ok(model.candidates.every(c=>c.layouts.every(l=>l.negativeSpace.cardGap===primitive.actualPx)));
+ assert.equal(report.tokenBridgeProposal.status,'NOT_NEEDED');assert.equal(report.tokenBridgeProposal.css,null);
+ assert.ok(report.report.rules.filter(r=>r.kind==='rhythm').every(r=>r.status==='PASS'));
+ assert.equal(report.report.exceptionLedger.some(e=>e.id==='cross-lane-card-gap-divergence'),false);
  assert.equal(report.report.verified.browser,'NOT_EVALUATED');
 });
 test('CLI capability, composition, CSS, HTML, grammar run against actual new files',()=>{
