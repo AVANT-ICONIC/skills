@@ -118,17 +118,29 @@ def run(args: argparse.Namespace) -> dict:
                     }
                     if args.action and args.state:
                         state = page.locator(args.state).first
-                        before = state.inner_text()
-                        click_error = None
-                        try:
-                            page.locator(args.action).first.click(timeout=2000)
-                        except Exception as exc:
-                            click_error = str(exc).splitlines()[0][:280]
-                        after = state.inner_text()
-                        record["interaction"] = {
-                            "before": before, "after": after,
-                            "changed": before != after, "error": click_error,
-                        }
+                        action = page.locator(args.action).first
+                        if state.count() == 0 or action.count() == 0:
+                            missing = []
+                            if state.count() == 0:
+                                missing.append("state selector absent")
+                            if action.count() == 0:
+                                missing.append("action selector absent")
+                            record["interaction"] = {
+                                "before": None, "after": None, "changed": False,
+                                "error": ", ".join(missing),
+                            }
+                        else:
+                            before = state.inner_text(timeout=1500)
+                            click_error = None
+                            try:
+                                action.click(timeout=2000)
+                            except Exception as exc:
+                                click_error = str(exc).splitlines()[0][:280]
+                            after = state.inner_text(timeout=1500)
+                            record["interaction"] = {
+                                "before": before, "after": after,
+                                "changed": before != after, "error": click_error,
+                            }
                     if args.motion:
                         duration = page.evaluate("""selector => {
                            const node=document.querySelector(selector);
@@ -145,7 +157,7 @@ def run(args: argparse.Namespace) -> dict:
                                 if args.expected_duration is not None else None
                             ),
                         }
-                        for ms in (0, 250, 500):
+                        for ms in ((0, 250, 500) if page.locator(args.motion).count() else ()):
                             page.evaluate("""arg => {
                                 const node=document.querySelector(arg.selector);
                                 if (!node) return;
@@ -171,7 +183,7 @@ def run(args: argparse.Namespace) -> dict:
         if interaction and (not interaction["changed"] or interaction["error"]):
             failures.append(f"interaction@{location}")
         motion = record["motion"]
-        if motion and motion["duration_matches"] is False:
+        if motion and (not motion["animations"] or motion["duration_matches"] is False):
             failures.append(f"motion-duration@{location}")
     report["failed_checks"] = failures
     report["status"] = "CHECKS_FAIL" if failures else "CHECKS_PASS_REVIEW_PIXELS"
@@ -206,6 +218,10 @@ def main(argv: list[str] | None = None) -> int:
     try:
         report = run(args)
     except Exception as exc:
+        (args.out / "probe.json").write_text(
+            json.dumps({"status": "BLOCKED_ENV", "error": str(exc)[:500]}, indent=2),
+            encoding="utf-8",
+        )
         print(f"BLOCKED_ENV: {exc}", file=sys.stderr)
         return 2
     (args.out / "probe.json").write_text(
