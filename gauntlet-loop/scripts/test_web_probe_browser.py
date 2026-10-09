@@ -53,14 +53,14 @@ class RealBrowserProbeTests(unittest.TestCase):
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name)
 
-    def probe(self, html, target="#panel", action="#act", state="#state", motion="#pulse", browser="/missing/chromium"):
+    def probe(self, html, target="#panel", action="#act", state="#state", motion="#pulse", browser="/missing/chromium", keyboard=False):
         fixture = self.root / "case.html"
         fixture.write_text(html, encoding="utf-8")
         out = self.root / "evidence"
         out.mkdir()
         args = argparse.Namespace(html=fixture, out=out,
             viewport=[{"width":390,"height":844}], target=target, action=action,
-            state=state, motion=motion, expected_duration=2000, browser=browser)
+            state=state, motion=motion, expected_duration=2000, browser=browser, keyboard=keyboard)
         return run(args)
 
     def test_broken_fixture_fails_layout_and_motion_and_recovers_binary(self):
@@ -91,6 +91,24 @@ class RealBrowserProbeTests(unittest.TestCase):
         self.assertEqual(report["status"], "CHECKS_FAIL")
         self.assertIn("interaction@390x844", report["failed_checks"])
         self.assertIn("state selector absent", report["viewports"][0]["interaction"]["error"])
+
+    def test_native_button_keyboard_enter_changes_state(self):
+        report = self.probe(make_html(), keyboard=True)
+        self.assertEqual("CHECKS_PASS_REVIEW_PIXELS", report["status"])
+        record = report["viewports"][0]["keyboard"]
+        self.assertTrue(record["tab_reachable"])
+        self.assertTrue(record["enter_changed"])
+        self.assertTrue(Path(record["focus_screenshot"]).is_file())
+        self.assertTrue(Path(record["after_screenshot"]).is_file())
+
+    def test_role_button_without_keyboard_handler_fails(self):
+        html = make_html().replace('<button id="act"', '<div role="button" tabindex="0" id="act"').replace('>Go</button>', '>Go</div>')
+        report = self.probe(html, keyboard=True)
+        self.assertEqual("CHECKS_FAIL", report["status"])
+        self.assertIn("keyboard@390x844", report["failed_checks"])
+        record = report["viewports"][0]["keyboard"]
+        self.assertTrue(record["tab_reachable"])
+        self.assertFalse(record["enter_changed"])
 
     def test_missing_motion_target_is_failing_check(self):
         report = self.probe(make_html(), motion="#nonexistent")
