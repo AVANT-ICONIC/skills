@@ -14,6 +14,16 @@ Intent Mode turns brain dumps, ambiguous goals, hidden constraints, contradictio
 
 See [`intent-mode/SKILL.md`](./intent-mode/SKILL.md).
 
+### `gauntlet-loop`
+
+**Evidence-driven QA for real artifacts, not just nice-looking source files.**
+
+Gauntlet Loop captures the actual quality bar, probes available tools, inspects rendered/running output, challenges defects (with independent critics when genuinely available), revises, checks regressions and reports honest PASS or an actionable unfinished verdict. It applies artifact-specific verification to UIs, animation, games, code, data, research and documents, including browser/profile troubleshooting before declaring an environment blocked.
+
+The skill installs independently and needs no paid accounts. Optional Python 3 evidence validation checks internal consistency of recorded PASS claims; the validator itself **cannot prove evidence is genuine**.
+
+See [`gauntlet-loop/SKILL.md`](./gauntlet-loop/SKILL.md).
+
 ### `futurequake`
 
 **Executable modifiability testing for real codebases.**
@@ -25,6 +35,14 @@ It can also run the exact same quake set against two refs to answer a sharper qu
 > Did this refactor or pull request make future changes easier or harder?
 
 See [`futurequake/SKILL.md`](./futurequake/SKILL.md).
+
+### `game-studio`
+
+**Portable game design, concept rescue, and explicitly requested production.**
+
+Game Studio converts a playable fantasy into actual inputs, meaningful tradeoffs, systemic progression and falsifiable playtest hypotheses. Open-ended ideas get **three comparably complete, mechanically distinct concepts**; refining one idea doesn't restart a trio. Review and rescue are read-only by default; prototypes, builds and production require explicit write authority. Nine canonical concept-core references cover 22 mapped disciplines without forcing 22 separate questionnaires. An optional stdlib package tool produces a deterministic allowlisted SHA-256 snapshot for future adapters; no WebUI skill is included in this S3 change.
+
+See [`game-studio/SKILL.md`](./game-studio/SKILL.md).
 
 ### `seo-aiseo`
 
@@ -128,6 +146,16 @@ Run Futurequake on this repository before we commit to the architecture.
 Compare main against this PR with Futurequake. Use the same quake set on both refs.
 ```
 
+### Game Studio
+
+```text
+Design three mechanically distinct nonviolent game concepts for a one-button handheld.
+```
+
+```text
+Audit the player choices in this existing game without changing source, then propose three distinct rescue loops.
+```
+
 ### SEO + AI SEO
 
 ```text
@@ -172,7 +200,7 @@ The repository follows the open Agent Skills convention: each skill is a folder 
 
 ## Status
 
-The collection includes `intent-mode`, `futurequake`, `seo-aiseo`, and `visual-output`; `geometric-design` is an **experimental alpha candidate** pending a separate merge approval.
+The collection currently includes `intent-mode`, `futurequake`, `game-studio`, `seo-aiseo`, and `visual-output`. The proposed `geometric-design` skill remains a **draft, experimental alpha candidate**.
 
 ## Development
 
@@ -194,8 +222,6 @@ MIT. See [LICENSE](./LICENSE).
 
 ### `geometric-design` (EXPERIMENTAL ALPHA candidate, draft/unmerged)
 
-**Source-backed proportional geometry and visual QA for monochrome symbols, nested layouts, standalone auditing, responsive UI tokens and design grammar.** Includes a self-contained offline Node 22+ engine, synthetic smoke tests and truthful unsupported/raster limits. No mandatory API keys or paid services.
+**Source-backed geometry and visual QA** for monochrome symbols, nested layouts, standalone auditing, responsive UI tokens and design grammar. Self-contained offline Node 22+ engine, free optional renderer/browser, no paid service or API key required. [Skill instructions](./geometric-design/SKILL.md).
 
-See [`geometric-design/SKILL.md`](./geometric-design/SKILL.md).
-
-**Alpha limitations:** Node 22+ verified target; optional free renderer/browser for raster and UI checks. No general SVG curved Booleans, genuine alpha-transparent counters, universal accessibility guarantee or independently demonstrated aesthetic/agent advantage. Spacing Option 0 keeps existing CSS: model gap is the proportional rem value, not fixed 20px. Source audits and blind creative evaluation are different kinds of evidence. This draft is not an official published release.
+**Technical limits:** bounded SVG subset only (no general curved Booleans or alpha-transparent counters), no broad accessibility certificate, no independent creative-recognition or matched-agent uplift evidence. Spacing Option 0 preserves rendered CSS and links the model to the existing responsive rem gap. This candidate is not an officially published release.
