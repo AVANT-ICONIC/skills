@@ -6,7 +6,7 @@ compatibility: Portable Agent Skills; optional Node.js 22+ for bundled offline J
 
 # Geometric Design
 
-**EXPERIMENTAL ALPHA candidate.** Technical-preview scope only; not yet merged or published. No independent blinded creative-superiority evidence (T3/T4 `NOT_EVALUATED`).
+**EXPERIMENTAL ALPHA technical preview.** Technical-preview scope only. No independent blinded creative-superiority evidence (T3/T4 `NOT_EVALUATED`).
 
 ## Workflow and activation
 
