@@ -200,7 +200,7 @@ The repository follows the open Agent Skills convention: each skill is a folder 
 
 ## Status
 
-The collection currently includes `intent-mode`, `futurequake`, `game-studio`, `seo-aiseo`, and `visual-output`. The proposed `geometric-design` skill remains a **draft, experimental alpha candidate**.
+The collection currently includes `intent-mode`, `futurequake`, `game-studio`, `seo-aiseo`, and `visual-output`.
 
 ## Development
 
