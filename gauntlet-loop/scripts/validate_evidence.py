@@ -108,6 +108,7 @@ def validate(record: object) -> list[str]:
         errors.append("PASS needs final_revision as an explicit artifact revision")
 
     passed: set[str] = set()
+    failed_or_unrun: set[str] = set()
     for i, item in enumerate(inspector_records):
         location = f"inspections[{i}]"
         if not isinstance(item, dict):
@@ -127,7 +128,7 @@ def validate(record: object) -> list[str]:
         for rid in check_ids:
             if not isinstance(rid, str) or rid not in ids:
                 errors.append(f"{location} refers to unknown requirement {rid!r}")
-        if item.get("result") not in RESULTS:
+        if not isinstance(item.get("result"), str) or item["result"] not in RESULTS:
             errors.append(f"{location}.result must be pass/fail/inconclusive")
         if (
             verdict == "PASS"
@@ -137,11 +138,21 @@ def validate(record: object) -> list[str]:
             and is_text(item.get("method"))
             and is_text(item.get("artifact_ref"))
         ):
-            passed.update(rid for rid in check_ids if rid in critical)
+            passed.update(rid for rid in check_ids if isinstance(rid, str) and rid in critical)
+        if (
+            verdict == "PASS"
+            and item.get("revision") == final_revision
+            and (item.get("state") != "observed" or item.get("result") != "pass")
+        ):
+            failed_or_unrun.update(rid for rid in check_ids if isinstance(rid, str) and rid in critical)
 
     if verdict == "PASS":
         if not inspector_records:
             errors.append("PASS cannot have zero inspections")
+        if not critical:
+            errors.append("PASS must declare at least one critical observable requirement")
+        for rid in sorted(failed_or_unrun):
+            errors.append(f"critical requirement {rid!r} has a failing or unrun inspection at final_revision")
         for rid in sorted(critical - passed):
             errors.append(f"critical requirement {rid!r} has no observed PASS at final_revision")
         if record.get("next_action") is not None:
