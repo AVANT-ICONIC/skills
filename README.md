@@ -14,6 +14,16 @@ Intent Mode turns brain dumps, ambiguous goals, hidden constraints, contradictio
 
 See [`intent-mode/SKILL.md`](./intent-mode/SKILL.md).
 
+### `gauntlet-loop`
+
+**Evidence-driven QA for real artifacts, not just nice-looking source files.**
+
+Gauntlet Loop captures the actual quality bar, probes available tools, inspects rendered/running output, challenges defects (with independent critics when genuinely available), revises, checks regressions and reports honest PASS or an actionable unfinished verdict. It applies artifact-specific verification to UIs, animation, games, code, data, research and documents, including browser/profile troubleshooting before declaring an environment blocked.
+
+The skill installs independently and needs no paid accounts. Optional Python 3 evidence validation checks internal consistency of recorded PASS claims; the validator itself **cannot prove evidence is genuine**.
+
+See [`gauntlet-loop/SKILL.md`](./gauntlet-loop/SKILL.md).
+
 ### `futurequake`
 
 **Executable modifiability testing for real codebases.**
