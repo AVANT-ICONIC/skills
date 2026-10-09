@@ -4,6 +4,8 @@
 Not an AI reviewer, not a deployment/browser-origin check, not proof the
 screenshots were visually inspected. Requires local Python Playwright and
 an actual Chromium binary. Writes screenshots only to an explicit output path.
+Browser contexts are offline before loading fixtures. HTML still executes JS:
+use trusted synthetic fixtures in an isolated, nonprivileged environment.
 """
 from __future__ import annotations
 
