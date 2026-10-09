@@ -74,14 +74,14 @@ class RealBrowserProbeTests(unittest.TestCase):
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name)
 
-    def probe(self, html, target="#panel", action="#act", state="#state", motion="#pulse", browser="/missing/chromium", keyboard=False, dialog=None):
+    def probe(self, html, target="#panel", action="#act", state="#state", motion="#pulse", browser="/missing/chromium", keyboard=False, dialog=None, canvas2d=None, canvas_min_colors=2):
         fixture = self.root / "case.html"
         fixture.write_text(html, encoding="utf-8")
         out = self.root / "evidence"
         out.mkdir()
         args = argparse.Namespace(html=fixture, out=out,
             viewport=[{"width":390,"height":844}], target=target, action=action,
-            state=state, motion=motion, expected_duration=2000, browser=browser, keyboard=keyboard, dialog=dialog)
+            state=state, motion=motion, expected_duration=2000, browser=browser, keyboard=keyboard, dialog=dialog, canvas2d=canvas2d, canvas_min_colors=canvas_min_colors)
         return run(args)
 
     def test_broken_fixture_fails_layout_and_motion_and_recovers_binary(self):
@@ -158,6 +158,29 @@ class RealBrowserProbeTests(unittest.TestCase):
         report = self.probe(html, target="#act", action="#act", state="#state", motion=None, dialog="#missing-dialog")
         self.assertEqual("CHECKS_FAIL", report["status"])
         self.assertIn("dialog@390x844", report["failed_checks"])
+
+    def test_blank_canvas_2d_content_fails_even_when_styled(self):
+        html = '<style>canvas{background:radial-gradient(circle,cyan,navy);width:300px;height:200px}</style><canvas id="scene" width="300" height="200"></canvas>'
+        result = self.probe(html, target="#scene", action=None, state=None, motion=None, canvas2d="#scene")
+        self.assertEqual(result["status"], "CHECKS_FAIL")
+        self.assertIn("canvas2d@390x844", result["failed_checks"])
+        self.assertTrue(result["viewports"][0]["canvas2d"]["verified"])
+        self.assertEqual(result["viewports"][0]["canvas2d"]["drawn_pixels"], 0)
+
+    def test_drawn_canvas_2d_content_passes_pixel_presence(self):
+        html = '<canvas id="scene" width="300" height="200"></canvas><script>const x=document.querySelector("#scene").getContext("2d"); x.fillStyle="cyan"; x.fillRect(0,0,140,200); x.fillStyle="red";x.fillRect(140,0,160,200);</script>'
+        result = self.probe(html, target="#scene", action=None, state=None, motion=None, canvas2d="#scene")
+        self.assertEqual(result["status"], "CHECKS_PASS_REVIEW_PIXELS")
+        canvas=result["viewports"][0]["canvas2d"]
+        self.assertTrue(canvas["has_content"])
+        self.assertGreaterEqual(canvas["unique_colors"], 2)
+
+    def test_noncavas_selector_does_not_falsely_pass_canvas_2d(self):
+        html = '<main id="scene" style="width:300px;height:200px;background:teal">Paint</main>'
+        result = self.probe(html, target="#scene", action=None, state=None, motion=None, canvas2d="#scene")
+        self.assertEqual(result["status"], "CHECKS_FAIL")
+        self.assertIn("canvas2d@390x844", result["failed_checks"])
+        self.assertFalse(result["viewports"][0]["canvas2d"]["verified"])
 
     def test_missing_motion_target_is_failing_check(self):
         report = self.probe(make_html(), motion="#nonexistent")
