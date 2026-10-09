@@ -7,6 +7,8 @@ separate coding agent followed the Gauntlet skill.
 from __future__ import annotations
 
 import argparse
+import http.server
+import threading
 import tempfile
 import unittest
 from pathlib import Path
@@ -189,6 +191,33 @@ class RealBrowserProbeTests(unittest.TestCase):
         self.assertEqual([], report["failed_checks"])
         self.assertTrue(report["unverified_checks"])
         self.assertIn("context unavailable", report["unverified_checks"][0])
+
+    def test_untrusted_html_cannot_load_external_resource(self):
+        requests_seen = []
+
+        class LocalMonitor(http.server.BaseHTTPRequestHandler):
+            def do_GET(self):
+                requests_seen.append(self.path)
+                self.send_response(204)
+                self.end_headers()
+
+            def log_message(self, *_args):
+                pass
+
+        server = http.server.HTTPServer(("127.0.0.1", 0), LocalMonitor)
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        try:
+            html = (f'<img src="http://127.0.0.1:{server.server_port}/external">'
+                    '<div id="scene" style="width:40px;height:40px">Test</div>')
+            report = self.probe(html, target="#scene", action=None, state=None, motion=None)
+            self.assertEqual("CHECKS_PASS_REVIEW_PIXELS", report["status"])
+            self.assertEqual([], requests_seen, "untrusted HTML made an HTTP request")
+            self.assertIn("offline", report["network_policy"])
+        finally:
+            server.shutdown()
+            server.server_close()
+            thread.join(timeout=2)
 
     def test_missing_motion_target_is_failing_check(self):
         report = self.probe(make_html(), motion="#nonexistent")
