@@ -61,7 +61,18 @@ For nontrivial runs use a small evidence record that identifies:
 - measured or reproducible defects, attempts, best version and regressions;
 - current verdict, missing gates, and exact next step.
 
-The optional standard-library validator is at [scripts/validate_evidence.py](scripts/validate_evidence.py). It rejects invented *structural* claims such as PASS without observations; it does **not** independently judge truth or certify aesthetics. Never call a schema-valid record proof that the screenshots or tests were genuine.
+The optional standard-library validator is at [scripts/validate_evidence.py](scripts/validate_evidence.py). It rejects invented *structural* claims such as PASS without observations; it does **not** independently judge truth or certify aesthetics.
+
+For **self-contained HTML synthetic QA fixtures**, the optional [browser probe](scripts/web_probe.py) can capture actual Chromium screenshots at multiple viewports, compare a critical target's bounds with clipping ancestors, exercise a click that must change visible state, sample CSS animation frames, and recover from a missing initial Chromium executable by probing actual local installations. Example (after separately installing free Python Playwright and Chromium in an authorized isolated environment):
+
+~~~bash
+python3 gauntlet-loop/scripts/web_probe.py \
+  --html /private/synthetic-fixture.html --out /private/evidence-run \
+  --viewport 1280x800 --viewport 390x844 \
+  --target '#primary-action' --action '#primary-action' --state '#status'
+~~~
+
+**This does not automate a critic.** The caller must open and inspect captured screenshots, motion samples and the actual browser-test JSON, and must never treat `CHECKS_PASS_REVIEW_PIXELS` as verified PASS. `page.set_content` renders self-contained HTML only, not a deployment's origin, CSP, service worker, network or external asset behavior. The probe is optional; unsupported platforms use equivalent suitable tools or an honest non-PASS handoff. Never call a schema-valid record proof that the screenshots or tests were genuine.
 
 **Verdicts:**
 - **PASS:** all critical gates actually inspected and passed for identified version; no known critical regressions.
