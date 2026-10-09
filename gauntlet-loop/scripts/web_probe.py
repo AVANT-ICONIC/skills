@@ -102,6 +102,7 @@ def run(args: argparse.Namespace) -> dict:
             "No independent coding agent or real-player enjoyment is established by this probe.",
         ],
         "source": str(args.html),
+        "network_policy": "offline for every page before HTML loads",
         "browser_attempts": [],
         "viewports": [],
         "status": "BLOCKED_ENV",
@@ -137,6 +138,7 @@ def run(args: argparse.Namespace) -> dict:
             for viewport in args.viewport:
                 page = browser.new_page(viewport=viewport, device_scale_factor=1)
                 try:
+                    page.context.set_offline(True)
                     page.set_content(html, wait_until="load", timeout=10000)
                     name = f'captured_{viewport["width"]}x{viewport["height"]}.png'
                     screenshot = args.out / name
@@ -187,6 +189,7 @@ def run(args: argparse.Namespace) -> dict:
                     if args.keyboard:
                         keyboard_page = browser.new_page(viewport=viewport, device_scale_factor=1)
                         try:
+                            keyboard_page.context.set_offline(True)
                             keyboard_page.set_content(html, wait_until="load", timeout=10000)
                             kb_state = keyboard_page.locator(args.state).first
                             kb_action = keyboard_page.locator(args.action).first
@@ -240,6 +243,7 @@ def run(args: argparse.Namespace) -> dict:
                     if args.dialog:
                         dialog_page = browser.new_page(viewport=viewport, device_scale_factor=1)
                         try:
+                            dialog_page.context.set_offline(True)
                             dialog_page.set_content(html, wait_until="load", timeout=10000)
                             trigger = dialog_page.locator(args.action).first
                             modal = dialog_page.locator(args.dialog).first
