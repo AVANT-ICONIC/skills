@@ -182,6 +182,14 @@ class RealBrowserProbeTests(unittest.TestCase):
         self.assertIn("canvas2d@390x844", result["failed_checks"])
         self.assertFalse(result["viewports"][0]["canvas2d"]["verified"])
 
+    def test_unavailable_2d_context_reports_unverified_not_blank_artifact(self):
+        html = '<canvas id="scene" width="300" height="200"></canvas><script>document.querySelector("#scene").getContext("bitmaprenderer")</script>'
+        report = self.probe(html, target="#scene", action=None, state=None, motion=None, canvas2d="#scene")
+        self.assertEqual(report["status"], "BLOCKED_ENV")
+        self.assertEqual([], report["failed_checks"])
+        self.assertTrue(report["unverified_checks"])
+        self.assertIn("context unavailable", report["unverified_checks"][0])
+
     def test_missing_motion_target_is_failing_check(self):
         report = self.probe(make_html(), motion="#nonexistent")
         self.assertEqual(report["status"], "CHECKS_FAIL")
