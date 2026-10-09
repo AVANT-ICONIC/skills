@@ -21,6 +21,15 @@ See [`intent-mode/SKILL.md`](./intent-mode/SKILL.md).
 OpenSpec Workflow routes substantial features, behavioral fixes, refactors, migrations, and architecture changes through the project's native OpenSpec lifecycle instead of treating OpenSpec as a documentation step after planning. It chooses Explore vs Propose from uncertainty, preserves the planning/implementation boundary, avoids duplicate shadow specs, and continues existing changes rather than restarting them.
 
 See [`openspec-workflow/SKILL.md`](./openspec-workflow/SKILL.md).
+### `gauntlet-loop`
+
+**Evidence-driven QA for real artifacts, not just nice-looking source files.**
+
+Gauntlet Loop captures the actual quality bar, probes available tools, inspects rendered/running output, challenges defects (with independent critics when genuinely available), revises, checks regressions and reports honest PASS or an actionable unfinished verdict. It applies artifact-specific verification to UIs, animation, games, code, data, research and documents, including browser/profile troubleshooting before declaring an environment blocked.
+
+The skill installs independently and needs no paid accounts. Optional Python 3 evidence validation checks internal consistency of recorded PASS claims; the validator itself **cannot prove evidence is genuine**.
+
+See [`gauntlet-loop/SKILL.md`](./gauntlet-loop/SKILL.md).
 
 ### `futurequake`
 
@@ -34,6 +43,14 @@ It can also run the exact same quake set against two refs to answer a sharper qu
 
 See [`futurequake/SKILL.md`](./futurequake/SKILL.md).
 
+### `game-studio`
+
+**Portable game design, concept rescue, and explicitly requested production.**
+
+Game Studio converts a playable fantasy into actual inputs, meaningful tradeoffs, systemic progression and falsifiable playtest hypotheses. Open-ended ideas get **three comparably complete, mechanically distinct concepts**; refining one idea doesn't restart a trio. Review and rescue are read-only by default; prototypes, builds and production require explicit write authority. Nine canonical concept-core references cover 22 mapped disciplines without forcing 22 separate questionnaires. An optional stdlib package tool produces a deterministic allowlisted SHA-256 snapshot for future adapters; no WebUI skill is included in this S3 change.
+
+See [`game-studio/SKILL.md`](./game-studio/SKILL.md).
+
 ### `seo-aiseo`
 
 **Evidence-led SEO and AI-search optimization for real websites.**
@@ -41,6 +58,35 @@ See [`futurequake/SKILL.md`](./futurequake/SKILL.md).
 SEO + AI SEO audits technical eligibility, search intent, content quality, information gain, entity clarity, local relevance, structured data, AI retrieval/citation visibility, conversion readiness, and measurement. It separates first-party platform guidance from observational research and experiments, and treats AI discovery as an extension of search rather than a separate collection of hacks.
 
 See [`seo-aiseo/SKILL.md`](./seo-aiseo/SKILL.md).
+
+### `visual-output`
+
+**Portable visual presentation companion for agent responses.**
+
+Visual Output makes substantial agent responses easier to scan using semantic status markers, progress bars, ASCII/Unicode structure, compact operator panels, diagrams, tables, and explicit ownership/evidence separation. It changes presentation only and never alters exact code, commands, specs, data, or other copy-paste artifacts.
+
+Use it alongside another skill when richer presentation is useful:
+
+```text
+task skill       = what to do
+visual-output    = how to present it
+```
+
+See [`visual-output/SKILL.md`](./visual-output/SKILL.md).
+
+## Skill composition
+
+Skills remain self-contained. Some skills can also act as optional **companions** that add cross-cutting behavior without changing another skill's domain rules.
+
+```text
+intent-mode  ─┐
+futurequake  ─┼─ optional companion → visual-output
+seo-aiseo    ─┘
+```
+
+Do not make task skills depend on a companion being installed. If a runtime supports loading multiple skills, explicitly load both. If it does not, the task skill must still work correctly on its own.
+
+Shared cross-cutting behavior belongs in one companion skill rather than being copied into every task skill.
 
 ## Repository layout
 
@@ -56,9 +102,11 @@ skills/
 │   ├── examples/
 │   ├── references/
 │   └── scripts/
-└── seo-aiseo/
-    ├── SKILL.md
-    └── references/
+├── seo-aiseo/
+│   ├── SKILL.md
+│   └── references/
+└── visual-output/
+    └── SKILL.md
 ```
 
 Each skill is self-contained. The root stays deliberately small as the collection grows.
@@ -117,6 +165,16 @@ Run Futurequake on this repository before we commit to the architecture.
 Compare main against this PR with Futurequake. Use the same quake set on both refs.
 ```
 
+### Game Studio
+
+```text
+Design three mechanically distinct nonviolent game concepts for a one-button handheld.
+```
+
+```text
+Audit the player choices in this existing game without changing source, then propose three distinct rescue loops.
+```
+
 ### SEO + AI SEO
 
 ```text
@@ -131,11 +189,22 @@ Audit why competitors are being cited by AI search and this site is not.
 Optimize this service page for classic search, answer engines, and conversion without inventing claims.
 ```
 
+### Visual Output
+
+```text
+Use visual-output alongside Futurequake and make the final report highly scannable.
+```
+
+```text
+Run SEO + AI SEO with visual-output so blockers, evidence, and priorities are visually obvious.
+```
+
 ## Design principles
 
 - **Evidence over assertion.** Skills should produce inspectable evidence and distinguish facts from inference.
 - **Scoped activation.** Each skill must say when it applies, when it does not, and what it is allowed to change.
 - **Portable by default.** Avoid runtime-specific behavior unless the skill explicitly requires it.
+- **Composable cross-cutting behavior.** Put shared presentation or workflow behavior in optional companion skills instead of duplicating it across task skills.
 - **Progressive disclosure.** Keep the core operating law in `SKILL.md`; load detailed references, examples, or scripts only when needed.
 - **No magic scores.** Prefer observable measurements and explicit tradeoffs over opaque composite ratings.
 - **No hidden side effects.** Diagnostic skills should not silently mutate production work or external systems.
@@ -150,7 +219,7 @@ The repository follows the open Agent Skills convention: each skill is a folder 
 
 ## Status
 
-The collection currently includes `intent-mode`, `openspec-workflow`, `futurequake`, and `seo-aiseo`.
+The collection currently includes `intent-mode`, `futurequake`, `game-studio`, `seo-aiseo`, and `visual-output`.
 
 ## Development
 

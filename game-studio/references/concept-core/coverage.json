@@ -1,0 +1,117 @@
+{
+  "baseline_disciplines": [
+    {
+      "id": "D00",
+      "owner": "references/concept-core/framing.md",
+      "title": "Design coherence"
+    },
+    {
+      "id": "D01",
+      "owner": "references/concept-core/framing.md",
+      "title": "Vision"
+    },
+    {
+      "id": "D02",
+      "owner": "references/concept-core/framing.md",
+      "title": "Design pillars"
+    },
+    {
+      "id": "D03",
+      "owner": "references/concept-core/experience-and-game-feel.md",
+      "title": "Aesthetic direction"
+    },
+    {
+      "id": "D04",
+      "owner": "references/concept-core/player-interaction.md",
+      "title": "Player experience"
+    },
+    {
+      "id": "D05",
+      "owner": "references/concept-core/pitch-market-and-scope.md",
+      "title": "High concept and pitch"
+    },
+    {
+      "id": "D06",
+      "owner": "references/concept-core/pitch-market-and-scope.md",
+      "title": "Market research"
+    },
+    {
+      "id": "D07",
+      "owner": "references/concept-core/mechanism-synthesis.md",
+      "title": "Core loop"
+    },
+    {
+      "id": "D08",
+      "owner": "references/concept-core/mechanism-synthesis.md",
+      "title": "Rules"
+    },
+    {
+      "id": "D09",
+      "owner": "references/concept-core/mechanism-synthesis.md",
+      "title": "Systems interactions"
+    },
+    {
+      "id": "D10",
+      "owner": "references/concept-core/systems-and-economy.md",
+      "title": "Economy and progression"
+    },
+    {
+      "id": "D11",
+      "owner": "references/concept-core/mechanism-synthesis.md",
+      "title": "Balance"
+    },
+    {
+      "id": "D12",
+      "owner": "references/concept-core/experience-and-game-feel.md",
+      "title": "Narrative systems"
+    },
+    {
+      "id": "D13",
+      "owner": "references/concept-core/progression-and-variation.md",
+      "title": "Level and encounter"
+    },
+    {
+      "id": "D14",
+      "owner": "references/concept-core/progression-and-variation.md",
+      "title": "World and lore"
+    },
+    {
+      "id": "D15",
+      "owner": "references/concept-core/reality-check-and-playtest.md",
+      "title": "Prototype scoping"
+    },
+    {
+      "id": "D16",
+      "owner": "references/concept-core/reality-check-and-playtest.md",
+      "title": "Playtesting"
+    },
+    {
+      "id": "D17",
+      "owner": "references/concept-core/reality-check-and-playtest.md",
+      "title": "Iteration tracking"
+    },
+    {
+      "id": "D18",
+      "owner": "references/concept-core/player-interaction.md",
+      "title": "UI and interaction"
+    },
+    {
+      "id": "D19",
+      "owner": "references/concept-core/existing-game-rescue.md",
+      "title": "GDD authoring"
+    },
+    {
+      "id": "D20",
+      "owner": "references/concept-core/framing.md",
+      "title": "Scope and priority"
+    },
+    {
+      "id": "D21",
+      "owner": "references/concept-core/existing-game-rescue.md",
+      "title": "Technical design bridge"
+    }
+  ],
+  "package_entrypoint": "scripts/package_concept_core.py",
+  "schema_version": "1",
+  "status": "instructions implemented; behavioral testing tracked separately; not claim of human fun or holdout validity"
+}
