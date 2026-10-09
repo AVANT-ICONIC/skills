@@ -89,7 +89,25 @@ class Packaging(unittest.TestCase):
             self.assertEqual({*mod.FILES, mod.MANIFEST}, {x.name for x in out.iterdir()})
             data = json.loads((out/mod.MANIFEST).read_text())
             self.assertEqual(mod.SCHEMA, data["schema_version"])
-            self.assertEqual(list(mod.FILES), [row["path"] for row in data["files"]])
+            self.assertEqual(list(mod.FILES), [row["generated_path"] for row in data["files"]])
+            self.assertEqual([f"game-studio/references/concept-core/{p}" for p in mod.FILES], [row["source_path"] for row in data["files"]])
+            self.assertIsNone(data["source_revision"])
+
+    def test_explicit_source_revision_is_bound_and_drift_detected(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp) / "out"
+            ref = "a" * 40
+            self.assertTrue(mod.package(CORE, out, source_revision=ref)[0])
+            record = json.loads((out/mod.MANIFEST).read_text())
+            self.assertEqual(record["source_revision"], ref)
+            self.assertTrue(mod.package(CORE, out, check=True, source_revision=ref)[0])
+            ok, changed = mod.package(CORE, out, check=True, source_revision="b" * 40)
+            self.assertFalse(ok)
+            self.assertIn("changed: package-manifest.json", changed)
+
+    def test_invalid_source_revision_rejected(self):
+        with self.assertRaisesRegex(ValueError, "40-character"):
+            mod.manifest_for(mod.source_contents(CORE), "not-a-git-sha")
 
     def test_modified_file_is_detected(self):
         with tempfile.TemporaryDirectory() as tmp:
