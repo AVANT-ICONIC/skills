@@ -22,6 +22,12 @@ Probe:
 - overlay/modal states, persistence and performance on target equipment if feasible;
 - separate gameplay simulation invariants and observed player interaction.
 
+## Real Canvas content versus a styled empty element
+
+A browser can position and screenshot `<canvas>` at the correct dimensions while the **drawing buffer is completely empty**. CSS gradients, surrounding headings and a decorative border can make such an empty game/simulation appear polished in a screenshot. When the user requires actual Canvas **2D** drawings, probe the **real pixel buffer** in addition to genuine visual inspection: use `--canvas2d '#scene'` in the optional synthetic browser probe, with a task-appropriate expected minimum number of colors. A `CHECKS_PASS_REVIEW_PIXELS` result is still not a visual or reference-fidelity PASS. Sampling is downscaled and may miss very thin strokes; uniform solid fills or a transparent clearing frame may be correct for some tasks. Do not force this gate when empty output is intentional.
+
+**WebGL is separate.** If `getContext('webgl')` or `webgl2` cannot initialize in the authorized host, report that GPU scene inspection remains **NOT_VERIFIED / BLOCKED_ENV**, not that the authored game is visually broken. Do not silently substitute a DOM-only/Canvas2D method, bypass browser security policies, or use a fake screenshot to claim actual WebGL output.
+
 ## Game loop and agency
 
 Inspect the *actual player task*, not whether all menu buttons can open. Ask:
