@@ -11,6 +11,8 @@ The fact that one browser invocation failed does **not** mean real verification 
 5. **Install safe free dependencies only if scoped:** temporary/project-local genuinely free packages/browser runtimes; obey host sandbox and user consent. Do not modify tracked lockfiles/global settings without authority. Avoid paid or credit-burning fallback services.
 6. **Handoff if truly necessary:** when no authorized path covers a critical requirement, preserve the current best candidate, attempted options, specific error, last passed gates and one exact runnable step in an environment that has the missing capability. Mark required gate NOT_RUN, and verdict BLOCKED_ENV or BLOCKED_PERMISSION.
 
+**Navigation policies matter:** a browser may block `file://` navigation in a restricted host while still supporting genuine browser rendering of self-contained HTML via an authorized `page.set_content`-style API. That fallback can verify CSS layout and in-page interaction for a synthetic fixture, **but is not proof that the original application URL, assets, network requests, service worker, CSP or deployment actually work**. For an application-specific PASS, test its real deployment/origin when permitted. Do not attempt to disable an administrator policy merely to make a test green.
+
 Never loop the same failed command without a changed hypothesis. Research errors if tool/network access and security policy permit. A target-specific integration missing from an environment may need a local coding agent, but an agent must not claim it ran that environment if it didn't.
 
 ## Approvals and hard boundaries
