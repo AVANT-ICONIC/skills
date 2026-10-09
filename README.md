@@ -220,8 +220,8 @@ Contributions are welcome when they remain portable, inspectable, and small. See
 
 MIT. See [LICENSE](./LICENSE).
 
-### `geometric-design` (EXPERIMENTAL ALPHA candidate, draft/unmerged)
+### `geometric-design` (EXPERIMENTAL ALPHA technical preview)
 
 **Source-backed geometry and visual QA** for monochrome symbols, nested layouts, standalone auditing, responsive UI tokens and design grammar. Self-contained offline Node 22+ engine, free optional renderer/browser, no paid service or API key required. [Skill instructions](./geometric-design/SKILL.md).
 
-**Technical limits:** bounded SVG subset only (no general curved Booleans or alpha-transparent counters), no broad accessibility certificate, no independent creative-recognition or matched-agent uplift evidence. Spacing Option 0 preserves rendered CSS and links the model to the existing responsive rem gap. This candidate is not an officially published release.
+**Technical limits:** bounded SVG subset only (no general curved Booleans or alpha-transparent counters), no broad accessibility certificate, no independent creative-recognition or matched-agent uplift evidence. Spacing Option 0 preserves rendered CSS and links the model to the existing responsive rem gap.
