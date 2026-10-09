@@ -119,7 +119,7 @@ def run(args: argparse.Namespace) -> dict:
                         "viewport": viewport, "screenshot": str(screenshot),
                         "sha256": hashlib.sha256(screenshot.read_bytes()).hexdigest(),
                         "target": page.evaluate(LAYOUT_JS, args.target),
-                        "interaction": None, "motion": None, "keyboard": None,
+                        "interaction": None, "motion": None, "keyboard": None, "dialog": None,
                     }
                     if args.action and args.state:
                         state = page.locator(args.state).first
@@ -207,6 +207,52 @@ def run(args: argparse.Namespace) -> dict:
                             }
                         finally:
                             keyboard_page.close()
+                    if args.dialog:
+                        dialog_page = browser.new_page(viewport=viewport, device_scale_factor=1)
+                        try:
+                            dialog_page.set_content(html, wait_until="load", timeout=10000)
+                            trigger = dialog_page.locator(args.action).first
+                            modal = dialog_page.locator(args.dialog).first
+                            if trigger.count() == 0 or modal.count() == 0:
+                                record["dialog"] = {"opened": False, "focus_inside": False,
+                                    "tabs_trapped": False, "escape_closed": False,
+                                    "focus_restored": False, "reason": "trigger/dialog selector missing"}
+                            else:
+                                trigger.click(timeout=2000)
+                                opened = modal.is_visible()
+                                open_shot = args.out / f'dialog_open_{viewport["width"]}x{viewport["height"]}.png'
+                                dialog_page.screenshot(path=str(open_shot), full_page=True)
+                                inside = dialog_page.evaluate(
+                                    "sel => document.querySelector(sel).contains(document.activeElement)",
+                                    args.dialog) if opened else False
+                                tabs = []
+                                if opened:
+                                    for _ in range(6):
+                                        dialog_page.keyboard.press("Tab")
+                                        tabs.append(dialog_page.evaluate(
+                                            "sel => document.querySelector(sel).contains(document.activeElement)",
+                                            args.dialog))
+                                    dialog_page.keyboard.press("Escape")
+                                closed = not modal.is_visible()
+                                restored = dialog_page.evaluate(
+                                    "sel => document.querySelector(sel)===document.activeElement",
+                                    args.action) if closed else False
+                                close_shot = args.out / f'dialog_after_escape_{viewport["width"]}x{viewport["height"]}.png'
+                                dialog_page.screenshot(path=str(close_shot), full_page=True)
+                                record["dialog"] = {
+                                    "opened": opened,
+                                    "focus_inside": inside,
+                                    "tabs_trapped": bool(tabs and all(tabs)),
+                                    "tab_results": tabs,
+                                    "escape_closed": closed,
+                                    "focus_restored": restored,
+                                    "open_screenshot": str(open_shot),
+                                    "after_escape_screenshot": str(close_shot),
+                                    "open_sha256": hashlib.sha256(open_shot.read_bytes()).hexdigest(),
+                                    "after_escape_sha256": hashlib.sha256(close_shot.read_bytes()).hexdigest(),
+                                }
+                        finally:
+                            dialog_page.close()
                     if args.motion:
                         duration = page.evaluate("""selector => {
                            const node=document.querySelector(selector);
@@ -251,6 +297,11 @@ def run(args: argparse.Namespace) -> dict:
         keyboard = record["keyboard"]
         if keyboard and (not keyboard["tab_reachable"] or not keyboard["enter_changed"]):
             failures.append(f"keyboard@{location}")
+        dialog = record["dialog"]
+        if dialog and not all(dialog.get(key) for key in (
+            "opened", "focus_inside", "tabs_trapped", "escape_closed", "focus_restored"
+        )):
+            failures.append(f"dialog@{location}")
         motion = record["motion"]
         if motion and (not motion["animations"] or motion["duration_matches"] is False):
             failures.append(f"motion-duration@{location}")
@@ -270,6 +321,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--state", help="CSS selector whose visible text must change")
     parser.add_argument("--keyboard", action="store_true",
                         help="also require Tab reachability and Enter-triggered visible state change")
+    parser.add_argument("--dialog", help="CSS selector for an expected modal dialog; verify focus trap, Escape and restoration")
     parser.add_argument("--motion", help="CSS selector with animation(s) to sample")
     parser.add_argument("--expected-duration", type=int,
                         help="required animation duration in milliseconds")
@@ -281,6 +333,8 @@ def main(argv: list[str] | None = None) -> int:
         parser.error("--expected-duration requires --motion")
     if args.keyboard and not (args.action and args.state):
         parser.error("--keyboard requires --action and --state")
+    if args.dialog and not (args.action and args.state):
+        parser.error("--dialog requires --action and --state")
     if not args.viewport:
         args.viewport = [{"width": 1280, "height": 800},
                          {"width": 390, "height": 844}]
