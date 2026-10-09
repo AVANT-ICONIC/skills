@@ -73,5 +73,7 @@ jobs:
         run: python3 gauntlet-loop/scripts/test_validate_evidence.py
       - name: Test optional Gauntlet browser probe
         run: python3 gauntlet-loop/scripts/test_web_probe.py
+      - name: Test Gauntlet JSON data integrity and independent SQL oracle
+        run: python3 gauntlet-loop/scripts/test_audit_aggregate.py
       - name: Optional real Chromium Gauntlet checks (skip when tools unavailable)
         run: python3 gauntlet-loop/scripts/test_web_probe_browser.py
