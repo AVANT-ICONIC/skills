@@ -101,7 +101,7 @@ class EvidenceValidatorTests(unittest.TestCase):
             "status": "open",
             "evidence": "click fails in screenshot state",
         }]
-        self.reject(r, "incompatible with open critical/major")
+        self.reject(r, "incompatible with unresolved critical/major")
 
     def test_open_major_defect_forbids_pass(self) -> None:
         r = valid_record()
@@ -112,7 +112,27 @@ class EvidenceValidatorTests(unittest.TestCase):
             "status": "open",
             "evidence": "bad focus layout",
         }]
-        self.reject(r, "incompatible with open critical/major")
+        self.reject(r, "incompatible with unresolved critical/major")
+
+    def test_wontfix_critical_or_major_defect_forbids_pass(self) -> None:
+        for severity in ("critical", "major"):
+            with self.subTest(severity=severity):
+                r = valid_record()
+                r["defects"] = [{
+                    "id": "D1", "requirement_id": "R1", "severity": severity,
+                    "status": "wontfix-with-reason",
+                    "evidence": "the required behavior still fails",
+                }]
+                self.reject(r, "incompatible with unresolved critical/major")
+
+    def test_wontfix_minor_defect_can_be_disclosed_with_pass(self) -> None:
+        r = valid_record()
+        r["defects"] = [{
+            "id": "Dminor", "requirement_id": None, "severity": "minor",
+            "status": "wontfix-with-reason",
+            "evidence": "noncritical cosmetic discrepancy accepted with reason",
+        }]
+        self.assertEqual([], validate(r))
 
     def test_missing_critic_provenance_rejected(self) -> None:
         r = valid_record()
