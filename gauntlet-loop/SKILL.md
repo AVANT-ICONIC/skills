@@ -8,7 +8,7 @@ compatibility: "Portable Agent Skills Markdown. Works with available agent tools
 
 **Inspect what the artifact actually does, not what the builder claims it does.** The target is observable conformance to the user's real brief and reference, with honest evidence, a retained best candidate and recovery from local tool failures.
 
-This is a universal verification companion for substantial work. It **does not** replace the task owner's creative/design/implementation decisions; it makes those outputs stand up to scrutiny. Use with a development task or invoke directly to audit/improve an existing artifact. For reference replication, the actual reference remains the quality bar. Do not silently substitute a different theme, style, scale, feature or convenient test.
+This is a universal verification companion for substantial work. **A single coding agent is the normal complete operator:** it builds the artifact, checks the real output, finds defects, fixes and polishes, checks again, and repeats until requirements pass or a genuine blocker remains. No separate QA agent, additional model session or multi-agent coordinator is required. It **does not** replace the task owner's creative/design/implementation decisions; it makes those outputs stand up to scrutiny. Use with a development task or invoke directly to audit/improve an existing artifact. For reference replication, the actual reference remains the quality bar. Do not silently substitute a different theme, style, scale, feature or convenient test.
 
 ## Triggers and exclusions
 
@@ -28,9 +28,9 @@ Skip full Gauntlet for greetings, simple text answers, speculative brainstorming
 2. **Identify the artifact and host.** Establish artifact type(s), exact output revision, environment, devices/viewports/animation times and available tools. Inspect existing repo instructions and working tree before writes. Do not assume browser access, subagents, network or a production environment.
 3. **Record a real baseline.** Render/open/run the current artifact in the same conditions as the requested result; inspect the actual pixels, frames, interactive states, logs, source-data relationships or runtime behavior as appropriate. Code review alone does not verify UI appearance; a static screenshot does not verify movement.
 4. **Build/revise within scope.** Preserve best-known candidate and all user-important constraints. Split independent work only if parallel file ownership and shared state are safe.
-5. **Critic inspects evidence.** Prefer a fresh-context independent critic where actually available, receiving the real artifact and contract but **not** the builder's justifying explanation. Add specialist lenses for geometry, motion, functionality, state, accessibility or data where useful; include at least one holistic end-to-end review when using multiple critics. If separate context is unavailable, record **self-review**, not fictional independence. Evaluate critic claims against observed evidence.
-6. **Repair the highest-impact actual gaps.** Rank defects by critical/major/minor plus consequence. Fix causes rather than aesthetic guesses. Re-render/re-execute under matched conditions. Re-check prior passing requirements and inspect the integrated product, not merely a convenient component.
-7. **Continue while warranted.** Meaningful pass = observed output + recorded discrepancy (or proven exactness) + targeted correction if needed + new observation if changed. For substantial new visual artifacts, aim for **at least three meaningful inspection passes**, not three blind generations or a three-attempt finish line. Continue beyond three if material gaps remain and approaches are improving. A verified exact result does not require pointless edits.
+5. **Same agent checks critically (default).** After each build, switch from implementing to inspecting: look at the actual artifact, compare it with the locked reference and requirements, and try to falsify your own assumptions. Check geometry, motion, functionality, state, accessibility and data as applicable, plus the integrated product. This is valid **self-review** when coupled with real executed tests and observations. A separate independent critic is **optional**, only when useful, authorized and actually available. Never pause normal QA to wait for extra agents, and never label same-context work independent.
+6. **Fix, check, polish, check.** Rank actual defects by critical/major/minor plus consequence. Correct the cause, then run/render/open the new revision and inspect it. Improve visible polish and interaction quality where required, then inspect **again** under matched conditions. Re-check previously passing requirements and the integrated artifact, not merely a convenient component.
+7. **Repeat until resolved.** The same agent runs **CODE → CHECK → FIX → CHECK → POLISH → CHECK → REPEAT IF OFF**. Every changed revision must be observed again with relevant regression checks. Make as many meaningful iterations as needed: three is neither an agent count nor a pass/fail threshold. Stop when every critical observable requirement is actually met and no material issue remains, or checkpoint a real blocker. Do not perform pointless edits or claim PASS based on an iteration count.
 8. **Close honestly.** PASS requires actual evidence for **every critical gate**, no known critical defect and relevant integrated/regression checks. Otherwise keep an explicit incomplete verdict and a concrete next operation. Do not label uninspected outputs verified.
 
 ## Artifact-specific verification
@@ -46,7 +46,7 @@ Treat multi-type artifacts as a union of their gates. A visually attractive game
 
 ## Capability probe: don't confuse broken setup with impossibility
 
-Check the capabilities that matter for the target: local files and executable commands, browser engine/profile, Playwright or equivalent, headless/offscreen capture, Canvas/WebGL rendering, desktop app or emulator, network access, ffmpeg/video frame sampling, document rendering, test runner and potential distinct agent contexts. **Probe first; do not assume any are installed.**
+Check the capabilities that matter for the target: local files and executable commands, browser engine/profile, Playwright or equivalent, headless/offscreen capture, Canvas/WebGL rendering, desktop app or emulator, network access, ffmpeg/video frame sampling, document rendering and test runner. **Probe first; do not assume any are installed.** Independent-agent contexts are optional for separate evaluation, never a normal execution prerequisite.
 
 If the preferred route fails: inspect logs/config/profile/version/path and dependency setup, try an isolated session/profile, appropriate alternate installed browser/renderer, permitted free project-local setup or another authorized execution environment. Browser engines are **not interchangeable proofs**: a DOM-only parser cannot establish that a Canvas/WebGL game visually rendered. A frame capture cannot prove animation timing. Do not loop on the same error. Never install paid tooling or globally alter the machine without the required approval.
 
@@ -57,7 +57,7 @@ See [recovery](references/recovery.md) for a problem-focused ladder and a runnab
 For nontrivial runs use a small evidence record that identifies:
 - artifact and revision, authentic reference and critical requirements;
 - methods actually run and outputs actually observed, including relevant viewport/timestamps/state/test exit;
-- critic provenance (independent / self-review / external human);
+- reviewer provenance (normally the same coding agent's self-review; independent or external human only if actually used);
 - measured or reproducible defects, attempts, best version and regressions;
 - current verdict, missing gates, and exact next step.
 
