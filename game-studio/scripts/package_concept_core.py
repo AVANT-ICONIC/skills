@@ -9,6 +9,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import re
 from pathlib import Path
 import sys
 
@@ -47,24 +48,32 @@ def source_contents(source: Path) -> dict[str, bytes]:
     return result
 
 
-def manifest_for(payload: dict[str, bytes]) -> bytes:
-    """Format is stable across OSes and independent of mtimes/current date."""
+def manifest_for(payload: dict[str, bytes], source_revision: str | None = None) -> bytes:
+    """Deterministic map of *source* modules to generated WebUI-ready snapshot paths.
+
+    Revision is optional for installed folders without Git metadata. Callers packaging
+    from a known Git commit should pass its exact SHA to bind package provenance.
+    """
+    if source_revision is not None and not re.fullmatch(r"[0-9a-f]{40}", source_revision):
+        raise ValueError("source_revision must be a full 40-character lowercase Git SHA")
     structure = {
         "schema_version": SCHEMA,
         "generator_version": GENERATOR,
-        "source": "game-studio/references/concept-core",
+        "source_root": "game-studio/references/concept-core",
+        "source_revision": source_revision,
         "files": [
-            {"path": name, "sha256": digest(payload[name]), "bytes": len(payload[name])}
+            {"source_path": f"game-studio/references/concept-core/{name}",
+             "generated_path": name, "sha256": digest(payload[name]), "bytes": len(payload[name])}
             for name in FILES
         ],
     }
     return (json.dumps(structure, sort_keys=True, indent=2, ensure_ascii=False) + "\n").encode("utf-8")
 
 
-def package(source: Path, output: Path, *, check: bool = False) -> tuple[bool, list[str]]:
+def package(source: Path, output: Path, *, check: bool = False, source_revision: str | None = None) -> tuple[bool, list[str]]:
     """Stage a self-contained snapshot, or detect *all* known drift in check mode."""
     payload = source_contents(source)
-    expected = {**payload, MANIFEST: manifest_for(payload)}
+    expected = {**payload, MANIFEST: manifest_for(payload, source_revision)}
     if output.resolve() == source.resolve() or source.resolve() in output.resolve().parents:
         raise ValueError("output must not overwrite the canonical core or nest inside it")
     if output.exists() and output.is_symlink():
@@ -102,9 +111,10 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--out", required=True, type=Path, help="Separate output dir for future adapter snapshot")
     parser.add_argument("--check", action="store_true", help="Read-only match check, fail closed on drift")
+    parser.add_argument("--source-revision", metavar="SHA", help="Optional exact 40-char source commit for manifest provenance; use same value when checking")
     args = parser.parse_args(argv)
     try:
-        ok, issues = package(SOURCE, args.out, check=args.check)
+        ok, issues = package(SOURCE, args.out, check=args.check, source_revision=args.source_revision)
     except (OSError, ValueError) as exc:
         print(f"PACKAGE_ERROR: {exc}", file=sys.stderr)
         return 2
