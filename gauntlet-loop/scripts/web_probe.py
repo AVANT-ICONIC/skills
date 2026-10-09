@@ -42,7 +42,12 @@ LAYOUT_JS = r"""selector => {
   const el = document.querySelector(selector);
   if (!el) return {found:false, clipped:true, reason:"selector missing"};
   const r=el.getBoundingClientRect();
-  let clipped = r.width<=0 || r.height<=0 || r.left<0 || r.right>innerWidth;
+  const own=getComputedStyle(el);
+  let opacity=1;
+  for (let n=el;n;n=n.parentElement) opacity *= Number(getComputedStyle(n).opacity);
+  const styleHidden = own.visibility==="hidden" || own.display==="none" ||
+                      own.contentVisibility==="hidden" || opacity<0.01;
+  let clipped = styleHidden || r.width<=0 || r.height<=0 || r.left<0 || r.right>innerWidth;
   const ancestors=[];
   for (let a=el.parentElement;a;a=a.parentElement) {
     const css=getComputedStyle(a), q=a.getBoundingClientRect();
@@ -56,7 +61,7 @@ LAYOUT_JS = r"""selector => {
       }
     }
   }
-  return {found:true,clipped,ancestors,
+  return {found:true,clipped,styleHidden,compositedOpacity:opacity,ancestors,
           naive_scroll_check:document.documentElement.scrollWidth<=innerWidth,
           rect:{x:r.x,y:r.y,width:r.width,height:r.height}};
 }"""
@@ -76,7 +81,7 @@ def run(args: argparse.Namespace) -> dict:
         "status": "BLOCKED_ENV",
     }
     try:
-        from playwright.sync_api import sync_playwright
+        from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeoutError
     except ImportError:
         report["error"] = "Python Playwright is unavailable (optional free local dependency)"
         return report
@@ -134,12 +139,24 @@ def run(args: argparse.Namespace) -> dict:
                             click_error = None
                             try:
                                 action.click(timeout=2000)
+                                try:
+                                    page.wait_for_function(
+                                        "({selector,before}) => {const e=document.querySelector(selector); return e && e.textContent.trim() !== before;}",
+                                        arg={"selector": args.state, "before": before},
+                                        timeout=1500,
+                                    )
+                                except PlaywrightTimeoutError:
+                                    pass  # An unchanged state is recorded as a QA failure below.
                             except Exception as exc:
                                 click_error = str(exc).splitlines()[0][:280]
                             after = state.inner_text(timeout=1500)
+                            capture = args.out / f'interaction_{viewport["width"]}x{viewport["height"]}.png'
+                            page.screenshot(path=str(capture), full_page=True)
                             record["interaction"] = {
                                 "before": before, "after": after,
                                 "changed": before != after, "error": click_error,
+                                "screenshot": str(capture),
+                                "sha256": hashlib.sha256(capture.read_bytes()).hexdigest(),
                             }
                     if args.motion:
                         duration = page.evaluate("""selector => {
