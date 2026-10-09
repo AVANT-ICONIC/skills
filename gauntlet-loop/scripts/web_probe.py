@@ -118,18 +118,22 @@ def run(args: argparse.Namespace) -> dict:
     html = args.html.read_text(encoding="utf-8")
     with sync_playwright() as playwright:
         browser = None
-        for binary in tool_candidates(args.browser):
+        # After system browser candidates, also try Playwright-managed Chromium.
+        # A managed installation may exist even when Chromium is absent from PATH.
+        for binary in [*tool_candidates(args.browser), None]:
+            label = binary or "playwright-managed Chromium"
             try:
+                kwargs = {"executable_path": binary} if binary else {}
                 browser = playwright.chromium.launch(
-                    executable_path=binary, headless=True, timeout=8000
+                    headless=True, timeout=8000, **kwargs
                 )
                 report["browser_attempts"].append(
-                    {"binary": binary, "result": "LAUNCHED"}
+                    {"binary": label, "result": "LAUNCHED"}
                 )
                 break
             except Exception as exc:
                 report["browser_attempts"].append({
-                    "binary": binary, "result": "FAILED",
+                    "binary": label, "result": "FAILED",
                     "error": str(exc).splitlines()[0][:250],
                 })
         if browser is None:
