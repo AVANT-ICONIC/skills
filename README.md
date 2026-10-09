@@ -191,3 +191,9 @@ Contributions are welcome when they remain portable, inspectable, and small. See
 ## License
 
 MIT. See [LICENSE](./LICENSE).
+
+### `geometric-design`
+
+**Source-backed proportional geometry and visual QA for monochrome symbols, nested layouts, standalone auditing, responsive UI tokens and design grammar.** Includes a self-contained offline Node 22+ engine, synthetic smoke tests and truthful unsupported/raster limits. No mandatory API keys or paid services.
+
+See [`geometric-design/SKILL.md`](./geometric-design/SKILL.md).
