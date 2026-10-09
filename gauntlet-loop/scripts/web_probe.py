@@ -175,7 +175,7 @@ def run(args: argparse.Namespace) -> dict:
                                 action.click(timeout=2000)
                                 try:
                                     page.wait_for_function(
-                                        "({selector,before}) => {const e=document.querySelector(selector); return e && e.textContent.trim() !== before;}",
+                                        "({selector,before}) => {const e=document.querySelector(selector); return e && e.innerText !== before;}",
                                         arg={"selector": args.state, "before": before},
                                         timeout=1500,
                                     )
@@ -220,7 +220,7 @@ def run(args: argparse.Namespace) -> dict:
                                     keyboard_page.keyboard.press("Enter")
                                     try:
                                         keyboard_page.wait_for_function(
-                                            "({selector,before}) => {const e=document.querySelector(selector); return e && e.textContent.trim() !== before;}",
+                                            "({selector,before}) => {const e=document.querySelector(selector); return e && e.innerText !== before;}",
                                             arg={"selector": args.state, "before": before},
                                             timeout=1500,
                                         )
@@ -266,8 +266,24 @@ def run(args: argparse.Namespace) -> dict:
                                     "sel => document.querySelector(sel).contains(document.activeElement)",
                                     args.dialog) if opened else False
                                 tabs = []
+                                tab_cycle_truncated = False
+                                tab_budget = 0
                                 if opened:
-                                    for _ in range(6):
+                                    # A fixed six-Tab sample can miss focus escaping later.
+                                    # Count candidate focusables and add enough steps to
+                                    # complete a wrap; fail closed when capped for safety.
+                                    candidate_count = dialog_page.evaluate(
+                                        """sel => {
+                                            const root = document.querySelector(sel);
+                                            return root ? root.querySelectorAll(
+                                                'a[href], area[href], button, input, select, textarea, [tabindex], [contenteditable="true"]'
+                                            ).length : 0;
+                                        }""",
+                                        args.dialog,
+                                    )
+                                    tab_cycle_truncated = candidate_count + 2 > 64
+                                    tab_budget = min(candidate_count + 2, 64)
+                                    for _ in range(tab_budget):
                                         dialog_page.keyboard.press("Tab")
                                         tabs.append(dialog_page.evaluate(
                                             "sel => document.querySelector(sel).contains(document.activeElement)",
@@ -282,8 +298,10 @@ def run(args: argparse.Namespace) -> dict:
                                 record["dialog"] = {
                                     "opened": opened,
                                     "focus_inside": inside,
-                                    "tabs_trapped": bool(tabs and all(tabs)),
+                                    "tabs_trapped": bool(tabs and all(tabs) and not tab_cycle_truncated),
                                     "tab_results": tabs,
+                                    "tab_budget": tab_budget,
+                                    "tab_cycle_truncated": tab_cycle_truncated,
                                     "escape_closed": closed,
                                     "focus_restored": restored,
                                     "open_screenshot": str(open_shot),
