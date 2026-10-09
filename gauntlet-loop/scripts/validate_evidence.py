@@ -192,10 +192,10 @@ def validate(record: object) -> list[str]:
             errors.append(f"{loc}.requirement_id unknown")
         if (
             verdict == "PASS"
-            and defect.get("status") == "open"
+            and defect.get("status") != "fixed"
             and defect.get("severity") in ("critical", "major")
         ):
-            errors.append("PASS incompatible with open critical/major defect")
+            errors.append("PASS incompatible with unresolved critical/major defect")
 
     if not isinstance(record.get("revisions"), list):
         errors.append("revisions must be a list")
