@@ -69,6 +69,13 @@ jobs:
               sys.exit(1)
 
           print(f"Validated {len(skill_dirs)} skill folders.")
+      - name: Install video inspection dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+          python3 -m pip install Pillow==11.3.0
+      - name: Test video frame extraction and captions
+        run: python3 -m unittest discover -s video-watch/scripts -p 'test_*.py' -v
       - name: Test Futurequake metrics helper
         run: python3 -m unittest discover -s futurequake/scripts -p 'test_*.py' -v
       - name: Test Game Studio canonical coverage and packaging
