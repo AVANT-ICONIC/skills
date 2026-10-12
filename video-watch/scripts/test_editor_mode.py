@@ -237,6 +237,8 @@ class CliEditorTests(unittest.TestCase):
     def run_cli(self, *args, env_extra=None):
         env = {k: v for k, v in os.environ.items() if k not in ('GROQ_API_KEY', 'OPENAI_API_KEY')}
         env['HOME'] = tempfile.mkdtemp()  # no ~/.config/watch/.env
+        # A fresh HOME hides a pip --user site (CI installs Pillow there); keep the parent's module path.
+        env['PYTHONPATH'] = os.pathsep.join(p for p in sys.path if p)
         env.update(env_extra or {})
         return subprocess.run([sys.executable, str(SCRIPT), *args], capture_output=True, text=True, env=env, cwd=env['HOME'])
 
