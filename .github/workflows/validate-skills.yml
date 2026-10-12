@@ -69,6 +69,11 @@ jobs:
               sys.exit(1)
 
           print(f"Validated {len(skill_dirs)} skill folders.")
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify Architecture Guard policy fragment
+        run: node --test architecture-guard/scripts/test_eslint_guard.mjs
       - name: Install video inspection dependencies
         run: |
           sudo apt-get update
