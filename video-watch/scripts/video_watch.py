@@ -21,7 +21,11 @@ import shutil
 import subprocess
 import tempfile
 from pathlib import Path
+import sys
 from urllib.parse import urlparse
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import vw_editor  # noqa: E402  (editor mode helpers; stdlib only)
 
 MAX_SCENE_FRAMES = 48
 DEFAULT_MAX_FRAMES = 72
@@ -386,7 +390,12 @@ def parse_vtt(path: Path) -> list[dict]:
 def write_transcript(caption: Path | None, out_path: Path, start: float | None = None, end: float | None = None) -> tuple[int, str | None]:
     if not caption or not caption.exists():
         return 0, None
-    segs = parse_vtt(caption)
+    return write_segments(parse_vtt(caption), out_path, start, end)
+
+
+def write_segments(segs: list[dict], out_path: Path, start: float | None = None, end: float | None = None) -> tuple[int, str | None]:
+    if not segs:
+        return 0, None
     if start is not None or end is not None:
         lo = start if start is not None else float("-inf")
         hi = end if end is not None else float("inf")
@@ -502,6 +511,63 @@ def write_manifest(work: Path, source: str, video: Path, info: dict, meta: dict,
     return path
 
 
+def run_editor_mode(args, work: Path, analysis_video: Path, offset: float, duration: float,
+                    frames: list[dict], info: dict, video: Path, caption_found: bool) -> dict:
+    """Editor mode: pacing, hook words, optional Whisper transcript, report.md, export."""
+    notes: list[str] = []
+    cuts = vw_editor.detect_scene_times(analysis_video, SCENE_THRESHOLD, offset)
+    pacing = vw_editor.compute_pacing(cuts, duration, start=offset)
+    (work / "pacing.json").write_text(json.dumps(pacing, indent=2), encoding="utf-8")
+
+    allow_local = args.transcribe == "local"
+    if args.transcribe == "off":
+        hook = {"ran": False, "words": [], "backend": None, "note": "Whisper disabled (--transcribe off)"}
+    else:
+        hook = vw_editor.hook_words(analysis_video, work, offset, allow_local=allow_local)
+    hook["frame_count"] = sum(1 for f in frames if f["kind"] == "hook")
+    if hook["note"]:
+        notes.append(hook["note"])
+
+    transcript_source, whisper_segments = None, []
+    report_segments: list[dict] = []
+    if caption_found:
+        transcript_source = "captions"
+        report_segments = _read_transcript_lines(work / "transcript.txt")
+    elif args.transcribe != "off":
+        whisper_segments, backend, err = vw_editor.transcribe_full(analysis_video, work, offset, allow_local=allow_local)
+        if err:
+            notes.append(f"no transcript: {err}")
+        else:
+            transcript_source = f"whisper:{backend}"
+            report_segments = whisper_segments
+    title = info.get("title") or video.name
+    hero = vw_editor.pick_hero_frames(frames)
+    report = vw_editor.write_report(
+        work / "report.md", args.source, title, duration, args.intent, report_segments,
+        transcript_source, frames, hero, pacing, hook)
+    exported = None
+    if args.export_dir:
+        exported = str(vw_editor.export_report(report, Path(args.export_dir), title, hero))
+    return {"report": str(report), "exported_report": exported, "pacing": pacing,
+            "transcript_source": transcript_source, "notes": notes,
+            "whisper_segments": whisper_segments}
+
+
+def _read_transcript_lines(path: Path) -> list[dict]:
+    """Re-read '[MM:SS.mmm] text' lines of transcript.txt as segments."""
+    segs = []
+    rx = re.compile(r"^\[(?:(\d+):)?(\d{2}):(\d{2})\.(\d{3})\]\s*(.*)$")
+    if not path.exists():
+        return segs
+    for line in path.read_text(encoding="utf-8").splitlines():
+        m = rx.match(line)
+        if m:
+            h, mi, se, ms, text = m.groups()
+            t = int(h or 0) * 3600 + int(mi) * 60 + int(se) + int(ms) / 1000
+            segs.append({"start": t, "end": t, "text": text})
+    return segs
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="Prepare a video for frame + transcript analysis")
     ap.add_argument("source", help="Local video path or yt-dlp supported URL")
@@ -513,6 +579,13 @@ def main() -> int:
     ap.add_argument("--sheet-thumb-width", type=int, default=384)
     ap.add_argument("--start", default=None, help="Focus start: SS, MM:SS, or HH:MM:SS")
     ap.add_argument("--end", default=None, help="Focus end: SS, MM:SS, or HH:MM:SS")
+    ap.add_argument("--mode", choices=["evidence", "editor"], default="evidence",
+                    help="evidence (default): frames + captions. editor: adds pacing, hook words, report.md, Whisper fallback")
+    ap.add_argument("--intent", default="", help="Editor mode: the question or lens recorded in report.md")
+    ap.add_argument("--transcribe", choices=["auto", "off", "local"], default="auto",
+                    help="Editor mode: auto = Groq/OpenAI Whisper only if a key exists, off = never, local = also allow a local `whisper` CLI")
+    ap.add_argument("--export-dir", default=None,
+                    help="Editor mode, optional: also copy report.md and hero frames into DIR/<title-slug>/ (e.g. a notes vault)")
     args = ap.parse_args()
 
     if args.max_frames < 1 or args.frame_width < 1 or args.sheet_thumb_width < 1:
@@ -588,6 +661,15 @@ def main() -> int:
         transcript_segments, transcript_path = write_transcript(
             caption, work / "transcript.txt", start, end
         )
+        editor = None
+        if args.mode == "editor":
+            editor = run_editor_mode(
+                args, work, analysis_video, offset, duration, frames, info, video,
+                caption_found=transcript_path is not None,
+            )
+            if editor["whisper_segments"]:
+                transcript_segments, transcript_path = write_segments(
+                    editor["whisper_segments"], work / "transcript.txt")
         manifest_path = write_manifest(
             work, args.source, video, info, meta, frames, sheets,
             transcript_path, transcript_segments, focus,
@@ -604,7 +686,11 @@ def main() -> int:
             "analysis_duration_seconds": duration,
             "focus": focus,
             "title": info.get("title"),
+            "mode": args.mode,
         }
+        if editor:
+            result.update({k: editor[k] for k in
+                           ("report", "exported_report", "pacing", "transcript_source", "notes")})
         print(json.dumps(result, ensure_ascii=False))
         return 0
     except Exception as exc:

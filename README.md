@@ -97,6 +97,8 @@ See [`visual-output/SKILL.md`](./visual-output/SKILL.md).
 
 Video Watch combines actual visual frames, available captions and focused detail checks without depending on a particular agent UI. An optional local Python helper extracts hybrid frame samples and contact sheets with ffmpeg; native tools work too. Sampling limits and missing evidence remain explicit.
 
+Two modes: **evidence** (default) answers questions about what happens; **editor** adds pacing metrics (cuts per minute, shot lengths), a word-timed 0-10 s hook breakdown, a `report.md`, optional Whisper transcription when there are no captions (Groq or OpenAI key, never required) and an optional `--export-dir`. Editor mode adapts MIT-licensed code from `watch`; see `video-watch/NOTICE`.
+
 See [`video-watch/SKILL.md`](./video-watch/SKILL.md).
 
 ## Skill composition
@@ -126,7 +128,7 @@ skills/
 ├── intent-mode/        # Intent reconstruction
 ├── openspec-workflow/  # Native OpenSpec lifecycle routing
 ├── seo-aiseo/          # Search audits; references
-├── video-watch/        # Video evidence; optional extraction helper and tests
+├── video-watch/        # Video evidence and editor analysis; optional extraction helper and tests
 └── visual-output/      # Presentation companion
 ```
 
