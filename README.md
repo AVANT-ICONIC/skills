@@ -24,6 +24,14 @@ The skill installs independently and needs no paid accounts. Optional Python 3 e
 
 See [`gauntlet-loop/SKILL.md`](./gauntlet-loop/SKILL.md).
 
+### `architecture-guard`
+
+**Enforced, single-source-of-truth architecture and reusable design systems.**
+
+Architecture Guard is a portable implementation companion that inspects existing owners, reuses semantic UI primitives and domain logic, rejects harmful abstractions, and separates agent guidance from actual lint/CI, runtime and visual-regression gates. It includes a React/TypeScript adoption recipe and a small ESLint AST-rule fragment.
+
+See [`architecture-guard/SKILL.md`](./architecture-guard/SKILL.md).
+
 ### `futurequake`
 
 **Executable modifiability testing for real codebases.**
@@ -110,6 +118,7 @@ Shared cross-cutting behavior belongs in one companion skill rather than being c
 ```text
 skills/
 ├── README.md
+├── architecture-guard/  # Architecture governance and React ESLint example
 ├── futurequake/        # Modifiability experiments; references, examples, metrics helper
 ├── game-studio/        # Game design; concept-core references and packaging helper
 ├── gauntlet-loop/      # Artifact QA; references and optional executable checks
@@ -227,7 +236,7 @@ The repository follows the open Agent Skills convention: each skill is a folder 
 
 ## Status
 
-The collection currently includes nine skills: `futurequake`, `game-studio`, `gauntlet-loop`, `geometric-design`, `intent-mode`, `openspec-workflow`, `seo-aiseo`, `video-watch`, and `visual-output`.
+The collection currently includes ten skills: `architecture-guard`, `futurequake`, `game-studio`, `gauntlet-loop`, `geometric-design`, `intent-mode`, `openspec-workflow`, `seo-aiseo`, `video-watch`, and `visual-output`.
 
 ## Development
 
