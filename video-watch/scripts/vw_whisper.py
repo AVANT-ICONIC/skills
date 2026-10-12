@@ -6,7 +6,7 @@ _post_whisper, _segments_from_response, transcribe_audio.
 
 Pure stdlib. Never required: callers must treat every failure as "no
 Whisper transcript" and say so. Keys come from the environment
-(GROQ_API_KEY / OPENAI_API_KEY) or ~/.config/watch/.env or ./.env.
+(GROQ_API_KEY / OPENAI_API_KEY) or ~/.config/watch/.env.
 """
 from __future__ import annotations
 
@@ -58,7 +58,7 @@ def _dotenv_value(path: Path, name: str) -> str | None:
 def load_api_key(preferred: str | None = None, dotenv_paths: list[Path] | None = None) -> tuple[str | None, str | None]:
     """Return (backend, key). Groq first, then OpenAI; (None, None) if neither."""
     if dotenv_paths is None:
-        dotenv_paths = [Path.home() / ".config" / "watch" / ".env", Path.cwd() / ".env"]
+        dotenv_paths = [Path.home() / ".config" / "watch" / ".env"]  # never the cwd: a project .env is not consent to spend its key
     candidates = (("GROQ_API_KEY", "groq"), ("OPENAI_API_KEY", "openai"))
     if preferred is not None:
         candidates = tuple(c for c in candidates if c[1] == preferred)

@@ -53,7 +53,7 @@ Run the helper with `--mode editor`. It measures every scene change (uncapped), 
 
 Hook (0-10 s): the dense opening frames are already in the manifest (2 fps, kind `hook`). Align them to the word timing in the report when present. Name the hook pattern (question, contrarian claim, demo first, in medias res, etc.) as inference.
 
-Transcript: captions win. With no captions, editor mode tries Whisper only if `GROQ_API_KEY` (preferred) or `OPENAI_API_KEY` is set in the environment or in `~/.config/watch/.env` or `./.env`. This uploads the audio track to that provider, so confirm that the user is fine with it when the video is private. `--transcribe local` additionally allows a locally installed `whisper` CLI; `--transcribe off` never transcribes. Without any of these the run still succeeds, the report says no transcript was available, and the answer must say so. No key is ever required and no paid service is used by default.
+Transcript: captions win. With no captions, editor mode tries Whisper only if `GROQ_API_KEY` (preferred) or `OPENAI_API_KEY` is set in the environment or in `~/.config/watch/.env`. This uploads the audio track to that provider, so confirm that the user is fine with it when the video is private. `--transcribe local` additionally allows a locally installed `whisper` CLI; `--transcribe off` never transcribes. Without any of these the run still succeeds, the report says no transcript was available, and the answer must say so. No key is ever required and no paid service is used by default.
 
 Optional export: `--export-dir DIR` copies `report.md` and the hero frames into `DIR/<title-slug>/` (for example a notes vault) with relative frame links. Nothing is exported unless the flag is given.
 
