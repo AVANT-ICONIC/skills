@@ -1,12 +1,19 @@
 ---
 name: video-watch
-description: Inspect videos from URLs or accessible local files using real timestamped frames and available audio or captions. Use for watching, summarizing, reviewing, reverse-engineering, or answering questions about visual events in a video. A transcript alone is not a watch.
+description: Inspect videos from URLs or accessible local files using real timestamped frames and available audio or captions. Use for watching, summarizing, reviewing, reverse-engineering, or answering questions about visual events in a video; editor mode adds pacing metrics, a 0-10s hook breakdown, a report.md and optional Whisper transcription for creator or content analysis. A transcript alone is not a watch.
 compatibility: Uses available video, image and transcript tools. Optional local extraction can use ffmpeg/ffprobe; no particular agent vendor, paid API or fixed workspace path is required.
 ---
 
 # Video Watch
 
 Actually inspect the video. Keep observed visuals, spoken or captioned content, and inference distinct.
+
+## Choose a mode
+
+- **Evidence (default).** Use to answer questions about what happens, to verify, summarize, review a demo or reverse-engineer an event. Output: frames, contact sheets, manifest, captions.
+- **Editor.** Use when the task is about how the video is made: creator or content analysis, pacing, hooks, retention, style, "watch it like an editor". It adds cuts/min and shot-length stats, a word-timed 0-10 s hook breakdown, `report.md` and a Whisper transcript when there are no captions.
+
+Editor mode is evidence mode plus extras. Every rule below still applies: inspect the actual frames, keep observation apart from inference, and treat pacing numbers as measurements of scene changes, not of quality. Choose by the user's question; if unclear, start with evidence and escalate.
 
 ## Resolve the source
 
@@ -40,6 +47,16 @@ Reuse existing source media and frames when the exact source and required resolu
 
 The requested source is resolved, relevant actual frames are inspected, available audio or captions are considered, detail checks are complete, and the answer separates observation from inference with timestamps and honest sampling limits.
 
+## Editor mode
+
+Run the helper with `--mode editor`. It measures every scene change (uncapped), reports shots, cuts per minute, mean and median shot length, and writes `pacing.json` and `report.md`. The report's deterministic parts (frontmatter, pacing, transcript, frame list) are filled in; narrative sections (TL;DR, key moments, hook interpretation, style fingerprint, quotable lines, entities, concepts) are marked `pending agent fill`. Fill them only after inspecting the contact sheets and the hook frames, cite timestamps, label inference, and remove the markers you filled. Leave a marker, or say so, where you lack evidence.
+
+Hook (0-10 s): the dense opening frames are already in the manifest (2 fps, kind `hook`). Align them to the word timing in the report when present. Name the hook pattern (question, contrarian claim, demo first, in medias res, etc.) as inference.
+
+Transcript: captions win. With no captions, editor mode tries Whisper only if `GROQ_API_KEY` (preferred) or `OPENAI_API_KEY` is set in the environment or in `~/.config/watch/.env`. This uploads the audio track to that provider, so confirm that the user is fine with it when the video is private. `--transcribe local` additionally allows a locally installed `whisper` CLI; `--transcribe off` never transcribes. Without any of these the run still succeeds, the report says no transcript was available, and the answer must say so. No key is ever required and no paid service is used by default.
+
+Optional export: `--export-dir DIR` copies `report.md` and the hero frames into `DIR/<title-slug>/` (for example a notes vault) with relative frame links. Nothing is exported unless the flag is given.
+
 ## Optional extraction helper
 
 The bundled [scripts/video_watch.py](scripts/video_watch.py) requires Python 3, ffmpeg/ffprobe and Pillow. URL sources additionally need yt-dlp. Inspect available tools and use permitted environment-local installation where needed; no fixed runtime or remote helper fetch is required. The Markdown workflow also works with equivalent native tools.
@@ -47,8 +64,13 @@ The bundled [scripts/video_watch.py](scripts/video_watch.py) requires Python 3, 
 ```bash
 python3 video-watch/scripts/video_watch.py /path/to/video.mp4 --max-frames 72
 python3 video-watch/scripts/video_watch.py /path/to/video.mp4 --start 02:15 --end 02:45 --out-dir /path/to/new-run
+python3 video-watch/scripts/video_watch.py URL --mode editor --intent "why does the hook work"
 ```
 
 Time arguments accept seconds, MM:SS or HH:MM:SS. The frame count is a configurable sampling budget, not an agent turn limit. The helper samples scene changes, uniform coverage and the first ten seconds at 2 fps, then creates timestamped contact sheets (up to twelve tiles). It emits a manifest, individual frames and source captions when available. Default outputs use a new temporary directory per run. An explicit output directory is caller-owned scratch: rerunning replaces generated frames, sheets and transcript there, so never select a source directory or user-owned output. Keep outputs outside a public checkout.
 
 Read manifest.md and transcript.txt when present, then inspect every relevant contact sheet and zoom needed individual frames. Extraction success is not watching. URL access and captions are source-dependent; local uploaded media has no automatic captions in this helper. Use available audio transcription separately. Clean up only generated scratch after required evidence has been saved.
+
+## Attribution
+
+Editor mode adapts MIT-licensed code from the `watch` skill (claude-watch). See [NOTICE](NOTICE) for the copyright line and license text. The helper modules are `scripts/video_watch.py` (entry point), `scripts/vw_editor.py` (pacing, hook words, report, export) and `scripts/vw_whisper.py` (optional transcription).
