@@ -8,6 +8,18 @@ compatibility: Uses available video, image and transcript tools. Optional local 
 
 Actually inspect the video. Keep observed visuals, spoken or captioned content, and inference distinct.
 
+## Answer-first fallback (mandatory)
+
+The user's **answer** and the ability to **download video frames** are different deliverables. Video access can fail; transcript evidence already provided by the user must never be discarded.
+
+1. **Inventory first.** Check the current message, prior visible conversation, large pasted-text attachments, uploaded `.txt`/`.vtt`/`.srt` files, previously extracted transcripts, frames and manifests **before** trying any URL. Read a complete user-supplied transcript directly rather than re-fetching it or asking for it again.
+2. **Keep two independent evidence lanes.** The **transcript lane** supports dialogue, narrated events, topics, timestamps and attributed claims. The **visual lane** supports on-screen events, UI, text, imagery and actions after frames have actually been inspected. A failure in one lane must not invalidate results in the other.
+3. **Produce the useful answer early.** If the question can be substantially answered from the transcript, do so, including timestamp references. Attempt visual verification only for material uncertainty or when the question explicitly demands visual details. Never finish with a wall of tool failures when a complete transcript could answer the question.
+4. **Bound tool attempts.** For nonessential visual work, try one direct acquisition and at most one genuinely different, already-connected watching path if available and permitted. Do not repeatedly poll queued jobs, invent accessible URLs, demand a video upload when the transcript suffices, or silently spend metered credits.
+5. **Label completeness honestly.** **VISUAL + TRANSCRIPT** means real inspected frames and transcript; **VISUAL ONLY** means inspected frames but no spoken evidence; **TRANSCRIPT ONLY** means an answer based on captions or pasted text without visual verification; **UNAVAILABLE** means neither evidence lane produced useful content. Extraction success or a queued job alone does not constitute visual inspection.
+
+**Transcript-only is a valid completed answer for transcript-answerable questions, but is never called "watched".** Editor-mode visual/pacing deliverables remain incomplete until actual visual evidence exists. If a requested visual fact cannot be checked, state exactly that and still deliver the supported transcript-based findings. Treat auto-caption money amounts, decimals, names, and internally inconsistent arithmetic as unverified transcription rather than silently correcting them.
+
 ## Choose a mode
 
 - **Evidence (default).** Use to answer questions about what happens, to verify, summarize, review a demo or reverse-engineer an event. Output: frames, contact sheets, manifest, captions.
@@ -17,7 +29,7 @@ Editor mode is evidence mode plus extras. Every rule below still applies: inspec
 
 ## Resolve the source
 
-Use the exact attachment path or verified URL. Prefer available native video inspection. If downloading is needed, use supported tools and an authorized source; do not invent paths, bypass access controls or require a paid dependency. For local extraction, probe available ffmpeg/ffprobe first. URL acquisition may use an available yt-dlp installation.
+Use the exact attachment path or verified URL. **If pasted or attached transcript content is already available, consume it first; do not make video acquisition a prerequisite to answering.** Prefer available native video inspection. If downloading is needed, use supported tools and an authorized source; do not invent paths, bypass access controls or require a paid dependency. For local extraction, probe available ffmpeg/ffprobe first. URL acquisition may use an available yt-dlp installation.
 
 ## Sample with purpose
 
@@ -45,7 +57,9 @@ Reuse existing source media and frames when the exact source and required resolu
 
 ## Done
 
-The requested source is resolved, relevant actual frames are inspected, available audio or captions are considered, detail checks are complete, and the answer separates observation from inference with timestamps and honest sampling limits.
+For a **visual watch or editor analysis**, the requested source is resolved, relevant actual frames are inspected, available audio or captions are considered, and the answer separates observation from inference with timestamps and sampling limits.
+
+For a **transcript-answerable question**, a source-grounded **TRANSCRIPT ONLY** answer is complete even if URL or video extraction failed, as long as visual claims are not invented, unresolved visual details are identified, and the transcript was actually read. A blocked visual tool is not grounds to discard supplied content or defer a usable answer. If neither lane yields content, state **UNAVAILABLE** and the verified blocker.
 
 ## Editor mode
 
