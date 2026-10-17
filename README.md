@@ -135,7 +135,8 @@ skills/
 ├── geometric-design/   # Geometry audits and tokens; offline Node tools
 ├── intent-mode/        # Intent reconstruction
 ├── openspec-workflow/  # Native OpenSpec lifecycle routing
-├── seo-aiseo/          # Search audits; references\n├── test-velocity/     # Test architecture, measurement and stack recipes          # Search audits; references
+├── seo-aiseo/          # Search audits; references
+├── test-velocity/      # Test architecture, measurement and stack recipes
 ├── video-watch/        # Video evidence and editor analysis; optional extraction helper and tests
 └── visual-output/      # Presentation companion
 ```
@@ -252,7 +253,7 @@ The repository follows the open Agent Skills convention: each skill is a folder 
 
 ## Status
 
-The collection currently includes eleven skills: `architecture-guard`, `futurequake`, `game-studio`, `gauntlet-loop`, `geometric-design`, `intent-mode`, `openspec-workflow`, `seo-aiseo`, `video-watch`, and `visual-output`, plus `test-velocity`.
+The collection currently includes eleven skills: `architecture-guard`, `futurequake`, `game-studio`, `gauntlet-loop`, `geometric-design`, `intent-mode`, `openspec-workflow`, `seo-aiseo`, `test-velocity`, `video-watch`, and `visual-output`.
 
 ## Development
 
