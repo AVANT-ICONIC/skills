@@ -16,7 +16,7 @@ Put independently testable logic in Swift packages and inject clocks, persistenc
 
 ## TypeScript / JavaScript
 
-For appropriate repos, consider Bun or Vitest for low startup cost and watch/related modes. Keep pure units out of browser/UI bootstraps. Use Playwright selectively for critical real-browser behavior and shard only when independent. Nx/Turborepo/Bazel-like dependency-aware execution may help monorepos; hash inputs and environment honestly. Never trust an affected graph without checking transitive/config edges and full-suite audits.
+Node's built-in runner gives cheap seams without new dependencies: `mock.timers` for clocks and timeouts, `mock.method` for `child_process` and `fs` calls, and dependency injection of `spawn`/`execFile` so a test asserts the argv instead of running the program. Parse captured command output as a string fixture rather than executing `git`, `ps` or a shell per case. One `node --test` process per file costs a cold start (tens of ms), so many cases per file beat many small files. For appropriate repos, consider Bun or Vitest for low startup cost and watch/related modes. Keep pure units out of browser/UI bootstraps. Use Playwright selectively for critical real-browser behavior and shard only when independent. Nx/Turborepo/Bazel-like dependency-aware execution may help monorepos; hash inputs and environment honestly. Never trust an affected graph without checking transitive/config edges and full-suite audits.
 
 ## Python
 

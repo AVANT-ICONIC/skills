@@ -4,7 +4,18 @@
 
 Record repo URL and commit, clean/dirty state, exact commands, runner version, lockfile, OS/arch, CPU and memory, concurrency, cache state and whether a remote CI service was involved. If unavailable, mark unknown rather than estimating.
 
-Use at least two repetitions for exploratory timing and more when variance is substantial; median alone is not proof of stable improvement. A first cold build and a restored-cache run are different experiments. Measure runner startup, compile, discovery, fixture setup, test execution, teardown, queueing, retries and reporting when tools allow. Wall time is the primary developer-feedback outcome.
+Use at least two repetitions for exploratory timing and more when variance is substantial; median alone is not proof of stable improvement. A first cold build and a restored-cache run are different experiments. Measure runner startup, compile, discovery, fixture setup, test execution, teardown, queueing, retries and reporting when tools allow. Wall time is the primary developer-feedback outcome; take it on a quiet machine and record the load average beside it, since a reading under heavy load measures the neighbours.
+
+## Load-independent readings
+
+Read these before any wall-clock number. They are stable across machine load, so they compare runs taken minutes or days apart:
+
+- **CPU time** (user + sys) per test file. Node: `process.resourceUsage()` or `process.cpuUsage()` around the file's run; any OS: `/usr/bin/time -l` (macOS) or `/usr/bin/time -v` (Linux) on a one-file run.
+- **Spawn count** per test file. Linux: `strace -f -c -e trace=execve,clone,fork <one-file run>`. macOS: a kqueue `EVFILT_PROC` + `NOTE_FORK` watcher on the runner's pids, or count calls through an injected spawner in the test. Polling `ps` misses most short-lived children; count forks at the kernel, not by sampling.
+- **Real waits**: total time spent in sleeps, timers and polls, from fake-timer accounting or by grepping the file for wait calls.
+- **Machine spawn rate** when many agents share a host: watch the PID counter advance over 10 s. Hundreds per second means some loop is forking; find it with a per-parent fork count before tuning any test.
+
+Rank files by CPU and by spawns. Fix the top of each list first.
 
 ## Comparable measurements
 
