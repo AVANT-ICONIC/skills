@@ -101,6 +101,14 @@ Two modes: **evidence** (default) answers questions about what happens; **editor
 
 See [`video-watch/SKILL.md`](./video-watch/SKILL.md).
 
+### `test-velocity`
+
+**Evidence-driven acceleration of software test feedback without sacrificing correctness.**
+
+Test Velocity designs testable architecture at project inception, profiles and repairs slow suites, optimizes CI and test authoring, and coordinates safe execution across agent fleets. It separates cold, warm, incremental, and complete validation while retaining essential real integration and system gates.
+
+See [`test-velocity/SKILL.md`](./test-velocity/SKILL.md).
+
 ## Skill composition
 
 Skills remain self-contained. Some skills can also act as optional **companions** that add cross-cutting behavior without changing another skill's domain rules.
@@ -128,6 +136,7 @@ skills/
 ├── intent-mode/        # Intent reconstruction
 ├── openspec-workflow/  # Native OpenSpec lifecycle routing
 ├── seo-aiseo/          # Search audits; references
+├── test-velocity/      # Test architecture, measurement and stack recipes
 ├── video-watch/        # Video evidence and editor analysis; optional extraction helper and tests
 └── visual-output/      # Presentation companion
 ```
@@ -188,6 +197,12 @@ Design three mechanically distinct nonviolent game concepts for a one-button han
 Audit the player choices in this existing game without changing source, then propose three distinct rescue loops.
 ```
 
+### Test Velocity
+
+```text
+Use Test Velocity to plan test architecture, reduce development feedback time, and preserve complete regression verification.
+```
+
 ### OpenSpec Workflow
 
 ```text
@@ -238,7 +253,7 @@ The repository follows the open Agent Skills convention: each skill is a folder 
 
 ## Status
 
-The collection currently includes ten skills: `architecture-guard`, `futurequake`, `game-studio`, `gauntlet-loop`, `geometric-design`, `intent-mode`, `openspec-workflow`, `seo-aiseo`, `video-watch`, and `visual-output`.
+The collection currently includes eleven skills: `architecture-guard`, `futurequake`, `game-studio`, `gauntlet-loop`, `geometric-design`, `intent-mode`, `openspec-workflow`, `seo-aiseo`, `test-velocity`, `video-watch`, and `visual-output`.
 
 ## Development
 
