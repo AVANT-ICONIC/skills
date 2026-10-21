@@ -17,6 +17,8 @@ PLATFORMS = {
     "instagram": {"instagram.com", "www.instagram.com", "m.instagram.com"},
     "tiktok": {"tiktok.com", "www.tiktok.com", "m.tiktok.com", "vm.tiktok.com", "vt.tiktok.com"},
     "x": {"x.com", "www.x.com", "twitter.com", "www.twitter.com", "mobile.twitter.com"},
+    "facebook": {"facebook.com", "www.facebook.com", "m.facebook.com", "web.facebook.com",
+                 "fb.watch", "www.fb.watch"},
     "reddit": {"reddit.com", "www.reddit.com", "old.reddit.com", "new.reddit.com",
                "redd.it", "www.redd.it", "v.redd.it", "www.v.redd.it"},
 }
@@ -40,9 +42,12 @@ def identify(url: str) -> tuple[str, str]:
     path = parts.path or "/"
     singular = {
         "youtube": path.startswith(("/watch", "/shorts/", "/embed/", "/live/")) or host.endswith("youtu.be"),
-        "instagram": path.startswith(("/p/", "/reel/", "/tv/")),
-        "tiktok": "/video/" in path or host.startswith(("vm.", "vt.")),
+        "instagram": path.startswith(("/p/", "/reel/", "/reels/", "/tv/")),
+        "tiktok": "/video/" in path or path.startswith(("/t/", "/share/video/")) or host.startswith(("vm.", "vt.")),
         "x": "/status/" in path,
+        "facebook": host.endswith("fb.watch") or path.startswith(("/reel/", "/watch", "/share/r/",
+                       "/share/v/", "/posts/", "/photos/", "/photo/", "/story.php", "/permalink.php"))
+                       or "/videos/" in path,
         "reddit": "/comments/" in path or host.endswith("redd.it"),
     }
     if not singular[platform]:
