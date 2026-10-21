@@ -76,6 +76,30 @@ jobs:
           x_video|https://x.com/SpaceX/status/2049581577844199476/video/1
           reddit_v_redd_it|https://www.reddit.com/r/interestingasfuck/comments/1ut8ylz/indian_paper_boy_passing_papers_showing_his/
           URLS
+      - name: Diagnose public Reddit access
+        shell: bash
+        run: |
+          set +e
+          python3 -m pip install --disable-pip-version-check --user curl_cffi >/dev/null
+          for url in \
+            "https://www.reddit.com/r/oddlysatisfying/comments/gtei7x/" \
+            "https://old.reddit.com/r/oddlysatisfying/comments/gtei7x/" \
+            "https://www.reddit.com/r/interestingasfuck/comments/1ut8ylz/"; do
+            echo "::group::Reddit public probe"
+            echo "Input: $url"
+            curl -L --max-time 15 -s -o /dev/null -w 'HTTP page status: %{http_code} bytes: %{size_download}\n' "$url"
+            timeout 35s yt-dlp --ignore-config --skip-download --no-playlist \
+              --impersonate chrome --socket-timeout 12 --retries 0 \
+              --no-progress --dump-single-json "$url" > "$RUNNER_TEMP/reddit-info.json" 2>"$RUNNER_TEMP/reddit-error.txt"
+            code=$?
+            echo "Impersonated extractor exit: $code"
+            if [ "$code" -eq 0 ]; then
+              python3 -c 'import json,sys; j=json.load(open(sys.argv[1])); print("FOUND",j.get("id"),j.get("title"),j.get("duration"))' "$RUNNER_TEMP/reddit-info.json"
+            else
+              sed -E 's@https?://[^ ]+@[url]@g; s@([?&](token|key|sig|session)=[^ ]+)@[redacted]@gi' "$RUNNER_TEMP/reddit-error.txt" | tail -n 6
+            fi
+            echo "::endgroup::"
+          done
       - name: Upload evidence
         if: always()
         uses: actions/upload-artifact@v4
