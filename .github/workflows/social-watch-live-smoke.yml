@@ -135,6 +135,15 @@ jobs:
                "$RUNNER_TEMP/extractor-diagnostic.txt" | tail -n 8
             echo "::endgroup::"
           done
+      - name: Try independent free YouTube caption fallback
+        shell: bash
+        run: |
+          set +e
+          python3 -m pip install --disable-pip-version-check --user youtube-transcript-api >/dev/null
+          python3 social-watch/scripts/youtube_captions.py \
+            "https://www.youtube.com/watch?v=LHUvedAssyE" \
+            --out-dir "$RUNNER_TEMP/social-live/youtube_nasa"
+          echo "YOUTUBE_CAPTION_FALLBACK_EXIT: $?"
       - name: Demonstrate optional no-API local speech recognition
         shell: bash
         run: |
@@ -191,6 +200,7 @@ jobs:
             ${{ runner.temp }}/social-live/**/*.sample-*.jpg
             ${{ runner.temp }}/social-live/**/*.vtt
             ${{ runner.temp }}/social-live/**/caption-transcript.txt
+            ${{ runner.temp }}/social-live/**/youtube-captions.*
             ${{ runner.temp }}/social-live/**/speech-transcript.json
             ${{ runner.temp }}/social-live/**/speech-transcript.txt
             ${{ runner.temp }}/social-live/acceptance-matrix.json
