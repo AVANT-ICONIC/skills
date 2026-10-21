@@ -107,5 +107,27 @@ class SocialIngestTests(unittest.TestCase):
 
 
 
+    def test_caption_track_creates_timestamped_transcript(self):
+        with tempfile.TemporaryDirectory() as td:
+            cue = Path(td) / "video.en.vtt"
+            cue.write_text(
+                "WEBVTT\n\n00:00:01.000 --> 00:00:03.000\n<v narrator>Hello &amp; welcome</v>\n"
+                "\n00:00:03.000 --> 00:00:04.000\nGravity is amazing\n",
+                encoding="utf-8")
+            parts = s.parse_caption_file(cue)
+            self.assertEqual(parts, [
+                {"at": "00:00:01.000", "text": "Hello & welcome"},
+                {"at": "00:00:03.000", "text": "Gravity is amazing"},
+            ])
+
+    def test_missing_speech_dependency_does_not_invent_transcript(self):
+        with tempfile.TemporaryDirectory() as td, \
+             patch.object(s.shutil, "which", return_value=None):
+            result = s.ingest("https://www.facebook.com/reel/123", Path(td), acquire_media=True)
+            self.assertFalse(result["audio_transcribed"])
+            self.assertIsNone(result["caption_transcript_file"])
+
+
+
 if __name__ == "__main__":
     unittest.main()
