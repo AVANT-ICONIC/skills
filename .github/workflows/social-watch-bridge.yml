@@ -1,0 +1,46 @@
+name: Social Watch bridge tests
+
+on:
+  pull_request:
+    paths:
+      - "social-watch/**"
+      - "video-watch/**"
+      - ".github/workflows/social-watch-bridge.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  bridge:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install MCP bridge dependencies
+        run: |
+          python -m pip install -r social-watch/bridge/requirements.txt
+      - name: Compile source files
+        run: |
+          python -m compileall -q social-watch/bridge social-watch/scripts
+      - name: Offline extractor and bridge tests
+        run: |
+          python -m unittest discover -s social-watch/scripts -p 'test_*.py' -v
+          python -m unittest discover -s social-watch/bridge -p 'test_*.py' -v
+      - name: MCP registry and image result contract
+        run: |
+          python - <<'PY'
+          import sys
+          from pathlib import Path
+          sys.path.insert(0, str(Path("social-watch/bridge").resolve()))
+          from server import mcp, bridge, read_social_contact_sheet
+          from mcp.types import CallToolResult
+          import inspect
+          assert mcp is not None
+          assert bridge is not None
+          assert "job_id" in inspect.signature(read_social_contact_sheet).parameters
+          print("MCP_IMPORT_OK")
+          PY
