@@ -42,6 +42,19 @@ The default image includes ffmpeg, ffprobe, nodejs, yt-dlp, gallery-dl, Pillow a
 
 Optional faster-whisper (hosted CPU, no paid API): add `faster-whisper` to the Docker Python requirements, rebuild, and set `SOCIAL_WATCH_ENABLE_STT=1` in the container environment. The speech model downloads weights on first use; the default server does not enable this.
 
+## Optional self-hosted Cobalt fallback for restricted public media
+
+The first extractor stays yt-dlp/gallery-dl. If they fail, operators can explicitly opt into a **private** Cobalt instance:
+
+    cd social-watch/bridge
+    SOCIAL_WATCH_COBALT_URL=http://cobalt:9000 docker compose --profile cobalt up --build -d
+
+Cobalt is independent open-source software (https://github.com/imputnet/cobalt, AGPL-3.0), not vendored or copied here. It has declared support for public videos/posts on Instagram, YouTube, Reddit, X, TikTok and Facebook, but its advertised platform list is **not verification that the target URL works from your host**. The private API is disabled by default, has no published host port, and is accessed only by the bridge container over its compose network.
+
+The adapter deliberately rejects third-party API origins and returned CDN redirect URLs. It accepts only same-origin Cobalt tunnel responses for compatible public media, reads in size-limited chunks, rejects unexpected MIME types and forbids HTTP redirects. This is a privacy and network control, not a way around login-required, private or deleted media. Do not add session credentials without platform-specific approval and secure storage. The Docker network still needs egress restrictions at the host/firewall layer before internet exposure.
+
+**Acceptance pending:** CI mocks prove URL/origin/tunnel validation. An actual Cobalt instance and live Instagram/Reddit/YouTube recovery still require isolated source tests. Treat those platforms as BLOCKED until output files and frames are proven.
+
 ## ChatGPT WebUI connection boundary
 
 ChatGPT must be able to reach a **public HTTPS endpoint** or an authorized Secure MCP Tunnel, and the user's plan/workspace must permit a custom MCP connection. The MCP server has to be running, the connection configured with its authentication, and the user must explicitly authorize/connect it. A GitHub PR or SKILL.md alone cannot activate the connector.
