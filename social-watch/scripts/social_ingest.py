@@ -187,7 +187,8 @@ def ingest(url: str, out_dir: Path, *, acquire_media: bool = False,
     # Success means media acquired, never that an image/video was actually inspected.
     if acquire_media and gallery and not media_download_ok:
         args = [gallery, "--config-ignore", "--directory", str(out_dir / "gallery"),
-                "--range", "1-20", "--filesize-max", "50M", "--no-mtime", cleaned]
+                "--range", "1-20", "--filesize-max", "50M", "--no-mtime",
+                "--write-info-json", cleaned]
         try:
             p = command(args, timeout=timeout)
             manifest["attempts"].append({"extractor": "gallery-dl", "stage": "media", "ok": p.returncode == 0})
@@ -197,6 +198,28 @@ def ingest(url: str, out_dir: Path, *, acquire_media: bool = False,
         except (OSError, subprocess.TimeoutExpired):
             manifest["attempts"].append({"extractor": "gallery-dl", "stage": "media", "ok": False})
             manifest["warnings"].append("gallery-dl timed out or could not start")
+    if gallery and not manifest["metadata"]:
+        for info_path in sorted((out_dir / "gallery").rglob("info.json"))[:3]:
+            if info_path.stat().st_size > 200_000:
+                continue
+            try:
+                item = json.loads(info_path.read_text(encoding="utf-8"))
+                if not isinstance(item, dict):
+                    continue
+                # Gallery metadata often calls a post caption "content".
+                for key in ("id", "title", "description", "content", "caption", "user"):
+                    if key not in item or not isinstance(item[key], str):
+                        continue
+                    target = "description" if key in ("content", "caption") else ("uploader" if key == "user" else key)
+                    manifest["metadata"][target] = item[key][:24000 if target == "description" else 500]
+                if manifest["metadata"].get("description"):
+                    manifest["text_evidence"].append({
+                        "type": "gallery_post_caption",
+                        "text": manifest["metadata"]["description"]})
+                if manifest["metadata"]:
+                    break
+            except (OSError, ValueError):
+                continue
     manifest["media_files"], manifest["caption_files"] = files_in(out_dir)
 
     if manifest["caption_files"]:
