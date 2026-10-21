@@ -49,7 +49,7 @@ def identify(url: str) -> tuple[str, str]:
         "x": "/status/" in path,
         "facebook": host.endswith("fb.watch") or path.startswith(("/reel/", "/watch", "/share/r/",
                        "/share/v/", "/posts/", "/photos/", "/photo/", "/story.php", "/permalink.php"))
-                       or "/videos/" in path,
+                       or "/videos/" in path or "/posts/" in path or "/photos/" in path,
         "reddit": "/comments/" in path or host.endswith("redd.it"),
     }
     if not singular[platform]:
