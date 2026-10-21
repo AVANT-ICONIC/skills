@@ -6,13 +6,16 @@ authentication proxy / MCP OAuth configuration and network egress controls.
 from __future__ import annotations
 
 import json
+import os
 
 from mcp.server.fastmcp import FastMCP, Image
 from mcp.types import CallToolResult, TextContent
 
 from core import SocialWatchBridge
 
-mcp = FastMCP("AVANT Social Watch", stateless_http=True, json_response=True)
+mcp = FastMCP("AVANT Social Watch", stateless_http=True, json_response=True,
+              host=os.environ.get("SOCIAL_WATCH_BIND", "127.0.0.1"),
+              port=int(os.environ.get("SOCIAL_WATCH_PORT", "8000")))
 bridge = SocialWatchBridge()
 
 
