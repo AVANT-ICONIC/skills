@@ -129,5 +129,26 @@ class SocialIngestTests(unittest.TestCase):
 
 
 
+    def test_gallery_media_and_caption_kept(self):
+        success = s.subprocess.CompletedProcess([], 0, "", "")
+        def fake_gallery(argv, timeout):
+            out = Path(argv[argv.index("--directory") + 1])
+            out.mkdir(parents=True, exist_ok=True)
+            (out / "clip.mp4").write_bytes(b"mock media")
+            (out / "info.json").write_text(
+                json.dumps({"id": "123", "content": "A sample post description"}))
+            return success
+        with tempfile.TemporaryDirectory() as td, \
+             patch.object(s.shutil, "which",
+                side_effect=lambda name: "/usr/bin/gallery-dl" if name=="gallery-dl" else None), \
+             patch.object(s, "command", side_effect=fake_gallery):
+            j = s.ingest("https://www.tiktok.com/@creator/video/123", Path(td),
+                         acquire_media=True)
+            self.assertEqual(j["status"], "media_acquired_uninspected")
+            self.assertEqual(j["metadata"]["description"], "A sample post description")
+            self.assertEqual(j["text_evidence"][0]["type"], "gallery_post_caption")
+
+
+
 if __name__ == "__main__":
     unittest.main()
