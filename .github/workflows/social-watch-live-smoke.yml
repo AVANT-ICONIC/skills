@@ -43,6 +43,7 @@ jobs:
             timeout 210s python3 social-watch/scripts/social_ingest.py "$url" --download --timeout 65 --out-dir "$target"
             code=$?
             echo "Extractor exit: $code"
+            if [ "$code" -ne 0 ]; then echo "::warning title=$id retrieval::No usable media extracted; see manifest"; fi
             if [ -f "$target/manifest.json" ]; then
               python3 - "$target/manifest.json" <<'PY'
           import json,sys,subprocess
@@ -68,6 +69,18 @@ jobs:
                                 "-i",str(p),"-frames:v","1",str(out)],
                                 capture_output=True,text=True,timeout=20)
               print("FRAME",f.returncode,out.name,out.stat().st_size if out.exists() else 0)
+              if f.returncode == 0:
+                meta=json.loads(r.stdout)
+                duration=float(meta.get("format",{}).get("duration",0) or 0)
+                for n in range(6):
+                  at=max(0,min(duration-0.2,0.5 + n * max(0,duration-0.5)/5))
+                  sample=p.parent / (p.stem + ".sample-" + str(n) + ".jpg")
+                  clip=subprocess.run(["ffmpeg","-nostdin","-loglevel","error","-y",
+                    "-ss",str(at),"-i",str(p),"-frames:v","1","-vf","scale=640:-2",
+                    str(sample)],capture_output=True,text=True,timeout=20)
+                  print("SAMPLE",n,round(at,2),clip.returncode,
+                        sample.stat().st_size if sample.exists() else 0)
+
           PY
               echo "VERIFICATION SCRIPT: $?"
             fi
