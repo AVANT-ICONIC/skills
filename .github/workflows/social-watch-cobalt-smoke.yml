@@ -66,8 +66,15 @@ jobs:
                       sizes=[Path(p).stat().st_size for p in paths]
                       summary[name]={"state":"media_acquired","files":len(paths),"bytes":sizes}
                   except Exception as ex:
+                      error_code=None
+                      if hasattr(ex,"read"):
+                          try:
+                              error_body=json.loads(ex.read(15000))
+                              error_code=error_body.get("error",{}).get("code")
+                          except Exception:
+                              pass
                       summary[name]={"state":"blocked","category":type(ex).__name__,
-                                     "detail":str(ex)[:170]}
+                                     "code":error_code,"detail":str(ex)[:170]}
                   summary[name]["elapsed_sec"]=round(time.monotonic()-start,2)
                   print("COBALT_CASE",name,json.dumps(summary[name]))
               Path("cobalt-results.json").write_text(json.dumps(summary,indent=2))
