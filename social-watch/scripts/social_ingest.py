@@ -66,6 +66,26 @@ def command(argv: list[str], timeout: int) -> subprocess.CompletedProcess[str]:
                           encoding="utf-8", errors="replace", timeout=timeout)
 
 
+
+def classify_extractor_error(stderr: str) -> str:
+    """Categorize errors without logging untrusted URLs, tokens or cookies."""
+    message = stderr.lower()
+    if "sign in to confirm" in message or "account authentication is required" in message:
+        return "authentication_required"
+    if "empty media response" in message:
+        return "empty_media_response"
+    if "http error 403" in message or "forbidden" in message:
+        return "access_denied"
+    if "not available" in message or "not found" in message or "deleted" in message:
+        return "not_available"
+    if "no supported javascript runtime" in message:
+        return "missing_js_runtime"
+    if "timed out" in message or "timeout" in message:
+        return "timeout"
+    return "extractor_failed" if message.strip() else "no_error_details"
+
+
+
 def parse_json(output: str) -> dict:
     try:
         item = json.loads(output)
@@ -153,7 +173,8 @@ def ingest(url: str, out_dir: Path, *, acquire_media: bool = False,
                 "--dump-single-json", "--socket-timeout", "15", "--retries", "1", cleaned]
         try:
             p = command(args, timeout=min(timeout, 75))
-            manifest["attempts"].append({"extractor": "yt-dlp", "stage": "metadata", "ok": p.returncode == 0})
+            manifest["attempts"].append({"extractor": "yt-dlp", "stage": "metadata", "ok": p.returncode == 0,
+                                         "reason": None if p.returncode == 0 else classify_extractor_error(p.stderr)})
             if p.returncode == 0:
                 manifest["metadata"] = clean_meta(parse_json(p.stdout))
                 if manifest["metadata"]:
@@ -176,7 +197,8 @@ def ingest(url: str, out_dir: Path, *, acquire_media: bool = False,
                     "--merge-output-format", "mp4", "-o", str(out_dir / "video.%(ext)s"), cleaned]
             try:
                 q = command(args, timeout=timeout)
-                manifest["attempts"].append({"extractor": "yt-dlp", "stage": "media", "ok": q.returncode == 0})
+                manifest["attempts"].append({"extractor": "yt-dlp", "stage": "media", "ok": q.returncode == 0,
+                                             "reason": None if q.returncode == 0 else classify_extractor_error(q.stderr)})
                 media_download_ok = q.returncode == 0
                 if q.returncode:
                     manifest["warnings"].append("yt-dlp media download failed; text may still be readable")
@@ -191,7 +213,8 @@ def ingest(url: str, out_dir: Path, *, acquire_media: bool = False,
                 "--write-info-json", cleaned]
         try:
             p = command(args, timeout=timeout)
-            manifest["attempts"].append({"extractor": "gallery-dl", "stage": "media", "ok": p.returncode == 0})
+            manifest["attempts"].append({"extractor": "gallery-dl", "stage": "media", "ok": p.returncode == 0,
+                                         "reason": None if p.returncode == 0 else classify_extractor_error(p.stderr)})
             media_download_ok = p.returncode == 0 and bool(files_in(out_dir / "gallery")[0])
             if p.returncode:
                 manifest["warnings"].append("gallery-dl failed for this URL")
