@@ -121,5 +121,6 @@ jobs:
           path: |
             ${{ runner.temp }}/social-live/**/manifest.json
             ${{ runner.temp }}/social-live/**/*.frame.jpg
+            ${{ runner.temp }}/social-live/**/*.sample-*.jpg
           if-no-files-found: ignore
           retention-days: 2
