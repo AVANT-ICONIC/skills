@@ -93,9 +93,9 @@ See [`visual-output/SKILL.md`](./visual-output/SKILL.md).
 
 ### `social-watch`
 
-**URL-first social post, thread, image and video inspection across YouTube, Instagram, TikTok, X and Reddit.**
+**URL-first social post, thread, image and video inspection across YouTube, Instagram, Facebook, TikTok, X and Reddit.**
 
-Social Watch resolves the exact source, uses available authorized readers, and optionally acquires images/video with a bounded Python helper. It delegates video scene analysis to `video-watch` rather than introducing another model. Live fetching depends on runtime connectivity and platform restrictions; the skill does not grant WebUI new tool access.
+Social Watch resolves the exact source, uses available authorized readers, and optionally acquires images/video and captions with a bounded Python helper; an optional hosted CPU speech backend requires no paid API. It delegates video scene analysis to `video-watch` rather than introducing another model. Live fetching depends on runtime connectivity and platform restrictions; the skill does not grant WebUI new tool access.
 
 See [`social-watch/SKILL.md`](./social-watch/SKILL.md).
 
