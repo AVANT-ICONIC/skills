@@ -92,6 +92,7 @@ jobs:
           instagram_image|https://www.instagram.com/p/BqtP440Fimf/
           tiktok_video|https://www.tiktok.com/@onworldserim/video/7676116112568012053
           facebook_video|https://www.facebook.com/NASASCaN/videos/how-nasa-uses-gravity-and-radio-waves-to-study-planets-and-moons/8368792419872400/
+          facebook_image|https://www.facebook.com/ISS/posts/nasa-astronaut-megan-mcarthur-leaves-the-agency-having-launched-to-space-twice-s/1194948136005111/
           reddit_v_redd_it|https://www.reddit.com/r/interesting/comments/1t5410z/just_how_does_this_species_survive_in_the_wild/
           URLS
       - name: Diagnose public Reddit access
