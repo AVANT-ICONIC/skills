@@ -5,6 +5,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 import social_ingest as s
+import youtube_captions as yc
 
 
 class SocialIngestTests(unittest.TestCase):
@@ -148,6 +149,14 @@ class SocialIngestTests(unittest.TestCase):
             self.assertEqual(j["metadata"]["description"], "A sample post description")
             self.assertEqual(j["text_evidence"][0]["type"], "gallery_post_caption")
 
+
+
+    def test_youtube_captions_validate_video_ids(self):
+        self.assertEqual(yc.video_id("https://www.youtube.com/watch?v=LHUvedAssyE"), "LHUvedAssyE")
+        self.assertEqual(yc.video_id("https://youtu.be/LHUvedAssyE"), "LHUvedAssyE")
+        self.assertEqual(yc.video_id("https://youtube.com/shorts/LHUvedAssyE"), "LHUvedAssyE")
+        with self.assertRaises(ValueError):
+            yc.video_id("https://youtube.com.evil.test/watch?v=LHUvedAssyE")
 
 
 if __name__ == "__main__":
