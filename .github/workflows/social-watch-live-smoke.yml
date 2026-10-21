@@ -95,6 +95,30 @@ jobs:
           facebook_image|https://www.facebook.com/ISS/posts/nasa-astronaut-megan-mcarthur-leaves-the-agency-having-launched-to-space-twice-s/1194948136005111/
           reddit_v_redd_it|https://www.reddit.com/r/interesting/comments/1t5410z/just_how_does_this_species_survive_in_the_wild/
           URLS
+      - name: Real bridge end-to-end X video -> contact sheets
+        shell: bash
+        run: |
+          python3 -m pip install --disable-pip-version-check --user Pillow
+          python3 - <<'PY'
+          from pathlib import Path
+          import sys,tempfile
+          from io import BytesIO
+          from PIL import Image
+          sys.path.insert(0, str(Path("social-watch/bridge").resolve()))
+          from core import SocialWatchBridge
+          with tempfile.TemporaryDirectory() as root:
+              bridge=SocialWatchBridge(Path(root))
+              out=bridge.resolve("https://x.com/SpaceX/status/2049581577844199476/video/1",max_frames=12)
+              print("BRIDGE_E2E", out)
+              assert out["state"]=="frames_prepared_uninspected", out
+              assert out["contact_sheets"]>=1, out
+              pixels=bridge.sheet(out["job_id"],0)
+              im=Image.open(BytesIO(pixels))
+              assert im.width >= 640 and im.height >= 400, (im.width,im.height)
+              assert im.format=="JPEG"
+              assert bridge.delete(out["job_id"])
+              print("BRIDGE_E2E_PASS",im.size,"sheets",out["contact_sheets"])
+          PY
       - name: Diagnose public Reddit access
         shell: bash
         run: |
