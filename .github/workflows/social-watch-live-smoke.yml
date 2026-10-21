@@ -15,7 +15,7 @@ jobs:
   live-smoke:
     if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -40,7 +40,7 @@ jobs:
             mkdir -p "$target"
             echo "::group::$id"
             echo "Input: $url"
-            timeout 210s python3 social-watch/scripts/social_ingest.py "$url" --download --timeout 65 --out-dir "$target"
+            timeout 210s python3 social-watch/scripts/social_ingest.py "$url" --download --timeout 55 --out-dir "$target"
             code=$?
             echo "Extractor exit: $code"
             if [ "$code" -ne 0 ]; then echo "::warning title=$id retrieval::No usable media extracted; see manifest"; fi
@@ -87,7 +87,12 @@ jobs:
             echo "::endgroup::"
           done <<'URLS'
           x_video|https://x.com/SpaceX/status/2049581577844199476/video/1
-          reddit_v_redd_it|https://www.reddit.com/r/interestingasfuck/comments/1ut8ylz/indian_paper_boy_passing_papers_showing_his/
+          youtube_nasa|https://www.youtube.com/watch?v=LHUvedAssyE
+          instagram_reel|https://www.instagram.com/reel/DbAqmKPIaY5/
+          instagram_image|https://www.instagram.com/p/BqtP440Fimf/
+          tiktok_video|https://www.tiktok.com/@onworldserim/video/7676116112568012053
+          facebook_video|https://www.facebook.com/NASASCaN/videos/how-nasa-uses-gravity-and-radio-waves-to-study-planets-and-moons/8368792419872400/
+          reddit_v_redd_it|https://www.reddit.com/r/interesting/comments/1t5410z/just_how_does_this_species_survive_in_the_wild/
           URLS
       - name: Diagnose public Reddit access
         shell: bash
