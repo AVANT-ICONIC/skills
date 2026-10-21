@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import argparse
 import json
+import html
+import re
 import shutil
 import subprocess
 import sys
@@ -96,6 +98,37 @@ def files_in(folder: Path) -> tuple[list[str], list[str]]:
     return media, captions
 
 
+
+def parse_caption_file(path: Path) -> list[dict]:
+    """Normalize VTT/SRT cues; source captions may contain errors or non-speech cues."""
+    if path.suffix.lower() not in CAPTION_EXTS or path.stat().st_size > 5_000_000:
+        return []
+    raw = path.read_text(encoding="utf-8-sig", errors="replace")
+    lines = raw.splitlines()
+    cues: list[dict] = []
+    i = 0
+    while i < len(lines):
+        line = lines[i].strip()
+        if "-->" not in line:
+            i += 1
+            continue
+        start = line.split("-->", 1)[0].strip()
+        i += 1
+        parts = []
+        while i < len(lines) and lines[i].strip():
+            value = re.sub(r"<[^>]+>", "", lines[i].strip())
+            value = html.unescape(value)
+            if value and value not in parts:
+                parts.append(value)
+            i += 1
+        caption = " ".join(parts).strip()
+        if caption and (not cues or cues[-1]["text"] != caption):
+            cues.append({"at": start, "text": caption})
+        i += 1
+    return cues[:2000]
+
+
+
 def ingest(url: str, out_dir: Path, *, acquire_media: bool = False,
            timeout: int = 120) -> dict:
     platform, cleaned = identify(url)
@@ -103,7 +136,7 @@ def ingest(url: str, out_dir: Path, *, acquire_media: bool = False,
     out_dir.mkdir(parents=True, exist_ok=True)
     manifest: dict = {
         "schema_version": "0.1", "source_url": cleaned, "platform": platform,
-        "metadata": {}, "media_files": [], "caption_files": [],
+        "metadata": {}, "media_files": [], "caption_files": [], "caption_transcript_file": None,
         "text_evidence": [], "attempts": [], "warnings": [],
         "status": "unavailable", "visuals_inspected": False,
         "audio_transcribed": False, "comments_retrieved": False,
@@ -114,8 +147,9 @@ def ingest(url: str, out_dir: Path, *, acquire_media: bool = False,
         manifest["warnings"].append(
             "No extractor installed. Use a native connector, hosted bridge, or install yt-dlp/gallery-dl in a networked runtime.")
     media_download_ok = False
+    js_runtime = ["--js-runtimes", "node"] if shutil.which("node") else []
     if ytdlp:
-        args = [ytdlp, "--ignore-config", "--no-playlist", "--skip-download",
+        args = [ytdlp, "--ignore-config", *js_runtime, "--no-playlist", "--skip-download",
                 "--dump-single-json", "--socket-timeout", "15", "--retries", "1", cleaned]
         try:
             p = command(args, timeout=min(timeout, 75))
@@ -133,7 +167,7 @@ def ingest(url: str, out_dir: Path, *, acquire_media: bool = False,
             manifest["attempts"].append({"extractor": "yt-dlp", "stage": "metadata", "ok": False})
             manifest["warnings"].append("yt-dlp metadata timed out or could not start")
         if acquire_media and manifest["attempts"][-1]["ok"]:
-            args = [ytdlp, "--ignore-config", "--no-playlist", "--no-progress",
+            args = [ytdlp, "--ignore-config", *js_runtime, "--no-playlist", "--no-progress",
                     "--socket-timeout", "15", "--retries", "1", "--fragment-retries", "1",
                     "--max-filesize", "250M",
                     "--write-subs", "--write-auto-subs", "--sub-langs", "en.*,de.*",
@@ -164,6 +198,22 @@ def ingest(url: str, out_dir: Path, *, acquire_media: bool = False,
             manifest["attempts"].append({"extractor": "gallery-dl", "stage": "media", "ok": False})
             manifest["warnings"].append("gallery-dl timed out or could not start")
     manifest["media_files"], manifest["caption_files"] = files_in(out_dir)
+
+    if manifest["caption_files"]:
+        cue_source = next((Path(p) for p in manifest["caption_files"]
+                           if p.lower().endswith((".vtt", ".srt"))), None)
+        if cue_source:
+            cues = parse_caption_file(cue_source)
+            if cues:
+                transcript = out_dir / "caption-transcript.txt"
+                transcript.write_text(
+                    "\n".join(f"[{cue['at']}] {cue['text']}" for cue in cues) + "\n",
+                    encoding="utf-8")
+                manifest["caption_transcript_file"] = str(transcript.resolve())
+                manifest["text_evidence"].append({
+                    "type": "caption_track", "path": str(transcript.resolve()),
+                    "cue_count": len(cues), "origin": "platform_caption_not_verified_speech"
+                })
     if manifest["media_files"] and media_download_ok:
         manifest["status"] = "media_acquired_uninspected"
     elif manifest["media_files"]:
