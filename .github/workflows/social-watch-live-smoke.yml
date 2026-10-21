@@ -23,6 +23,11 @@ jobs:
         run: |
           python3 -m pip install --disable-pip-version-check --user "yt-dlp[default]" gallery-dl
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+      - name: Install ffmpeg for real media verification
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg
+          ffprobe -version | head -n 1
       - name: Offline tests
         run: python3 -m unittest discover -s social-watch/scripts -p 'test_*.py' -v
       - name: Public video source smoke
@@ -64,11 +69,12 @@ jobs:
                                 capture_output=True,text=True,timeout=20)
               print("FRAME",f.returncode,out.name,out.stat().st_size if out.exists() else 0)
           PY
+              echo "VERIFICATION SCRIPT: $?"
             fi
             echo "::endgroup::"
           done <<'URLS'
           x_video|https://x.com/SpaceX/status/2049581577844199476/video/1
-          reddit_v_redd_it|https://www.reddit.com/r/oddlysatisfying/comments/1un1bkl/guinea_pigs_crossing_the_bridge/
+          reddit_v_redd_it|https://www.reddit.com/r/interestingasfuck/comments/1ut8ylz/indian_paper_boy_passing_papers_showing_his/
           URLS
       - name: Upload evidence
         if: always()
