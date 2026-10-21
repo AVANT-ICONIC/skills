@@ -233,7 +233,7 @@ def ingest(url: str, out_dir: Path, *, acquire_media: bool = False,
             manifest["attempts"].append({
                 "extractor": "cobalt-local", "stage": "media", "ok": media_download_ok,
                 "reason": None if files else "no_media"})
-        except (ValueError, RuntimeError, OSError, TimeoutError, Exception) as exc:
+        except Exception:
             # Catch adapter/network JSON errors but never expose remote payload,
             # URLs, tokens or signed links in model-facing tool results.
             manifest["attempts"].append({
