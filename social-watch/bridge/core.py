@@ -6,6 +6,7 @@ and no arbitrary URL fetcher. Workspaces and tokens never leave the host.
 from __future__ import annotations
 
 import json
+import io
 import os
 import secrets
 import shutil
@@ -16,6 +17,7 @@ import threading
 import time
 from pathlib import Path
 from typing import Any
+from PIL import Image as PILImage, ImageOps
 
 HERE = Path(__file__).resolve().parent
 SOCIAL = HERE.parent
@@ -80,7 +82,7 @@ class SocialWatchBridge:
             folder = self.root / ident
             folder.mkdir(mode=0o700)
             self.jobs[ident] = {"created": time.time(), "url": cleaned,
-                                "platform": platform, "media": [], "sheets": [],
+                                "platform": platform, "media": [], "images": [], "sheets": [],
                                 "manifest": {}, "transcript": "", "state": "unavailable"}
         try:
             manifest = ingest(cleaned, folder / "source", acquire_media=True, timeout=90)
@@ -91,6 +93,13 @@ class SocialWatchBridge:
             if subtitle:
                 txt = self._validate_media_path(subtitle, folder)
                 job["transcript"] = txt.read_text(encoding="utf-8", errors="replace")[:50000]
+            image_extensions = (".jpg", ".jpeg", ".png", ".webp", ".gif")
+            if manifest["status"] == "media_acquired_uninspected":
+                job["images"] = [
+                    str(self._validate_media(p, folder))
+                    for p in manifest.get("media_files", [])[:20]
+                    if Path(p).suffix.lower() in image_extensions
+                ]
             media = [self._validate_media(path, folder)
                      for path in manifest.get("media_files", [])[:3]
                      if Path(path).suffix.lower() in (".mp4", ".webm", ".mov", ".mkv", ".m4v", ".avi", ".flv", ".wmv")]
@@ -137,6 +146,7 @@ class SocialWatchBridge:
                 "warnings": manifest.get("warnings", []) + job.get("warnings", []),
                 "caption_available": bool(job["transcript"]),
                 "contact_sheets": len(job["sheets"]),
+                "images": len(job.get("images", [])),
                 "visuals_inspected": False,
                 "note": "Prepared frames are not watched until model actually inspects returned image blocks"}
 
@@ -148,6 +158,34 @@ class SocialWatchBridge:
         if path.stat().st_size > 3_000_000:
             raise ValueError("Sheet too large")
         return path.read_bytes()
+
+    def image(self, job_id: str, index: int = 0) -> bytes:
+        """Return bounded real image bytes from a downloaded source carousel."""
+        job = self._job(job_id)
+        images = job.get("images", [])
+        if index < 0 or index >= len(images):
+            raise IndexError("Requested source image is not available")
+        path = self._validate_media_path(images[index], self.root / job_id)
+        if path.stat().st_size > 20_000_000:
+            raise ValueError("Source image too large")
+        with PILImage.open(path) as source:
+            if source.width * source.height > 40_000_000:
+                raise ValueError("Source image pixel budget exceeded")
+            sample = ImageOps.exif_transpose(source)
+            sample.thumbnail((1600, 1600))
+            converted = sample.convert("RGB")
+            out = io.BytesIO()
+            converted.save(out, format="JPEG", quality=86, optimize=True)
+            if out.tell() > 3_000_000:
+                raise ValueError("Prepared image too large")
+            return out.getvalue()
+
+    def post_text(self, job_id: str) -> dict[str, Any]:
+        manifest = self._job(job_id)["manifest"]
+        return {"metadata": manifest.get("metadata", {}),
+                "text_evidence": manifest.get("text_evidence", []),
+                "comments_retrieved": False,
+                "note": "A page-reader or authorized API is needed for full comment threads"}
 
     def captions(self, job_id: str) -> str:
         return self._job(job_id)["transcript"] or "No verified source caption track."
