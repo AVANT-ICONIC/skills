@@ -30,6 +30,8 @@ jobs:
         run: |
           python -m unittest discover -s social-watch/scripts -p 'test_*.py' -v
           python -m unittest discover -s social-watch/bridge -p 'test_*.py' -v
+      - name: Real MCP Streamable HTTP protocol smoke
+        run: python social-watch/bridge/protocol_smoke.py
       - name: MCP registry and image result contract
         run: |
           python - <<'PY'
