@@ -18,6 +18,7 @@ class SocialIngestTests(unittest.TestCase):
             ("https://www.instagram.com/reels/DbAqmKPIaY5/", "instagram"),
             ("https://www.facebook.com/NASASCaN/videos/example/8368792419872400/", "facebook"),
             ("https://www.facebook.com/reel/123456789/", "facebook"),
+            ("https://www.facebook.com/ISS/posts/nasa-photo/1194948136005111/", "facebook"),
             ("https://www.facebook.com/watch/?v=8368792419872400", "facebook"),
             ("https://fb.watch/abc123/", "facebook"),
             ("https://x.com/user/status/123", "x"),
