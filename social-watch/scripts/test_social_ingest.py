@@ -82,5 +82,24 @@ class SocialIngestTests(unittest.TestCase):
             self.assertFalse(result["visuals_inspected"])
 
 
+    def test_failed_download_with_partial_file_is_not_success(self):
+        metadata = s.subprocess.CompletedProcess([], 0,
+            json.dumps({"id": "abc", "title": "Video"}), "")
+        failure = s.subprocess.CompletedProcess([], 1, "", "ffmpeg unavailable")
+        def fake_run(argv, timeout):
+            if "--dump-single-json" in argv:
+                return metadata
+            Path(argv[argv.index("-o") + 1].replace("%(ext)s", "mp4")).write_bytes(b"incomplete")
+            return failure
+        with tempfile.TemporaryDirectory() as temp, \
+             patch.object(s.shutil, "which", side_effect=lambda x: "/usr/bin/yt-dlp" if x == "yt-dlp" else None), \
+             patch.object(s, "command", side_effect=fake_run):
+            j = s.ingest("https://www.youtube.com/watch?v=abc", Path(temp), acquire_media=True)
+            self.assertEqual(j["status"], "partial_media_unverified")
+            self.assertEqual(len(j["media_files"]), 1)
+            self.assertFalse(j["visuals_inspected"])
+
+
+
 if __name__ == "__main__":
     unittest.main()
