@@ -1,0 +1,25 @@
+services:
+  social-watch:
+    build:
+      context: ../..
+      dockerfile: social-watch/bridge/Dockerfile
+    restart: unless-stopped
+    # Localhost ONLY: a private auth-protected tunnel/reverse proxy is required
+    # for any internet-facing ChatGPT integration. Never use 0.0.0.0:8000:8000.
+    ports:
+      - "127.0.0.1:8000:8000"
+    environment:
+      SOCIAL_WATCH_BIND: "0.0.0.0"
+      SOCIAL_WATCH_PORT: "8000"
+      SOCIAL_WATCH_ENABLE_STT: "0"
+      XDG_CACHE_HOME: /tmp/sw-cache
+    read_only: true
+    tmpfs:
+      - /tmp:rw,nosuid,nodev,size=512m
+    pids_limit: 80
+    mem_limit: 2g
+    cpus: 2
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
