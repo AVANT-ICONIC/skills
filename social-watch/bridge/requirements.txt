@@ -1,0 +1,4 @@
+mcp>=1.28,<2
+Pillow>=10,<13
+yt-dlp[default]
+gallery-dl
