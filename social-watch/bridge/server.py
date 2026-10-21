@@ -5,13 +5,10 @@ authentication proxy / MCP OAuth configuration and network egress controls.
 """
 from __future__ import annotations
 
-import base64
 import json
-import os
-from pathlib import Path
 
-from mcp.server.fastmcp import FastMCP
-from mcp.types import CallToolResult, ImageContent, TextContent
+from mcp.server.fastmcp import FastMCP, Image
+from mcp.types import CallToolResult, TextContent
 
 from core import SocialWatchBridge
 
@@ -38,8 +35,7 @@ def read_social_contact_sheet(job_id: str, index: int = 0) -> CallToolResult:
         TextContent(type="text", text=json.dumps({
             "job_id": job_id, "index": index, "kind": "real_source_contact_sheet",
             "instruction": "Inspect these pixels; this image is source evidence, not a full-motion video."})),
-        ImageContent(type="image", data=base64.b64encode(data).decode("ascii"),
-                     mimeType="image/jpeg")  # SDK field alias 'mimeType' maps to mime_type
+        Image(data=data, format="jpeg").to_image_content()
     ])
 
 
