@@ -19,6 +19,7 @@ def transcribe(source: Path, out_dir: Path, model_name: str, language: str | Non
     if model_name not in {"tiny", "base", "small", "medium"}:
         raise ValueError("Unsupported model tier")
     try:
+        import numpy as np
         from faster_whisper import WhisperModel
     except ImportError as exc:
         raise RuntimeError("faster-whisper not installed in this runtime") from exc
@@ -31,9 +32,16 @@ def transcribe(source: Path, out_dir: Path, model_name: str, language: str | Non
     duration = float(p.stdout.strip())
     if not 0 < duration <= max_seconds:
         raise ValueError(f"Duration outside permitted range (max {max_seconds} s)")
+    # Decode to PCM ourselves: PyAV version changes should not break Whisper audio loading.
+    pcm = subprocess.run(["ffmpeg", "-nostdin", "-v", "error", "-i", str(source),
+                          "-vn", "-f", "f32le", "-ac", "1", "-ar", "16000", "-"],
+                         capture_output=True, timeout=min(max_seconds * 3 + 30, 7200))
+    if pcm.returncode or not pcm.stdout:
+        raise RuntimeError("ffmpeg failed to decode the audio stream")
+    audio = np.frombuffer(pcm.stdout, dtype=np.float32).copy()
     out_dir.mkdir(parents=True, exist_ok=True)
     model = WhisperModel(model_name, device="cpu", compute_type="int8")
-    segments, info = model.transcribe(str(source), language=language,
+    segments, info = model.transcribe(audio, language=language,
                                      beam_size=3, vad_filter=True)
     all_segments = [
         {"start": round(seg.start, 2), "end": round(seg.end, 2),
