@@ -221,6 +221,25 @@ def ingest(url: str, out_dir: Path, *, acquire_media: bool = False,
         except (OSError, subprocess.TimeoutExpired):
             manifest["attempts"].append({"extractor": "gallery-dl", "stage": "media", "ok": False})
             manifest["warnings"].append("gallery-dl timed out or could not start")
+    # Optional independent private Cobalt instance. No public API is contacted.
+    # Redirect-only responses and non-local tunnel URLs are rejected by adapter.
+    cobalt_endpoint = os.environ.get("SOCIAL_WATCH_COBALT_URL")
+    if acquire_media and cobalt_endpoint and not media_download_ok:
+        try:
+            from cobalt_fallback import attempt as cobalt_attempt
+            files = cobalt_attempt(cleaned, out_dir / "cobalt", cobalt_endpoint,
+                                   timeout=min(timeout, 25))
+            media_download_ok = bool(files)
+            manifest["attempts"].append({
+                "extractor": "cobalt-local", "stage": "media", "ok": media_download_ok,
+                "reason": None if files else "no_media"})
+        except (ValueError, RuntimeError, OSError, TimeoutError, Exception) as exc:
+            # Catch adapter/network JSON errors but never expose remote payload,
+            # URLs, tokens or signed links in model-facing tool results.
+            manifest["attempts"].append({
+                "extractor": "cobalt-local", "stage": "media", "ok": False,
+                "reason": "local_cobalt_error"})
+            manifest["warnings"].append("Private Cobalt fallback did not produce usable media")
     if gallery and not manifest["metadata"]:
         for info_path in sorted((out_dir / "gallery").rglob("info.json"))[:3]:
             if info_path.stat().st_size > 200_000:
