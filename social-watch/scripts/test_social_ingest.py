@@ -13,6 +13,12 @@ class SocialIngestTests(unittest.TestCase):
             ("https://youtu.be/abc", "youtube"),
             ("https://www.instagram.com/reel/abc/", "instagram"),
             ("https://vm.tiktok.com/abc/", "tiktok"),
+            ("https://www.tiktok.com/t/ZTRxyz/", "tiktok"),
+            ("https://www.instagram.com/reels/DbAqmKPIaY5/", "instagram"),
+            ("https://www.facebook.com/NASASCaN/videos/example/8368792419872400/", "facebook"),
+            ("https://www.facebook.com/reel/123456789/", "facebook"),
+            ("https://www.facebook.com/watch/?v=8368792419872400", "facebook"),
+            ("https://fb.watch/abc123/", "facebook"),
             ("https://x.com/user/status/123", "x"),
             ("https://old.reddit.com/r/test/comments/abc", "reddit"),
         )
