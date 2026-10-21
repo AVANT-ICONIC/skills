@@ -108,6 +108,7 @@ def ingest(url: str, out_dir: Path, *, acquire_media: bool = False,
     if not ytdlp and not gallery:
         manifest["warnings"].append(
             "No extractor installed. Use a native connector, hosted bridge, or install yt-dlp/gallery-dl in a networked runtime.")
+    media_download_ok = False
     if ytdlp:
         args = [ytdlp, "--ignore-config", "--no-playlist", "--skip-download",
                 "--dump-single-json", "--socket-timeout", "15", "--retries", "1", cleaned]
@@ -129,7 +130,7 @@ def ingest(url: str, out_dir: Path, *, acquire_media: bool = False,
         if acquire_media and manifest["attempts"][-1]["ok"]:
             args = [ytdlp, "--ignore-config", "--no-playlist", "--no-progress",
                     "--socket-timeout", "15", "--retries", "1", "--fragment-retries", "1",
-                    "--max-filesize", "250M", "--max-downloads", "1",
+                    "--max-filesize", "250M",
                     "--write-subs", "--write-auto-subs", "--sub-langs", "en.*,de.*",
                     "--sub-format", "vtt", "--write-info-json",
                     "-f", "bv*[height<=720]+ba/b[height<=720]/best",
@@ -137,6 +138,7 @@ def ingest(url: str, out_dir: Path, *, acquire_media: bool = False,
             try:
                 q = command(args, timeout=timeout)
                 manifest["attempts"].append({"extractor": "yt-dlp", "stage": "media", "ok": q.returncode == 0})
+                media_download_ok = q.returncode == 0
                 if q.returncode:
                     manifest["warnings"].append("yt-dlp media download failed; text may still be readable")
             except (OSError, subprocess.TimeoutExpired):
@@ -144,20 +146,24 @@ def ingest(url: str, out_dir: Path, *, acquire_media: bool = False,
                 manifest["warnings"].append("yt-dlp download timed out or could not start")
     # Gallery fallback is bounded to a single URL and at most 20 post-media objects.
     # Success means media acquired, never that an image/video was actually inspected.
-    if acquire_media and gallery and not files_in(out_dir)[0]:
+    if acquire_media and gallery and not media_download_ok:
         args = [gallery, "--config-ignore", "--directory", str(out_dir / "gallery"),
                 "--range", "1-20", "--filesize-max", "50M", "--no-mtime", cleaned]
         try:
             p = command(args, timeout=timeout)
             manifest["attempts"].append({"extractor": "gallery-dl", "stage": "media", "ok": p.returncode == 0})
+            media_download_ok = p.returncode == 0 and bool(files_in(out_dir / "gallery")[0])
             if p.returncode:
                 manifest["warnings"].append("gallery-dl failed for this URL")
         except (OSError, subprocess.TimeoutExpired):
             manifest["attempts"].append({"extractor": "gallery-dl", "stage": "media", "ok": False})
             manifest["warnings"].append("gallery-dl timed out or could not start")
     manifest["media_files"], manifest["caption_files"] = files_in(out_dir)
-    if manifest["media_files"]:
+    if manifest["media_files"] and media_download_ok:
         manifest["status"] = "media_acquired_uninspected"
+    elif manifest["media_files"]:
+        manifest["warnings"].append("Only incomplete/unverified media files found after extractor failure")
+        manifest["status"] = "partial_media_unverified"
     elif not manifest["metadata"] and platform == "reddit":
         manifest["warnings"].append("Text-only Reddit posts and comments require a readable page or authorized Reddit API")
     elif not manifest["metadata"] and platform == "x":
@@ -191,7 +197,7 @@ def main() -> int:
                           "media_count": len(manifest["media_files"]),
                           "caption_count": len(manifest["caption_files"]),
                           "warnings": manifest["warnings"]}, ensure_ascii=False))
-        return 0 if manifest["status"] != "unavailable" else 2
+        return 0 if manifest["status"] in ("metadata_only", "media_acquired_uninspected") else 2
     except (ValueError, OSError) as error:
         print(json.dumps({"error": str(error)}), file=sys.stderr)
         return 2
