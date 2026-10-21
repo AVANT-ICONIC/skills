@@ -1,0 +1,82 @@
+name: Social Watch live smoke (experimental)
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - "social-watch/**"
+      - ".github/workflows/social-watch-live-smoke.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  live-smoke:
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install open-source extractors
+        run: |
+          python3 -m pip install --disable-pip-version-check --user "yt-dlp[default]" gallery-dl
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+      - name: Offline tests
+        run: python3 -m unittest discover -s social-watch/scripts -p 'test_*.py' -v
+      - name: Public video source smoke
+        shell: bash
+        run: |
+          set +e
+          mkdir -p "$RUNNER_TEMP/social-live"
+          while IFS='|' read -r id url; do
+            target="$RUNNER_TEMP/social-live/$id"
+            mkdir -p "$target"
+            echo "::group::$id"
+            echo "Input: $url"
+            timeout 210s python3 social-watch/scripts/social_ingest.py "$url" --download --timeout 65 --out-dir "$target"
+            code=$?
+            echo "Extractor exit: $code"
+            if [ -f "$target/manifest.json" ]; then
+              python3 - "$target/manifest.json" <<'PY'
+          import json,sys,subprocess
+          from pathlib import Path
+          j=json.loads(Path(sys.argv[1]).read_text())
+          print("EVIDENCE",json.dumps({
+            "platform":j.get("platform"), "status":j.get("status"),
+            "attempts":j.get("attempts"), "warnings":j.get("warnings"),
+            "media_count":len(j.get("media_files",[])),
+            "captions":len(j.get("caption_files",[])),
+            "title":j.get("metadata",{}).get("title","")[:120],
+          },ensure_ascii=False))
+          for file in j.get("media_files",[])[:2]:
+            p=Path(file)
+            print("FILE",p.name,"bytes",p.stat().st_size)
+            r=subprocess.run(["ffprobe","-v","error","-show_entries",
+                              "format=duration:stream=codec_type,codec_name",
+                              "-of","json",str(p)],capture_output=True,text=True,timeout=15)
+            print("FFPROBE",r.returncode,r.stdout[:1000])
+            if r.returncode==0 and '"video"' in r.stdout:
+              out=p.with_suffix(".frame.jpg")
+              f=subprocess.run(["ffmpeg","-nostdin","-loglevel","error","-y","-ss","0.5",
+                                "-i",str(p),"-frames:v","1",str(out)],
+                                capture_output=True,text=True,timeout=20)
+              print("FRAME",f.returncode,out.name,out.stat().st_size if out.exists() else 0)
+          PY
+            fi
+            echo "::endgroup::"
+          done <<'URLS'
+          x_video|https://x.com/SpaceX/status/2049581577844199476/video/1
+          reddit_v_redd_it|https://www.reddit.com/r/oddlysatisfying/comments/1un1bkl/guinea_pigs_crossing_the_bridge/
+          URLS
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: social-watch-live-evidence
+          path: |
+            ${{ runner.temp }}/social-live/**/manifest.json
+            ${{ runner.temp }}/social-live/**/*.frame.jpg
+          if-no-files-found: ignore
+          retention-days: 2
