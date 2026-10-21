@@ -40,6 +40,27 @@ def read_social_contact_sheet(job_id: str, index: int = 0) -> CallToolResult:
 
 
 @mcp.tool()
+def read_social_image(job_id: str, index: int = 0) -> CallToolResult:
+    """Return actual downloaded photo/carousel image as JPEG pixels.
+    These are source pixels, not generated images or guessed thumbnails.
+    """
+    data = bridge.image(job_id, index=index)
+    return CallToolResult(content=[
+        TextContent(type="text", text=json.dumps({
+            "job_id": job_id, "index": index, "kind": "actual_source_image"})),
+        Image(data=data, format="jpeg").to_image_content()
+    ])
+
+
+@mcp.tool()
+def read_social_post_text(job_id: str) -> dict:
+    """Return actual fetched post description and available structured text.
+    Does NOT claim comments or entire threads unless evidence exists.
+    """
+    return bridge.post_text(job_id)
+
+
+@mcp.tool()
 def read_social_caption_track(job_id: str) -> str:
     """Read the actual timestamped source caption track; may be absent.
     This is NOT automatically verified audio transcription.
