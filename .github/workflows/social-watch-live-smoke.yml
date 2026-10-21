@@ -118,6 +118,23 @@ jobs:
             fi
             echo "::endgroup::"
           done
+      - name: Diagnose YouTube and Instagram failures
+        shell: bash
+        run: |
+          set +e
+          for url in \
+            "https://www.youtube.com/watch?v=LHUvedAssyE" \
+            "https://www.instagram.com/reel/DbAqmKPIaY5/" \
+            "https://www.instagram.com/p/BqtP440Fimf/"; do
+            echo "::group::source diagnostics: $url"
+            timeout 25s yt-dlp --ignore-config --js-runtimes node --skip-download \
+               --no-playlist --socket-timeout 10 --retries 0 --dump-single-json \
+               "$url" >/dev/null 2>"$RUNNER_TEMP/extractor-diagnostic.txt"
+            echo "METADATA_DIAGNOSTIC_EXIT: $?"
+            sed -E 's@https?://[^ ]+@[url]@g; s@([?&](token|key|sig|session)=[^ ]+)@[redacted]@gi' \
+               "$RUNNER_TEMP/extractor-diagnostic.txt" | tail -n 8
+            echo "::endgroup::"
+          done
       - name: Demonstrate optional no-API local speech recognition
         shell: bash
         run: |
