@@ -5,12 +5,15 @@ Does not scrape, impersonate a logged-in browser or fetch removed posts.
 """
 from __future__ import annotations
 import json
+import base64
+import threading
+import time
 import os
 import re
 import urllib.error
 import urllib.request
 from pathlib import Path
-from urllib.parse import urlsplit
+from urllib.parse import urlsplit, urlencode
 
 MAX_API_JSON = 2_000_000
 MAX_MEDIA = 120 * 1024 * 1024
@@ -37,18 +40,61 @@ def post_id(url: str) -> str:
     return m.group(1)
 
 
+_TOKEN_LOCK = threading.Lock()
+_TOKEN_CACHE: tuple[str, float] | None = None
+
+def refresh_approved_token(client_id: str, client_secret: str,
+                           refresh_token: str, user_agent: str) -> str:
+    """Refresh a previously consented, approved Reddit Data API token."""
+    global _TOKEN_CACHE
+    with _TOKEN_LOCK:
+        if _TOKEN_CACHE and time.monotonic() < _TOKEN_CACHE[1]:
+            return _TOKEN_CACHE[0]
+        body = urlencode({"grant_type": "refresh_token",
+                          "refresh_token": refresh_token}).encode("ascii")
+        basic = base64.b64encode(f"{client_id}:{client_secret}".encode("utf-8")).decode("ascii")
+        req = urllib.request.Request(
+            "https://www.reddit.com/api/v1/access_token",
+            data=body, method="POST",
+            headers={"Authorization": "Basic " + basic, "User-Agent": user_agent,
+                     "Content-Type": "application/x-www-form-urlencoded",
+                     "Accept": "application/json"})
+        with OPENER.open(req, timeout=12) as reply:
+            if reply.status != 200 or "json" not in reply.headers.get("Content-Type",""):
+                raise RuntimeError("Approved Reddit OAuth refresh was rejected")
+            payload = reply.read(8193)
+            if len(payload) > 8192:
+                raise RuntimeError("Reddit OAuth refresh response too large")
+        parsed = json.loads(payload)
+        token = parsed.get("access_token")
+        expiry = parsed.get("expires_in")
+        scopes = parsed.get("scope", "")
+        if (not isinstance(token,str) or not 10 <= len(token) <= 4096 or
+            not isinstance(expiry,(int,float)) or not 60 <= expiry <= 86400 or
+            not isinstance(scopes,str) or "read" not in scopes.split()):
+            raise RuntimeError("Reddit OAuth refresh lacks a valid read grant")
+        _TOKEN_CACHE = (token, time.monotonic() + expiry - 30)
+        return token
+
+
 def approved_settings() -> tuple[str, str] | None:
     token = os.environ.get("SOCIAL_WATCH_REDDIT_OAUTH_TOKEN", "").strip()
     user_agent = os.environ.get("SOCIAL_WATCH_REDDIT_USER_AGENT", "").strip()
-    if not token and not user_agent:
+    fields = tuple(os.environ.get(n, "").strip() for n in (
+        "SOCIAL_WATCH_REDDIT_CLIENT_ID",
+        "SOCIAL_WATCH_REDDIT_CLIENT_SECRET",
+        "SOCIAL_WATCH_REDDIT_REFRESH_TOKEN"))
+    if not any((token, user_agent, *fields)):
         return None
-    if not token or not user_agent:
-        raise ValueError("Reddit requires both an approved OAuth token and honest User-Agent")
-    if not (10 <= len(token) <= 4096 and
-            16 <= len(user_agent) <= 255 and "(by /u/" in user_agent):
-        raise ValueError("Invalid Reddit OAuth token or User-Agent configuration")
+    if not user_agent or not (16 <= len(user_agent) <= 255 and "(by /u/" in user_agent):
+        raise ValueError("Reddit requires an honest, descriptive User-Agent")
+    if not token:
+        if not all(fields):
+            raise ValueError("Approved Reddit OAuth needs a token or all three refresh credentials")
+        token = refresh_approved_token(*fields, user_agent)
+    if not 10 <= len(token) <= 4096:
+        raise ValueError("Invalid approved Reddit OAuth token")
     return token, user_agent
-
 
 def _fetch(url: str, token: str, user_agent: str, *, binary: bool = False) -> tuple[bytes, str]:
     req = urllib.request.Request(url, headers={
