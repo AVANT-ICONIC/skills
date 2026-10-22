@@ -12,10 +12,21 @@ from mcp.server.fastmcp import FastMCP, Image
 from mcp.types import CallToolResult, TextContent
 
 from core import SocialWatchBridge
+from oauth import AuthConfig, JWTVerifier
 
+_config = AuthConfig.from_environment()
+_bind = os.environ.get("SOCIAL_WATCH_BIND", "127.0.0.1")
+if _config is None and _bind not in ("127.0.0.1", "::1", "localhost"):
+    if os.environ.get("SOCIAL_WATCH_PRIVATE_UNAUTH") != "1":
+        raise RuntimeError(
+            "Refusing public bind without OAuth. Explicitly set SOCIAL_WATCH_PRIVATE_UNAUTH=1 "
+            "only inside a locked-down private network/container, never on a public host."
+        )
 mcp = FastMCP("AVANT Social Watch", stateless_http=True, json_response=True,
-              host=os.environ.get("SOCIAL_WATCH_BIND", "127.0.0.1"),
-              port=int(os.environ.get("SOCIAL_WATCH_PORT", "8000")))
+              host=_bind,
+              port=int(os.environ.get("SOCIAL_WATCH_PORT", "8000")),
+              **({"auth": _config.auth_settings(),
+                  "token_verifier": JWTVerifier(_config)} if _config else {}))
 bridge = SocialWatchBridge()
 
 
