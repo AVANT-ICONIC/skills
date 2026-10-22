@@ -2,7 +2,7 @@
 
 A real, bounded Streamable HTTP MCP backend for the portable Social Watch Agent Skill. Unlike skill instructions, the bridge can **download supported public media from URLs and return source-derived JPEG content blocks to a model**. It reuses ../scripts/social_ingest.py and ../../video-watch/scripts/video_watch.py. It does not call a paid vision or speech API.
 
-**Security warning:** This service runs powerful URL-triggered media extractors. It has NO built-in public OAuth authentication yet. **Do not expose the MCP listener on a public interface** or put an unauthenticated tunnel in front of it. A public MCP connector requires an authentication gateway that verifies every request and blocks anonymous users, plus outbound network policies to prevent access to internal/private IPs after HTTP redirects. Platform login restrictions must not be bypassed.
+**Security warning:** This service runs URL-triggered media extractors and now supports external OAuth JWT verification. The default is unauthenticated **localhost-only**; the included Compose file explicitly allows unauthenticated binding inside a private container with a host port mapped to localhost. Never publish that configuration or an unauthenticated tunnel. Read [AUTH-DEPLOYMENT.md](AUTH-DEPLOYMENT.md) for the real OAuth/approved-Reddit setup and remaining host egress protections.
 
 ## Zero-credential local smoke
 
@@ -14,6 +14,7 @@ From the **root of this GitHub repository**:
     python3 -m unittest discover -s social-watch/scripts -p 'test_*.py' -v
     python3 -m unittest discover -s social-watch/bridge -p 'test_*.py' -v
     python3 social-watch/bridge/protocol_smoke.py
+    python3 social-watch/bridge/auth_protocol_smoke.py
     python3 social-watch/bridge/server.py
 
 The server listens on 127.0.0.1:8000/mcp by default. A real MCP client can call:
@@ -61,7 +62,7 @@ ChatGPT must be able to reach a **public HTTPS endpoint** or an authorized Secur
 
 Where account/workspace policy allows: ChatGPT -> Plugins -> plus -> Add custom MCP server -> configure the authenticated HTTPS MCP endpoint (or permitted secure tunnel), review server permissions, and create/connect. Current UI instructions: https://help.openai.com/en/articles/12584461-connecting-custom-mcp-servers-in-chatgpt .
 
-**Never connect directly to a raw unauthenticated public port.** Preferred deployment: HTTPS auth gateway + private overlay tunnel to the localhost listener, with identity-aware OAuth and explicit network egress restrictions. In addition to allowlisted initial social domains, the downloader must not be able to reach loopback, RFC1918, link-local, container metadata, Kubernetes control planes or other private endpoints even if an upstream URL redirects there. Enforce outbound filtering at the host/container/network layer, not in a string validator.
+**Never connect directly to a raw unauthenticated public port.** For an OAuth-protected external deployment follow [AUTH-DEPLOYMENT.md](AUTH-DEPLOYMENT.md). Preferred deployment: HTTPS auth gateway + private overlay tunnel to the localhost listener, with identity-aware OAuth and explicit network egress restrictions. In addition to allowlisted initial social domains, the downloader must not be able to reach loopback, RFC1918, link-local, container metadata, Kubernetes control planes or other private endpoints even if an upstream URL redirects there. Enforce outbound filtering at the host/container/network layer, not in a string validator.
 
 ## Honest support
 
