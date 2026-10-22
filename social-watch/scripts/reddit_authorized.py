@@ -137,22 +137,40 @@ def read_post(url: str, token: str, user_agent: str) -> dict:
     comments_listing = data[1].get("data", {})
     comments = []
     partial = False
-    for item in comments_listing.get("children", []):
-        if item.get("kind") == "more":
-            partial = True
-            continue
-        if item.get("kind") != "t1":
-            continue
-        comment = item.get("data", {})
-        text = comment.get("body")
-        if not isinstance(text, str) or text in ("[removed]", "[deleted]"):
-            continue
-        comments.append({"id": str(comment.get("id", ""))[:24],
-                         "author": str(comment.get("author", ""))[:80],
-                         "score": comment.get("score", 0),
-                         "text": text[:6000],
-                         "created_utc": comment.get("created_utc")})
+
+    def collect(children: list, depth: int = 0) -> None:
+        nonlocal partial
+        for item in children:
+            if len(comments) >= 100:
+                partial = True
+                return
+            if item.get("kind") == "more":
+                partial = True
+                continue
+            if item.get("kind") != "t1":
+                continue
+            comment = item.get("data", {})
+            text = comment.get("body")
+            if isinstance(text, str) and text not in ("[removed]", "[deleted]"):
+                comments.append({"id": str(comment.get("id", ""))[:24],
+                                 "parent_id": str(comment.get("parent_id", ""))[:35],
+                                 "depth": depth,
+                                 "author": str(comment.get("author", ""))[:80],
+                                 "score": comment.get("score", 0),
+                                 "text": text[:4000],
+                                 "created_utc": comment.get("created_utc")})
+            replies = comment.get("replies")
+            if isinstance(replies, dict) and depth < 10:
+                nested = replies.get("data", {}).get("children", [])
+                if isinstance(nested, list):
+                    collect(nested, depth + 1)
+    collect(comments_listing.get("children", []))
     media = post.get("secure_media") or post.get("media") or {}
+    if not media.get("reddit_video"):
+        for parent in (post.get("crosspost_parent_list") or [])[:1]:
+            media = parent.get("secure_media") or parent.get("media") or {}
+            if media.get("reddit_video"):
+                break
     video = media.get("reddit_video") or {}
     fallback = video.get("fallback_url")
     if fallback:
@@ -170,7 +188,7 @@ def read_post(url: str, token: str, user_agent: str) -> dict:
         "video_mp4": fallback,
         "comments": comments, "comments_partial": partial or bool(comments_listing.get("after")),
         "comments_count": len(comments),
-        "comments_scope": "top-level only, max 100 listing entries; replies may be excluded",
+        "comments_scope": "max 100 accessible comments/replies; MoreChildren entries are marked partial",
     }
 
 
