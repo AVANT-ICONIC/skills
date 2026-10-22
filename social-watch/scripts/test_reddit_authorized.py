@@ -104,5 +104,44 @@ class RedditOAuthTests(unittest.TestCase):
         self.assertEqual(manifest["text_evidence"][-1]["comments"][0]["text"],"comment")
         self.assertEqual(manifest["attempts"][0]["extractor"],"reddit-approved-oauth")
 
+
+    def test_approved_refresh_token_is_cached_and_requires_read_grant(self):
+        class Response:
+            status = 200
+            headers = {"Content-Type": "application/json"}
+            def read(self, n=-1):
+                return json.dumps({"access_token": "approved-very-long-token",
+                                   "expires_in": 3600, "scope": "identity read"}).encode()
+            def __enter__(self): return self
+            def __exit__(self, *a): return False
+        with patch.object(ra.OPENER, "open", return_value=Response()) as op:
+            ra._TOKEN_CACHE = None
+            token = ra.refresh_approved_token("client-id", "client-secret",
+                                              "refresh-secret", "web:app:v1 (by /u/example)")
+            token2 = ra.refresh_approved_token("client-id", "client-secret",
+                                               "refresh-secret", "web:app:v1 (by /u/example)")
+            self.assertEqual(token, "approved-very-long-token")
+            self.assertEqual(token2, token)
+            self.assertEqual(op.call_count, 1)
+            req = op.call_args.args[0]
+            self.assertEqual(req.full_url, "https://www.reddit.com/api/v1/access_token")
+            self.assertNotIn("refresh-secret", req.full_url)
+            self.assertIn(b"grant_type=refresh_token", req.data)
+            ra._TOKEN_CACHE = None
+
+    def test_reddit_refresh_without_read_scope_refused(self):
+        class Response:
+            status=200
+            headers={"Content-Type":"application/json"}
+            def read(self, n=-1):
+                return json.dumps({"access_token":"approved-very-long-token",
+                                   "expires_in":3600,"scope":"identity"}).encode()
+            def __enter__(self): return self
+            def __exit__(self,*a): return False
+        with patch.object(ra.OPENER,"open",return_value=Response()):
+            ra._TOKEN_CACHE = None
+            with self.assertRaisesRegex(RuntimeError,"read grant"):
+                ra.refresh_approved_token("client","secret","refresh","web:app:v1 (by /u/example)")
+
 if __name__ == "__main__":
     unittest.main()
