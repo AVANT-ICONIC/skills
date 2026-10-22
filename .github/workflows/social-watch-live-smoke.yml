@@ -15,7 +15,7 @@ jobs:
   live-smoke:
     if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -119,6 +119,11 @@ jobs:
               assert bridge.delete(out["job_id"])
               print("BRIDGE_E2E_PASS",im.size,"sheets",out["contact_sheets"])
           PY
+      - name: Real MCP HTTP URL-to-ImageContent
+        shell: bash
+        run: |
+          python3 -m pip install --disable-pip-version-check --user -r social-watch/bridge/requirements.txt
+          timeout 150s python3 social-watch/bridge/live_protocol.py
       - name: Diagnose public Reddit access
         shell: bash
         run: |
