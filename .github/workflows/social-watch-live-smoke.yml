@@ -1,0 +1,238 @@
+name: Social Watch live smoke (experimental)
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - "social-watch/**"
+      - ".github/workflows/social-watch-live-smoke.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  live-smoke:
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install open-source extractors
+        run: |
+          python3 -m pip install --disable-pip-version-check --user "yt-dlp[default]" gallery-dl
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+      - name: Install ffmpeg for real media verification
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg
+          ffprobe -version | head -n 1
+      - name: Offline tests
+        run: python3 -m unittest discover -s social-watch/scripts -p 'test_*.py' -v
+      - name: Public video source smoke
+        shell: bash
+        run: |
+          set +e
+          mkdir -p "$RUNNER_TEMP/social-live"
+          while IFS='|' read -r id url; do
+            target="$RUNNER_TEMP/social-live/$id"
+            mkdir -p "$target"
+            echo "::group::$id"
+            echo "Input: $url"
+            timeout 210s python3 social-watch/scripts/social_ingest.py "$url" --download --timeout 55 --out-dir "$target"
+            code=$?
+            echo "Extractor exit: $code"
+            if [ "$code" -ne 0 ]; then echo "::warning title=$id retrieval::No usable media extracted; see manifest"; fi
+            if [ -f "$target/manifest.json" ]; then
+              python3 - "$target/manifest.json" <<'PY'
+          import json,sys,subprocess
+          from pathlib import Path
+          j=json.loads(Path(sys.argv[1]).read_text())
+          print("EVIDENCE",json.dumps({
+            "platform":j.get("platform"), "status":j.get("status"),
+            "attempts":j.get("attempts"), "warnings":j.get("warnings"),
+            "media_count":len(j.get("media_files",[])),
+            "captions":len(j.get("caption_files",[])),
+            "title":j.get("metadata",{}).get("title","")[:120],
+          },ensure_ascii=False))
+          for file in j.get("media_files",[])[:2]:
+            p=Path(file)
+            print("FILE",p.name,"bytes",p.stat().st_size)
+            r=subprocess.run(["ffprobe","-v","error","-show_entries",
+                              "format=duration:stream=codec_type,codec_name",
+                              "-of","json",str(p)],capture_output=True,text=True,timeout=15)
+            print("FFPROBE",r.returncode,r.stdout[:1000])
+            if r.returncode==0 and '"video"' in r.stdout:
+              out=p.with_suffix(".frame.jpg")
+              f=subprocess.run(["ffmpeg","-nostdin","-loglevel","error","-y","-ss","0.5",
+                                "-i",str(p),"-frames:v","1",str(out)],
+                                capture_output=True,text=True,timeout=20)
+              print("FRAME",f.returncode,out.name,out.stat().st_size if out.exists() else 0)
+              if f.returncode == 0:
+                meta=json.loads(r.stdout)
+                duration=float(meta.get("format",{}).get("duration",0) or 0)
+                for n in range(6):
+                  at=max(0,min(duration-0.2,0.5 + n * max(0,duration-0.5)/5))
+                  sample=p.parent / (p.stem + ".sample-" + str(n) + ".jpg")
+                  clip=subprocess.run(["ffmpeg","-nostdin","-loglevel","error","-y",
+                    "-ss",str(at),"-i",str(p),"-frames:v","1","-vf","scale=640:-2",
+                    str(sample)],capture_output=True,text=True,timeout=20)
+                  print("SAMPLE",n,round(at,2),clip.returncode,
+                        sample.stat().st_size if sample.exists() else 0)
+
+          PY
+              echo "VERIFICATION SCRIPT: $?"
+            fi
+            echo "::endgroup::"
+          done <<'URLS'
+          x_video|https://x.com/SpaceX/status/2049581577844199476/video/1
+          youtube_nasa|https://www.youtube.com/watch?v=LHUvedAssyE
+          instagram_reel|https://www.instagram.com/reel/DbAqmKPIaY5/
+          instagram_image|https://www.instagram.com/p/BqtP440Fimf/
+          tiktok_video|https://www.tiktok.com/@onworldserim/video/7676116112568012053
+          facebook_video|https://www.facebook.com/NASASCaN/videos/how-nasa-uses-gravity-and-radio-waves-to-study-planets-and-moons/8368792419872400/
+          facebook_image|https://www.facebook.com/ISS/posts/nasa-astronaut-megan-mcarthur-leaves-the-agency-having-launched-to-space-twice-s/1194948136005111/
+          reddit_v_redd_it|https://www.reddit.com/r/interesting/comments/1t5410z/just_how_does_this_species_survive_in_the_wild/
+          URLS
+      - name: Real bridge end-to-end X video -> contact sheets
+        shell: bash
+        run: |
+          python3 -m pip install --disable-pip-version-check --user Pillow
+          python3 - <<'PY'
+          from pathlib import Path
+          import sys,tempfile
+          from io import BytesIO
+          from PIL import Image
+          sys.path.insert(0, str(Path("social-watch/bridge").resolve()))
+          from core import SocialWatchBridge
+          with tempfile.TemporaryDirectory() as root:
+              bridge=SocialWatchBridge(Path(root))
+              out=bridge.resolve("https://x.com/SpaceX/status/2049581577844199476/video/1",max_frames=12)
+              print("BRIDGE_E2E", out)
+              assert out["state"]=="frames_prepared_uninspected", out
+              assert out["contact_sheets"]>=1, out
+              pixels=bridge.sheet(out["job_id"],0)
+              im=Image.open(BytesIO(pixels))
+              assert im.width >= 640 and im.height >= 400, (im.width,im.height)
+              assert im.format=="JPEG"
+              assert bridge.delete(out["job_id"])
+              print("BRIDGE_E2E_PASS",im.size,"sheets",out["contact_sheets"])
+          PY
+      - name: Real MCP HTTP URL-to-ImageContent
+        shell: bash
+        run: |
+          python3 -m pip install --disable-pip-version-check --user -r social-watch/bridge/requirements.txt
+          timeout 150s python3 social-watch/bridge/live_protocol.py
+      - name: Diagnose public Reddit access
+        shell: bash
+        run: |
+          set +e
+          python3 -m pip install --disable-pip-version-check --user curl_cffi >/dev/null
+          for url in \
+            "https://www.reddit.com/r/oddlysatisfying/comments/gtei7x/" \
+            "https://old.reddit.com/r/oddlysatisfying/comments/gtei7x/" \
+            "https://www.reddit.com/r/interestingasfuck/comments/1ut8ylz/"; do
+            echo "::group::Reddit public probe"
+            echo "Input: $url"
+            curl -L --max-time 15 -s -o /dev/null -w 'HTTP page status: %{http_code} bytes: %{size_download}\n' "$url"
+            timeout 35s yt-dlp --ignore-config --skip-download --no-playlist \
+              --impersonate chrome --socket-timeout 12 --retries 0 \
+              --no-progress --dump-single-json "$url" > "$RUNNER_TEMP/reddit-info.json" 2>"$RUNNER_TEMP/reddit-error.txt"
+            code=$?
+            echo "Impersonated extractor exit: $code"
+            if [ "$code" -eq 0 ]; then
+              python3 -c 'import json,sys; j=json.load(open(sys.argv[1])); print("FOUND",j.get("id"),j.get("title"),j.get("duration"))' "$RUNNER_TEMP/reddit-info.json"
+            else
+              sed -E 's@https?://[^ ]+@[url]@g; s@([?&](token|key|sig|session)=[^ ]+)@[redacted]@gi' "$RUNNER_TEMP/reddit-error.txt" | tail -n 6
+            fi
+            echo "::endgroup::"
+          done
+      - name: Diagnose YouTube and Instagram failures
+        shell: bash
+        run: |
+          set +e
+          for url in \
+            "https://www.youtube.com/watch?v=LHUvedAssyE" \
+            "https://www.instagram.com/reel/DbAqmKPIaY5/" \
+            "https://www.instagram.com/p/BqtP440Fimf/"; do
+            echo "::group::source diagnostics: $url"
+            timeout 25s yt-dlp --ignore-config --js-runtimes node --skip-download \
+               --no-playlist --socket-timeout 10 --retries 0 --dump-single-json \
+               "$url" >/dev/null 2>"$RUNNER_TEMP/extractor-diagnostic.txt"
+            echo "METADATA_DIAGNOSTIC_EXIT: $?"
+            sed -E 's@https?://[^ ]+@[url]@g; s@([?&](token|key|sig|session)=[^ ]+)@[redacted]@gi' \
+               "$RUNNER_TEMP/extractor-diagnostic.txt" | tail -n 8
+            echo "::endgroup::"
+          done
+      - name: Try independent free YouTube caption fallback
+        shell: bash
+        run: |
+          set +e
+          python3 -m pip install --disable-pip-version-check --user youtube-transcript-api >/dev/null
+          python3 social-watch/scripts/youtube_captions.py \
+            "https://www.youtube.com/watch?v=LHUvedAssyE" \
+            --out-dir "$RUNNER_TEMP/social-live/youtube_nasa"
+          echo "YOUTUBE_CAPTION_FALLBACK_EXIT: $?"
+      - name: Demonstrate optional no-API local speech recognition
+        shell: bash
+        run: |
+          set +e
+          python3 -m pip install --disable-pip-version-check --user faster-whisper
+          media="$RUNNER_TEMP/social-live/facebook_video/video.mp4"
+          if [ -s "$media" ]; then
+            timeout 240s python3 social-watch/scripts/audio_transcribe.py "$media" \
+              --model tiny --max-seconds 300 --out-dir "$RUNNER_TEMP/social-live/facebook_video"
+            code=$?
+            echo "SPEECH_TRANSCRIPTION_EXIT: $code"
+            if [ "$code" -ne 0 ]; then echo "::warning::Audio STT needs available model runtime/weights"; fi
+            if [ -f "$RUNNER_TEMP/social-live/facebook_video/speech-transcript.json" ]; then
+              python3 - "$RUNNER_TEMP/social-live/facebook_video/speech-transcript.json" <<'PY'
+          import json,sys
+          j=json.load(open(sys.argv[1]))
+          print("STT_EVIDENCE",json.dumps({"engine":j["engine"],"model":j["model"],
+             "speech_detected":j["speech_detected"],"segments":len(j["segments"]),
+             "duration":j["duration"],"language":j["language"]}))
+          PY
+            fi
+          else
+            echo "::warning::No Facebook media available for optional speech test"
+          fi
+      - name: Print explicit per-platform acceptance matrix
+        if: always()
+        run: |
+          python3 - "$RUNNER_TEMP/social-live" <<'PY'
+          from pathlib import Path
+          import json,sys
+          root=Path(sys.argv[1])
+          result={}
+          for m in root.glob("*/manifest.json"):
+            j=json.loads(m.read_text())
+            files=j.get("media_files",[])
+            images=list(m.parent.rglob("*.sample-*.jpg"))
+            result[m.parent.name]={
+               "platform":j.get("platform"),"status":j.get("status"),
+               "media_files":len(files),"frames":len(images),
+               "caption_tracks":len(j.get("caption_files",[])),
+               "caption_transcript":bool(j.get("caption_transcript_file")),
+               "speech_transcript":(m.parent / "speech-transcript.json").is_file()}
+          (root / "acceptance-matrix.json").write_text(json.dumps(result,indent=2))
+          print("ACCEPTANCE_MATRIX",json.dumps(result))
+          PY
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: social-watch-live-evidence
+          path: |
+            ${{ runner.temp }}/social-live/**/manifest.json
+            ${{ runner.temp }}/social-live/**/*.frame.jpg
+            ${{ runner.temp }}/social-live/**/*.sample-*.jpg
+            ${{ runner.temp }}/social-live/**/*.vtt
+            ${{ runner.temp }}/social-live/**/caption-transcript.txt
+            ${{ runner.temp }}/social-live/**/youtube-captions.*
+            ${{ runner.temp }}/social-live/**/speech-transcript.json
+            ${{ runner.temp }}/social-live/**/speech-transcript.txt
+            ${{ runner.temp }}/social-live/acceptance-matrix.json
+          if-no-files-found: ignore
+          retention-days: 2

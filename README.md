@@ -91,6 +91,14 @@ visual-output    = how to present it
 
 See [`visual-output/SKILL.md`](./visual-output/SKILL.md).
 
+### `social-watch`
+
+**URL-first social post, thread, image and video inspection across YouTube, Instagram, Facebook, TikTok, X and Reddit.**
+
+Social Watch resolves the exact source, uses available authorized readers, and optionally acquires images/video and captions with a bounded Python helper; an optional hosted CPU speech backend requires no paid API. It delegates video scene analysis to `video-watch` rather than introducing another model. Live fetching depends on runtime connectivity and platform restrictions; the skill does not grant WebUI new tool access.
+
+See [`social-watch/SKILL.md`](./social-watch/SKILL.md).
+
 ### `video-watch`
 
 **Frame-aware video inspection with timestamped evidence.**
@@ -138,6 +146,7 @@ skills/
 ├── seo-aiseo/          # Search audits; references
 ├── test-velocity/      # Test architecture, measurement and stack recipes
 ├── video-watch/        # Video evidence and editor analysis; optional extraction helper and tests
+├── social-watch/       # URL-first social platform routing, optional bounded downloader, tests
 └── visual-output/      # Presentation companion
 ```
 
@@ -253,7 +262,7 @@ The repository follows the open Agent Skills convention: each skill is a folder 
 
 ## Status
 
-The collection currently includes eleven skills: `architecture-guard`, `futurequake`, `game-studio`, `gauntlet-loop`, `geometric-design`, `intent-mode`, `openspec-workflow`, `seo-aiseo`, `test-velocity`, `video-watch`, and `visual-output`.
+The collection currently includes twelve skills: `architecture-guard`, `futurequake`, `game-studio`, `gauntlet-loop`, `geometric-design`, `intent-mode`, `openspec-workflow`, `seo-aiseo`, `social-watch`, `test-velocity`, `video-watch`, and `visual-output`.
 
 ## Development
 

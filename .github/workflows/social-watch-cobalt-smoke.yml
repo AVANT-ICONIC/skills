@@ -1,0 +1,90 @@
+name: Social Watch Cobalt fallback trial (public posts only)
+
+on:
+  pull_request:
+    paths:
+      - "social-watch/scripts/cobalt_fallback.py"
+      - "social-watch/scripts/social_ingest.py"
+      - ".github/workflows/social-watch-cobalt-smoke.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  cobalt:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      cobalt:
+        image: ghcr.io/imputnet/cobalt:11
+        ports:
+          - 9000:9000
+        env:
+          API_URL: "http://127.0.0.1:9000/"
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate adapter and exact origin tests
+        run: |
+          python3 -m unittest discover -s social-watch/scripts -p 'test_*.py' -v
+      - name: Check local Cobalt API
+        run: |
+          python3 - <<'PY'
+          import urllib.request,time,json
+          for i in range(45):
+              try:
+                  with urllib.request.urlopen("http://127.0.0.1:9000/",timeout=2) as result:
+                      data=json.load(result)
+                      print("COBALT_READY",data.get("cobalt",{}).get("version"),i)
+                      break
+              except Exception as ex:
+                  time.sleep(1)
+          else:
+              raise SystemExit("Local Cobalt instance unavailable")
+          PY
+      - name: Run bounded platform recovery attempts
+        shell: bash
+        run: |
+          set +e
+          python3 - <<'PY'
+          import json,sys,tempfile,time
+          from pathlib import Path
+          sys.path.insert(0, str(Path("social-watch/scripts").resolve()))
+          from cobalt_fallback import attempt
+          cases={
+            "instagram_reel": "https://www.instagram.com/reel/DbAqmKPIaY5/",
+            "reddit_video": "https://www.reddit.com/r/interesting/comments/1t5410z/just_how_does_this_species_survive_in_the_wild/",
+            "youtube_nasa": "https://www.youtube.com/watch?v=LHUvedAssyE",
+            "facebook_image": "https://www.facebook.com/ISS/posts/nasa-astronaut-megan-mcarthur-leaves-the-agency-having-launched-to-space-twice-s/1194948136005111/"
+          }
+          summary={}
+          with tempfile.TemporaryDirectory() as root:
+              for name,url in cases.items():
+                  start=time.monotonic()
+                  try:
+                      paths=attempt(url,Path(root)/name,"http://127.0.0.1:9000",timeout=18)
+                      sizes=[Path(p).stat().st_size for p in paths]
+                      summary[name]={"state":"media_acquired","files":len(paths),"bytes":sizes}
+                  except Exception as ex:
+                      error_code=None
+                      if hasattr(ex,"read"):
+                          try:
+                              error_body=json.loads(ex.read(15000))
+                              error_code=error_body.get("error",{}).get("code")
+                          except Exception:
+                              pass
+                      summary[name]={"state":"blocked","category":type(ex).__name__,
+                                     "code":error_code,"detail":str(ex)[:170]}
+                  summary[name]["elapsed_sec"]=round(time.monotonic()-start,2)
+                  print("COBALT_CASE",name,json.dumps(summary[name]))
+              Path("cobalt-results.json").write_text(json.dumps(summary,indent=2))
+              print("COBALT_MATRIX",json.dumps(summary))
+          PY
+      - name: Preserve exact results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cobalt-trial-results
+          path: cobalt-results.json
+          if-no-files-found: ignore
+          retention-days: 2

@@ -1,0 +1,43 @@
+services:
+  social-watch:
+    build:
+      context: ../..
+      dockerfile: social-watch/bridge/Dockerfile
+    restart: unless-stopped
+    # Localhost ONLY: a private auth-protected tunnel/reverse proxy is required
+    # for any internet-facing ChatGPT integration. Never use 0.0.0.0:8000:8000.
+    ports:
+      - "127.0.0.1:8000:8000"
+    environment:
+      SOCIAL_WATCH_BIND: "0.0.0.0"
+      # Explicit opt-in is ONLY safe with localhost-only published host port.
+      SOCIAL_WATCH_PRIVATE_UNAUTH: "1"
+      SOCIAL_WATCH_PORT: "8000"
+      SOCIAL_WATCH_ENABLE_STT: "0"
+      XDG_CACHE_HOME: /tmp/sw-cache
+      SOCIAL_WATCH_COBALT_URL: ${SOCIAL_WATCH_COBALT_URL:-}
+    read_only: true
+    tmpfs:
+      - /tmp:rw,nosuid,nodev,size=512m
+    pids_limit: 80
+    mem_limit: 2g
+    cpus: 2
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+  # Opt-in Cobalt fallback: start with
+  # SOCIAL_WATCH_COBALT_URL=http://cobalt:9000 docker compose --profile cobalt up -d --build
+  # No public port mapping. Cobalt is an independent AGPL-3.0 project.
+  cobalt:
+    profiles: ["cobalt"]
+    image: ghcr.io/imputnet/cobalt:11
+    restart: unless-stopped
+    environment:
+      API_URL: "http://cobalt:9000/"
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
