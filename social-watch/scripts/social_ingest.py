@@ -168,8 +168,49 @@ def ingest(url: str, out_dir: Path, *, acquire_media: bool = False,
         manifest["warnings"].append(
             "No extractor installed. Use a native connector, hosted bridge, or install yt-dlp/gallery-dl in a networked runtime.")
     media_download_ok = False
+    authorized_reddit_attempted = False
+    if platform == "reddit":
+        from reddit_authorized import approved_settings, read_post, download_native_video
+        try:
+            settings = approved_settings()
+            if settings:
+                authorized_reddit_attempted = True
+                post = read_post(cleaned, *settings)
+                manifest["metadata"] = {
+                    "id": post["id"], "title": post["title"],
+                    "description": post["description"], "uploader": post["author"],
+                    "subreddit": post["subreddit"], "score": post["score"],
+                    "webpage_url": cleaned}
+                manifest["status"] = "metadata_only"
+                manifest["comments_retrieved"] = True
+                manifest["comments_partial"] = post["comments_partial"]
+                manifest["text_evidence"].append({
+                    "type": "reddit_post", "text": post["description"],
+                    "title": post["title"], "source": "approved_reddit_oauth"})
+                manifest["text_evidence"].append({
+                    "type": "reddit_top_level_comments",
+                    "comments": post["comments"], "partial": post["comments_partial"],
+                    "scope": post["comments_scope"]})
+                manifest["attempts"].append({
+                    "extractor": "reddit-approved-oauth", "stage": "post+comments", "ok": True})
+                if acquire_media and post["video_mp4"]:
+                    path = download_native_video(post, *settings, out_dir / "reddit-oauth")
+                    media_download_ok = bool(path)
+                    manifest["attempts"].append({
+                        "extractor": "reddit-approved-oauth", "stage": "media",
+                        "ok": media_download_ok})
+                    if path:
+                        manifest["warnings"].append(
+                            "Reddit MP4 fallback may be silent; audio track not confirmed")
+        except Exception:
+            # Never leak tokens, user agent, request bodies or signed URLs.
+            manifest["attempts"].append({
+                "extractor": "reddit-approved-oauth", "stage": "post+comments",
+                "ok": False, "reason": "api_unavailable_or_auth_error"})
+            manifest["warnings"].append("Approved Reddit API unavailable or post inaccessible")
+            authorized_reddit_attempted = True
     js_runtime = ["--js-runtimes", "node"] if shutil.which("node") else []
-    if ytdlp:
+    if ytdlp and not authorized_reddit_attempted:
         args = [ytdlp, "--ignore-config", *js_runtime, "--no-playlist", "--skip-download",
                 "--dump-single-json", "--socket-timeout", "15", "--retries", "1", cleaned]
         try:
@@ -208,7 +249,7 @@ def ingest(url: str, out_dir: Path, *, acquire_media: bool = False,
                 manifest["warnings"].append("yt-dlp download timed out or could not start")
     # Gallery fallback is bounded to a single URL and at most 20 post-media objects.
     # Success means media acquired, never that an image/video was actually inspected.
-    if acquire_media and gallery and not media_download_ok:
+    if acquire_media and gallery and not media_download_ok and not authorized_reddit_attempted:
         args = [gallery, "--config-ignore", "--directory", str(out_dir / "gallery"),
                 "--range", "1-20", "--filesize-max", "50M", "--no-mtime",
                 "--write-info-json", cleaned]
@@ -225,7 +266,7 @@ def ingest(url: str, out_dir: Path, *, acquire_media: bool = False,
     # Optional independent private Cobalt instance. No public API is contacted.
     # Redirect-only responses and non-local tunnel URLs are rejected by adapter.
     cobalt_endpoint = os.environ.get("SOCIAL_WATCH_COBALT_URL")
-    if acquire_media and cobalt_endpoint and not media_download_ok:
+    if acquire_media and cobalt_endpoint and not media_download_ok and not authorized_reddit_attempted:
         try:
             from cobalt_fallback import attempt as cobalt_attempt
             files = cobalt_attempt(cleaned, out_dir / "cobalt", cobalt_endpoint,
