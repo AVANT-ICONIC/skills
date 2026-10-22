@@ -143,5 +143,25 @@ class RedditOAuthTests(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError,"read grant"):
                 ra.refresh_approved_token("client","secret","refresh","web:app:v1 (by /u/example)")
 
+
+    def test_nested_reddit_replies_and_crosspost_video(self):
+        data = reddit_fixture()
+        post = data[0]["data"]["children"][0]["data"]
+        video = post.pop("secure_media")
+        post["crosspost_parent_list"] = [{"secure_media":video}]
+        first = data[1]["data"]["children"][0]["data"]
+        first["parent_id"] = "t3_abc123"
+        first["replies"] = {"data":{"children":[
+            {"kind":"t1","data":{"id":"nested1","parent_id":"t1_aa1",
+                                  "body":"A reply","author":"user3",
+                                  "score":1,"created_utc":124}}
+        ]}}
+        with patch.object(ra,"_fetch",return_value=(json.dumps(data).encode(),"application/json")):
+            result=ra.read_post("https://www.reddit.com/r/videos/comments/abc123/","token","ua")
+        self.assertEqual(result["comments_count"],2)
+        self.assertEqual(result["comments"][-1]["depth"],1)
+        self.assertEqual(result["comments"][-1]["parent_id"],"t1_aa1")
+        self.assertEqual(result["video_mp4"],video["reddit_video"]["fallback_url"])
+
 if __name__ == "__main__":
     unittest.main()
