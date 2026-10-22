@@ -6,6 +6,7 @@ and no arbitrary URL fetcher. Workspaces and tokens never leave the host.
 from __future__ import annotations
 
 import json
+from collections import deque
 import io
 import os
 import secrets
@@ -26,6 +27,8 @@ sys.path.insert(0, str(SOCIAL / "scripts"))
 from social_ingest import identify, ingest  # noqa: E402
 
 MAX_JOBS = 15
+MAX_CONCURRENT_DOWNLOADS = 2
+MAX_STARTS_PER_MINUTE = 6
 MAX_BYTES = 250 * 1024 * 1024
 TTL_SECONDS = 20 * 60
 
@@ -44,17 +47,21 @@ class SocialWatchBridge:
         self.ttl = ttl
         self.jobs: dict[str, dict[str, Any]] = {}
         self.lock = threading.RLock()
+        self.slots = threading.BoundedSemaphore(MAX_CONCURRENT_DOWNLOADS)
+        self.started = deque()
 
     def _clean(self) -> None:
         now = time.time()
         for key, job in list(self.jobs.items()):
-            if now - job["created"] > self.ttl:
+            if now - job["created"] > self.ttl and not job.get("active"):
                 del self.jobs[key]
                 shutil.rmtree(self.root / key, ignore_errors=True)
         if len(self.jobs) >= MAX_JOBS:
-            old = min(self.jobs, key=lambda k: self.jobs[k]["created"])
-            del self.jobs[old]
-            shutil.rmtree(self.root / old, ignore_errors=True)
+            idle = [key for key, job in self.jobs.items() if not job.get("active")]
+            if idle:
+                old = min(idle, key=lambda key: self.jobs[key]["created"])
+                del self.jobs[old]
+                shutil.rmtree(self.root / old, ignore_errors=True)
 
     def _job(self, job_id: str) -> dict[str, Any]:
         with self.lock:
@@ -76,14 +83,26 @@ class SocialWatchBridge:
         platform, cleaned = identify(url)
         if not 6 <= max_frames <= 60:
             raise ValueError("max_frames must be 6–60")
+        if not self.slots.acquire(blocking=False):
+            raise RuntimeError("Two acquisitions already running")
         with self.lock:
+            now = time.time()
+            while self.started and now - self.started[0] > 60:
+                self.started.popleft()
+            if len(self.started) >= MAX_STARTS_PER_MINUTE:
+                self.slots.release()
+                raise RuntimeError("At most six new URLs per minute")
+            self.started.append(now)
             self._clean()
+            if len(self.jobs) >= MAX_JOBS:
+                self.slots.release()
+                raise RuntimeError("All session slots are in use")
             ident = secrets.token_urlsafe(18)
             folder = self.root / ident
             folder.mkdir(mode=0o700)
             self.jobs[ident] = {"created": time.time(), "url": cleaned,
                                 "platform": platform, "media": [], "images": [], "sheets": [],
-                                "manifest": {}, "transcript": "", "state": "unavailable"}
+                                "manifest": {}, "transcript": "", "state": "unavailable", "active": True}
         try:
             manifest = ingest(cleaned, folder / "source", acquire_media=True, timeout=90)
             job = self._job(ident)
@@ -129,6 +148,12 @@ class SocialWatchBridge:
         except Exception:
             self.delete(ident)
             raise
+        finally:
+            with self.lock:
+                job = self.jobs.get(ident)
+                if job is not None:
+                    job["active"] = False
+            self.slots.release()
 
     def _validate_media_path(self, path: str, directory: Path) -> Path:
         value = Path(path).resolve()
@@ -198,7 +223,7 @@ class SocialWatchBridge:
                       if Path(p).suffix.lower() in (".mp4", ".webm", ".mkv", ".mov")]
         if not candidates or job["state"] in ("unavailable", "partial_media_unverified"):
             return "No safely acquired playable source audio."
-        if not os.environ.get("SOCIAL_WATCH_ENABLE_STT"):
+        if os.environ.get("SOCIAL_WATCH_ENABLE_STT") != "1":
             return "Server STT disabled; set SOCIAL_WATCH_ENABLE_STT=1 after installing faster-whisper."
         source = self._validate_media(candidates[0], self.root / job_id)
         runner = SOCIAL / "scripts" / "audio_transcribe.py"
