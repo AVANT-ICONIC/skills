@@ -10,6 +10,8 @@ services:
       - "127.0.0.1:8000:8000"
     environment:
       SOCIAL_WATCH_BIND: "0.0.0.0"
+      # Explicit opt-in is ONLY safe with localhost-only published host port.
+      SOCIAL_WATCH_PRIVATE_UNAUTH: "1"
       SOCIAL_WATCH_PORT: "8000"
       SOCIAL_WATCH_ENABLE_STT: "0"
       XDG_CACHE_HOME: /tmp/sw-cache
