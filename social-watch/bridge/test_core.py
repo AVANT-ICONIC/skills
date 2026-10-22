@@ -91,5 +91,43 @@ class BridgeTests(unittest.TestCase):
                 bridge.sheet(name,1)
 
 
+    def test_concurrency_limit_rejects_before_any_download(self):
+        with tempfile.TemporaryDirectory() as scratch:
+            bridge = core.SocialWatchBridge(Path(scratch))
+            bridge.slots.acquire()
+            bridge.slots.acquire()
+            try:
+                with patch.object(core, "ingest") as acquisition, \
+                     self.assertRaisesRegex(RuntimeError, "already running"):
+                    bridge.resolve("https://x.com/user/status/123")
+                acquisition.assert_not_called()
+            finally:
+                bridge.slots.release()
+                bridge.slots.release()
+
+    def test_rate_limit_rejects_without_starting_download(self):
+        with tempfile.TemporaryDirectory() as scratch:
+            bridge = core.SocialWatchBridge(Path(scratch))
+            for _ in range(core.MAX_STARTS_PER_MINUTE):
+                bridge.started.append(core.time.time())
+            with patch.object(core, "ingest") as acquisition, \
+                 self.assertRaisesRegex(RuntimeError, "six new URLs"):
+                bridge.resolve("https://x.com/user/status/123")
+            acquisition.assert_not_called()
+
+    def test_active_job_survives_cache_capacity_cleanup(self):
+        with tempfile.TemporaryDirectory() as scratch:
+            bridge = core.SocialWatchBridge(Path(scratch))
+            for idx, active in enumerate((True, False)):
+                name = f"j{idx}"
+                (Path(scratch)/name).mkdir()
+                bridge.jobs[name] = {"created":core.time.time()-idx,
+                                     "active":active}
+            with patch.object(core, "MAX_JOBS", 2):
+                bridge._clean()
+            self.assertIn("j0",bridge.jobs)
+            self.assertNotIn("j1",bridge.jobs)
+
+
 if __name__ == "__main__":
     unittest.main()
