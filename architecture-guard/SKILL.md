@@ -16,6 +16,31 @@ Load the relevant [enforcement framework](references/enforcement.md). For React/
 
 A skill by itself cannot enforce anything: **only checks wired into a project's tools and CI can block violations**. Report those separately from skill guidance.
 
+## Standing craftsmanship standard for EVERY software project
+
+**Default and persistent:** For any new or existing software project, codebase architecture proposal, project scaffold, substantive implementation, refactor, or code review, apply this quality standard in addition to the repository's local conventions. Even a small code edit must not violate it. This is a standing cross-project requirement, not an optional preference the user has to repeat. Use normal judgment for casual discussion, single-line corrections and non-software artifacts: do not manufacture a complex architecture ceremony.
+
+**The human-expert test:** An experienced, exacting human developer should be able to open the repository, understand its structure and intended usage, find the single owner of each important rule, trace a behavior end to end, and change it without a cleanup expedition. Optimize for long-term comprehension and maintainable correctness, not generated file count, cleverness, abstractions or artificial brevity.
+
+### Repository organization and documentation
+
+- Treat a clear root `README.md` as a real product/developer entry point: **what it is, prerequisites, install/setup, development, tests, build, usage, architecture map and links to detailed docs**. Document only commands that actually exist and distinguish planned from implemented. Keep every example executable or explicitly illustrative.
+- Prefer `docs/` for substantive project Markdown: architecture, design decisions, developer instructions, APIs, workflows, performance notes, feature behavior and troubleshooting. Maintain one navigable `docs/README.md` or equivalent index when enough documents exist. Preserve conventional root files such as `README.md`, `AGENTS.md`, `CONTRIBUTING.md`, `CHANGELOG.md`, `LICENSE` and platform/tool-required Markdown; don't break tooling merely to move a file.
+- Keep documentation colocated with the source of truth: high-level usage/explanation in `docs/`; useful API annotations/types and **why** comments in code; concrete usage examples beside the relevant module or in curated examples/tests. Do not scatter competing `PLAN-v2.md`, `SPEC-final.md`, outdated handoffs or redundant pseudo-documentation.
+- Any user-visible behavior, public interface, CLI command, configuration or architectural boundary changed must receive a matching focused documentation/usage update in the same coherent change. Deleting or renaming functionality includes repairing affected docs and examples. Existing docs are not evidence unless checked against real code.
+- Organize code by **domain/feature and responsibility**, with explicit public boundaries and discoverable naming. One canonical implementation per behavior; no `utils2`, `managers` dumping grounds, duplicate `ServiceNew`, unexplained index barrels, abandoned implementations or files scattered by convenience. Prefer a small modular monolith until independent builds/deployments are justified.
+- Prefer typed, testable, cohesive modules and direct readable control flow. Reuse **meaning**, not superficial similarity. No needless mega-classes, broad flags, over-engineered generic frameworks, DI-container ceremony, circular dependencies or tiny files created solely to satisfy a line limit. Local helpers stay local.
+- Prefer **direct, auditable, minimal** project commands and established tooling. Avoid chains of setup scripts that generate fix scripts that invoke other wrappers. Automation is warranted when it removes genuine repeated manual work and has clear ownership, errors, usage docs and tests.
+- Keep README, architecture/docs index, real module APIs, examples, environment instructions and validation commands consistent. A repository with passing unit tests but misleading docs or orphaned modules does **not** pass the craftsmanship gate.
+
+### Verification and review standard
+
+- Before editing, locate the existing owner and actual usage. During editing, keep failures typed/explicit, invariants centralized, tests close to the risk and operational costs measured where relevant.
+- For tests and CI speed, use [Test Velocity](../test-velocity/SKILL.md) when planning/optimizing suites: aim for sub-10-second **affected local feedback where practical** while maintaining a complete independent release/PR verification path. Never assert that a full browser/mobile/integration suite can universally finish within that budget.
+- Review the completed change as an unfamiliar senior developer would: source and directory layout, naming, dependency direction, dead or duplicated code, stale docs, usage instructions, reproducible command results, security boundaries, actual rendering where applicable and avoidable runtime/build overhead.
+- A green lint or generated documentation file is not proof of quality. Record which gates actually ran and whether they were real, partial, skipped or blocked.
+- Honor existing mature conventions unless a demonstrated defect justifies a scoped migration. Do not reorganize a repository for cosmetics, generate documentation per trivial helper or expand unrelated scope.
+
 ## Operating invariants
 
 1. **Canonical ownership.** Each shared design decision and domain invariant has an authoritative owner. Search existing design tokens, component registries, imports, utilities, hooks, services, state boundaries and prior conventions before introducing anything.
@@ -54,6 +79,7 @@ A change passes Architecture Guard only when evidence establishes:
 - Affected UI uses canonical tokens/primitives or justified, reviewed exceptions.
 - Changed logic has correct module ownership and no harmful coupling introduced merely to dedupe.
 - Relevant lint/typecheck/build/tests pass (or specific blockers are declared).
+- README, docs/, module usage examples, configuration/CLI instructions and architecture index match observed behavior; changed paths have no orphaned or duplicate implementation.
 - Affected rendered screens/states are verified when UI changes; visual equivalence is **not** inferred from lint alone.
 - Actual enforcement/configuration and CI status are explicitly identified, not imagined.
 
