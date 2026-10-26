@@ -32,6 +32,8 @@ Architecture Guard is a portable implementation companion that inspects existing
 
 See [`architecture-guard/SKILL.md`](./architecture-guard/SKILL.md).
 
+**Standing across all coding projects:** the skill includes a human-grade craftsmanship contract for clearly organized modules, a maintained root README, precise usage/code documentation, substantive Markdown in `docs/` (with standard root-file exceptions), one authoritative implementation per domain behavior, and actual verification rather than AI self-certification. Load it for new repository scaffolds, implementation, substantive reviews and refactors; no special prompt is needed once the agent workflow routes to it.
+
 ### `futurequake`
 
 **Executable modifiability testing for real codebases.**
