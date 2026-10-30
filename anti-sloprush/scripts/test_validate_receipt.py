@@ -22,7 +22,34 @@ def good():
     }
 
 
+def locked_contract():
+    return {
+        "schema": "anti-sloprush-contract/v1",
+        "artifact_id": "a.png",
+        "critical_gate_ids": ["identity"],
+    }
+
+
 class ReceiptTests(unittest.TestCase):
+    def test_locked_contract_matches(self):
+        self.assertEqual(inspect(good(), locked_contract()), [])
+
+    def test_dropped_hard_gate_rejected_against_contract(self):
+        x = good()
+        contract = locked_contract()
+        contract["critical_gate_ids"].append("identity-right")
+        self.assertIn("do not match locked contract", " ".join(inspect(x, contract)))
+
+    def test_forged_replacement_gate_rejected(self):
+        x = good()
+        x["critical_gates"][0]["id"] = "generic-quality"
+        self.assertTrue(inspect(x, locked_contract()))
+
+    def test_wrong_artifact_rejected(self):
+        x = good()
+        x["artifact"]["id"] = "different.png"
+        self.assertTrue(inspect(x, locked_contract()))
+
     def test_valid_latest_artifact_pass(self):
         self.assertEqual(inspect(good()), [])
 
