@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   validate:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - name: Validate skill structure
@@ -89,6 +89,8 @@ jobs:
         run: |
           python3 game-studio/scripts/package_concept_core.py --out "$RUNNER_TEMP/game-concept-core"
           python3 game-studio/scripts/package_concept_core.py --out "$RUNNER_TEMP/game-concept-core" --check
+      - name: Test Anti-SlopRush release receipt and locked-gate controls
+        run: python3 anti-sloprush/scripts/test_validate_receipt.py
       - name: Test Gauntlet evidence validator
         run: python3 gauntlet-loop/scripts/test_validate_evidence.py
       - name: Test optional Gauntlet browser probe
