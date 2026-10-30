@@ -17,7 +17,7 @@ METHODS = {
 }
 
 
-def inspect(receipt: object) -> list[str]:
+def inspect(receipt: object, contract: object | None = None) -> list[str]:
     errors: list[str] = []
     if not isinstance(receipt, dict):
         return ["receipt must be an object"]
@@ -87,6 +87,20 @@ def inspect(receipt: object) -> list[str]:
             errors.append(f"{gate['id']}: invalid status")
         check_evidence(gate, gate["id"], gate.get("status") == "PASS")
 
+    if contract is not None:
+        if not isinstance(contract, dict) or contract.get("schema") != "anti-sloprush-contract/v1":
+            errors.append("invalid locked contract")
+        elif not isinstance(contract.get("critical_gate_ids"), list) or not contract["critical_gate_ids"]:
+            errors.append("contract missing critical_gate_ids")
+        else:
+            required = contract["critical_gate_ids"]
+            if any(not isinstance(g, str) or not g for g in required) or len(required) != len(set(required)):
+                errors.append("contract critical_gate_ids malformed or duplicated")
+            elif set(required) != seen:
+                errors.append("critical gates do not match locked contract")
+            if contract.get("artifact_id") != (artifact.get("id") if isinstance(artifact, dict) else None):
+                errors.append("artifact id does not match locked contract")
+
     for section in ("craft", "regressions"):
         value = receipt.get(section)
         if not isinstance(value, dict) or value.get("status") not in STATUS:
@@ -127,13 +141,24 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("receipt", type=Path)
     parser.add_argument("--require-pass", action="store_true")
+    parser.add_argument("--contract", type=Path, help="External frozen acceptance contract")
     args = parser.parse_args(argv)
     try:
         receipt = json.loads(args.receipt.read_text(encoding="utf-8"))
     except (OSError, ValueError) as exc:
         print(f"INVALID: {exc}", file=sys.stderr)
         return 1
-    errors = inspect(receipt)
+    if args.require_pass and args.contract is None:
+        print("INVALID: --require-pass requires --contract to prevent omitted hard gates", file=sys.stderr)
+        return 1
+    contract = None
+    if args.contract is not None:
+        try:
+            contract = json.loads(args.contract.read_text(encoding="utf-8"))
+        except (OSError, ValueError) as exc:
+            print(f"INVALID CONTRACT: {exc}", file=sys.stderr)
+            return 1
+    errors = inspect(receipt, contract)
     if errors:
         for error in errors:
             print(f"INVALID: {error}", file=sys.stderr)
