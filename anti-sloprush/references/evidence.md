@@ -1,5 +1,15 @@
 # Evidence contract and machine-readable receipt
 
+The **acceptance contract** is defined before artifact creation and should live outside the builder's mutable receipt. For hard gates in automation use a trusted, frozen contract whose integrity is enforced by the host/CI. A single agent can draft it, but must not silently weaken it after work starts. Example:
+
+```json
+{
+  "schema": "anti-sloprush-contract/v1",
+  "artifact_id": "poster.png",
+  "critical_gate_ids": ["identity-left", "identity-right"]
+}
+```
+
 The receipt is optional for tiny answers but recommended for substantial artifacts and required when using a mechanical release gate. It is **not an aesthetic oracle**. Example:
 
 ```json
@@ -32,4 +42,4 @@ The receipt is optional for tiny answers but recommended for substantial artifac
 - `CHECKPOINTED`, `BLOCKED`, `NEEDS_WORK` and `PLATEAU_UNRESOLVED` retain gaps and next action; they are not release approval.
 - Records are evidence metadata, not claims that the validator verified image identity or factual correctness.
 
-Run `python3 anti-sloprush/scripts/validate_receipt.py path/to/receipt.json --require-pass`. `0` = structurally valid PASS; `2` = valid non-PASS; `1` = invalid (including false/stale PASS). A validator verifies **claim consistency only**, never the truth of external observation records.
+Run `python3 anti-sloprush/scripts/validate_receipt.py path/to/receipt.json --contract path/to/locked-contract.json --require-pass`. `0` = structurally valid PASS; `2` = valid non-PASS; `1` = invalid (including false/stale PASS). A validator verifies **claim consistency only**, never the truth of external observation records.
