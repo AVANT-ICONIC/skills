@@ -6,6 +6,13 @@ The goal is not to publish another pile of prompts. Each skill should introduce 
 
 ## Skills
 
+### `anti-sloprush`
+
+**Single-agent-first artifact completion gate.** A generated image, code change or written deliverable is not complete until its latest revision was genuinely inspected, hard requirements were checked against a frozen contract, material defects repaired and applicable regressions verified. Includes a Python stdlib receipt validator and failure tests; no paid services or second agent required. Host-specific hooks can add mechanical gating, but Markdown alone is not a stop-hook.
+
+See [`anti-sloprush/SKILL.md`](./anti-sloprush/SKILL.md). Combine with Gauntlet Loop for detailed artifact tests; Anti-SlopRush owns release eligibility.
+
+
 ### `intent-mode`
 
 **Intent reconstruction before planning, specification, or implementation.**
@@ -130,6 +137,7 @@ Shared cross-cutting behavior belongs in one companion skill rather than being c
 ```text
 skills/
 ├── README.md
+├── anti-sloprush/       # Revision-bound single-agent release contract
 ├── architecture-guard/  # Architecture governance and React ESLint example
 ├── futurequake/        # Modifiability experiments; references, examples, metrics helper
 ├── game-studio/        # Game design; concept-core references and packaging helper
@@ -255,7 +263,7 @@ The repository follows the open Agent Skills convention: each skill is a folder 
 
 ## Status
 
-The collection currently includes eleven skills: `architecture-guard`, `futurequake`, `game-studio`, `gauntlet-loop`, `geometric-design`, `intent-mode`, `openspec-workflow`, `seo-aiseo`, `test-velocity`, `video-watch`, and `visual-output`.
+The collection currently includes twelve skills: `anti-sloprush`, `architecture-guard`, `futurequake`, `game-studio`, `gauntlet-loop`, `geometric-design`, `intent-mode`, `openspec-workflow`, `seo-aiseo`, `test-velocity`, `video-watch`, and `visual-output`.
 
 ## Development
 
