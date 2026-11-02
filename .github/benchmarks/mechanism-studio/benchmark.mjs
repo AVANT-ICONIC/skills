@@ -80,9 +80,9 @@ async function inspectPage(browser,html,out,name,isFilm){
     if(controls===0)throw new Error(name+': no live controls');
     surface={renderType:'live-loop',controls};times=['initial','interaction'];hashes=[];deterministic=null;
     await page.waitForTimeout(350);
-    hashes.push(sha256(await page.screenshot({path:path.join(out,name+'-0.png')})));
+    hashes.push(sha256(await page.screenshot({path:path.join(out,name+'-0.png'),timeout:90000,animations:'disabled'})));
     await page.locator('.bt,.tb,.hit').first().click({timeout:5000});
-    hashes.push(sha256(await page.screenshot({path:path.join(out,name+'-1.png')})));
+    hashes.push(sha256(await page.screenshot({path:path.join(out,name+'-1.png'),timeout:90000,animations:'disabled'})));
   }
   const gpu=await page.evaluate(()=>{const c=document.querySelector('canvas');const gl=c?.getContext('webgl2');if(!gl)return 'unavailable';const ext=gl.getExtension('WEBGL_debug_renderer_info');return ext?gl.getParameter(ext.UNMASKED_RENDERER_WEBGL):'masked';}).catch(()=> 'unavailable');
   await context.close();
