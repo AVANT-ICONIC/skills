@@ -11,7 +11,7 @@ import path from 'node:path';
 import {fileURLToPath,pathToFileURL} from 'node:url';
 import os from 'node:os';
 
-const PIN=JSON.parse(readFileSync(path.join(path.dirname(fileURLToPath(import.meta.url)),'upstream.lock.json'),'utf8'));
+const PIN=JSON.parse(readFileSync(path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../../../mechanism-studio/upstream.lock.json'),'utf8'));
 const sha256=bytes=>createHash('sha256').update(bytes).digest('hex');
 
 export function nominalRackTravel(teeth=32,moduleMm=4){
