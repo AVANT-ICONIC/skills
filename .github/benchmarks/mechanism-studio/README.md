@@ -13,8 +13,8 @@ This is **a benchmark harness**, not an installed or working Mechanism Studio sk
 ## Run locally (after explicit environment setup)
 
 ```bash
-node --test mechanism-studio/benchmark/benchmark.test.mjs
-node mechanism-studio/benchmark/benchmark.mjs \
+node --test .github/benchmarks/mechanism-studio/benchmark.test.mjs
+node .github/benchmarks/mechanism-studio/benchmark.mjs \
   --upstream /path/to/pinned/teardown \
   --output .artifacts/mechanism-stage0
 ```
