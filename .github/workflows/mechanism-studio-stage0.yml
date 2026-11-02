@@ -36,6 +36,14 @@ jobs:
           set -euo pipefail
           npm ci --ignore-scripts --no-audit --no-fund
           npx playwright install chromium
+      - name: Install FFmpeg for frame-accurate MP4 probing
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg
+          ffmpeg -version | head -n 1
+          ffprobe -version | head -n 1
       - name: Run compatibility checks and collect evidence
         shell: bash
         run: |
