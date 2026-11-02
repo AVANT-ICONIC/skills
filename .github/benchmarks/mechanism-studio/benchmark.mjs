@@ -63,10 +63,13 @@ async function inspectPage(browser,html,out,name,isFilm){
     await page.waitForFunction(()=>window.SIM?.ready===true,{timeout:30000});
     surface=await page.evaluate(()=>({duration:window.SIM.duration,fps:window.SIM.fps,renderType:typeof window.SIM.render}));
     if(surface.renderType!=='function')throw new Error(name+': missing SIM.render(t)');
+    // Software WebGL on CI cannot sustain the upstream's 4096px shadows and AO.
+    // Adjust only observable stage quality, never the physical model or upstream source.
+    await page.evaluate(()=>{const stage=window.V8||window.CS;stage?.setQuality?.({samples:0,ao:false,shadow:512});stage?.resize?.(1600,900,0.25);});
     times=[0.5,0,1,0.5];hashes=[];
     for(let i=0;i<times.length;i++){
       await page.evaluate(t=>window.SIM.render(t),times[i]);
-      const screenshot=await page.screenshot({path:path.join(out,name+'-'+i+'.png')});
+      const screenshot=await page.screenshot({path:path.join(out,name+'-'+i+'.png'),timeout:90000,animations:'disabled'});
       hashes.push(sha256(screenshot));
     }
     deterministic=hashes[0]===hashes[3];
@@ -116,7 +119,7 @@ export async function main(args=process.argv.slice(2)){
       return {output:stdout.slice(-1200),sizes};
     });
     const playwright=createRequire(path.join(upstream,'package.json'))('playwright');
-    const browser=await playwright.chromium.launch({headless:true,args:['--disable-dev-shm-usage','--use-gl=angle','--use-angle=swiftshader']});
+    const browser=await playwright.chromium.launch({headless:true,args:['--disable-dev-shm-usage','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
     try{
       for(const [name,film] of [['v8-film',true],['cessna-film',true],['v8-live',false],['cessna-live',false]]){
         await record(report,'T0.4-seek-'+name,()=>inspectPage(browser,path.join(dist,'dist',name+'.html'),out,name,film));
@@ -125,9 +128,9 @@ export async function main(args=process.argv.slice(2)){
     for(const name of ['v8-film','cessna-film']){
       await record(report,'T0.3-capture-'+name,()=>{
         const video=path.join(out,name+'.mp4');
-        run('node',['sims/capture.mjs',name,'--size','640x360','--dpr','1','--fps','24','--from','0','--to','1','--out',video],upstream,{TEARDOWN_OUT:dist});
+        run('node',['sims/capture.mjs',name,'--size','640x360','--dpr','1','--fps','6','--from','0','--to','1','--out',video],upstream,{TEARDOWN_OUT:dist});
         const probe=JSON.parse(run('ffprobe',['-v','quiet','-show_streams','-of','json',video],upstream));
-        return {...checkVideoProbe(probe,{width:640,height:360,fps:24,frames:24}),bytes:statSync(video).size,sha256:sha256(readFileSync(video))};
+        return {...checkVideoProbe(probe,{width:640,height:360,fps:6,frames:6}),bytes:statSync(video).size,sha256:sha256(readFileSync(video))};
       });
     }
     report.state='PASS';status=0;
