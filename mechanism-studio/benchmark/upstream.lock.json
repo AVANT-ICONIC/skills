@@ -1,8 +1,0 @@
-{
-  "schema": "avant.mechanism-upstream-lock/1",
-  "repository": "https://github.com/elvarofficial/teardown",
-  "revision": "a91262ac1109051e014662d42ecb0b7bc1f113b1",
-  "packageLockSha256": "39297ac60ef6ae04a93f4716c6bbd6ae48bbd3f116e583d6700274a113012b1e",
-  "license": "MIT",
-  "status": "candidate-awaiting-runtime-compatibility-gate"
-}
