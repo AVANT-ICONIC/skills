@@ -3,6 +3,7 @@ on:
   pull_request:
     paths:
       - '.github/benchmarks/mechanism-studio/**'
+      - 'mechanism-studio/**'
       - '.github/workflows/mechanism-studio-stage0.yml'
   workflow_dispatch:
 
@@ -22,6 +23,8 @@ jobs:
           node-version: '22'
       - name: Verify local benchmark invariants
         run: node --test .github/benchmarks/mechanism-studio/benchmark.test.mjs
+      - name: Validate portable package code
+        run: node --test mechanism-studio/tests/*.test.mjs
       - name: Fetch immutable public upstream
         shell: bash
         run: |
@@ -51,6 +54,22 @@ jobs:
           node .github/benchmarks/mechanism-studio/benchmark.mjs \
             --upstream "$RUNNER_TEMP/teardown" \
             --output "$GITHUB_WORKSPACE/.artifacts/mechanism-stage0"
+      - name: Package verified examples (preview only)
+        shell: bash
+        run: |
+          set -euo pipefail
+          for machine in v8 cessna; do
+            node mechanism-studio/scripts/package-example.mjs --upstream "$RUNNER_TEMP/teardown" --run "$GITHUB_WORKSPACE/.artifacts/mechanism-stage0" --machine "$machine" --out "$GITHUB_WORKSPACE/.artifacts/mechanism-packages/$machine"
+            node mechanism-studio/scripts/verify.mjs "$GITHUB_WORKSPACE/.artifacts/mechanism-packages/$machine"
+          done
+      - name: Preserve preview packages on successful run
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mechanism-studio-package-previews
+          path: .artifacts/mechanism-packages/
+          if-no-files-found: error
+          retention-days: 7
       - name: Preserve benchmark evidence, including failure receipts
         if: always()
         uses: actions/upload-artifact@v4

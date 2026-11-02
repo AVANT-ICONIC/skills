@@ -11,7 +11,7 @@ import path from 'node:path';
 import {fileURLToPath,pathToFileURL} from 'node:url';
 import os from 'node:os';
 
-const PIN=JSON.parse(readFileSync(path.join(path.dirname(fileURLToPath(import.meta.url)),'upstream.lock.json'),'utf8'));
+const PIN=JSON.parse(readFileSync(path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../../../mechanism-studio/upstream.lock.json'),'utf8'));
 const sha256=bytes=>createHash('sha256').update(bytes).digest('hex');
 
 export function nominalRackTravel(teeth=32,moduleMm=4){
@@ -80,9 +80,9 @@ async function inspectPage(browser,html,out,name,isFilm){
     if(controls===0)throw new Error(name+': no live controls');
     surface={renderType:'live-loop',controls};times=['initial','interaction'];hashes=[];deterministic=null;
     await page.waitForTimeout(350);
-    hashes.push(sha256(await page.screenshot({path:path.join(out,name+'-0.png')})));
+    hashes.push(sha256(await page.screenshot({path:path.join(out,name+'-0.png'),timeout:90000,animations:'disabled'})));
     await page.locator('.bt,.tb,.hit').first().click({timeout:5000});
-    hashes.push(sha256(await page.screenshot({path:path.join(out,name+'-1.png')})));
+    hashes.push(sha256(await page.screenshot({path:path.join(out,name+'-1.png'),timeout:90000,animations:'disabled'})));
   }
   const gpu=await page.evaluate(()=>{const c=document.querySelector('canvas');const gl=c?.getContext('webgl2');if(!gl)return 'unavailable';const ext=gl.getExtension('WEBGL_debug_renderer_info');return ext?gl.getParameter(ext.UNMASKED_RENDERER_WEBGL):'masked';}).catch(()=> 'unavailable');
   await context.close();

@@ -6,6 +6,13 @@ The goal is not to publish another pile of prompts. Each skill should introduce 
 
 ## Skills
 
+### `mechanism-studio`
+
+**Experimental model-driven 3D mechanism explainers and evidence-backed packaging.** Uses a pinned external Teardown engine; current executable capability packages vetted upstream V8/Cessna examples as offline HTML, MP4, poster and integrity-verified evidence. It is not yet a general-purpose generator or physically certified simulator.
+
+See [`mechanism-studio/SKILL.md`](./mechanism-studio/SKILL.md) for portable agent instructions and [its README](./mechanism-studio/README.md) for the verified preview workflow and limitations.
+
+
 ### `anti-sloprush`
 
 **Single-agent-first artifact completion gate.** A generated image, code change or written deliverable is not complete until its latest revision was genuinely inspected, hard requirements were checked against a frozen contract, material defects repaired and applicable regressions verified. Includes a Python stdlib receipt validator and failure tests; no paid services or second agent required. Host-specific hooks can add mechanical gating, but Markdown alone is not a stop-hook.
