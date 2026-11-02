@@ -50,7 +50,7 @@ async function record(report,id,func){
   catch(error){report.checks.push({id,status:'FAIL',elapsedMs:Date.now()-start,error:String(error.message||error)});throw error;}
 }
 async function inspectPage(browser,html,out,name,isFilm){
-  const context=await browser.newContext({viewport:{width:800,height:450},deviceScaleFactor:1,serviceWorkers:'block',acceptDownloads:false});
+  const context=await browser.newContext({viewport:{width:isFilm?1600:800,height:isFilm?900:450},deviceScaleFactor:1,serviceWorkers:'block',acceptDownloads:false});
   const requests=[];
   await context.route(/https?:\/\//,route=>{requests.push(route.request().url());return route.abort();});
   const page=await context.newPage();
@@ -128,7 +128,7 @@ export async function main(args=process.argv.slice(2)){
     for(const name of ['v8-film','cessna-film']){
       await record(report,'T0.3-capture-'+name,()=>{
         const video=path.join(out,name+'.mp4');
-        run('node',['sims/capture.mjs',name,'--size','640x360','--dpr','1','--fps','6','--from','0','--to','1','--out',video],upstream,{TEARDOWN_OUT:dist});
+        run('node',['sims/capture.mjs',name,'--size','1600x900','--dpr','0.4','--fps','6','--from','0','--to','1','--out',video],upstream,{TEARDOWN_OUT:dist});
         const probe=JSON.parse(run('ffprobe',['-v','quiet','-show_streams','-of','json',video],upstream));
         return {...checkVideoProbe(probe,{width:640,height:360,fps:6,frames:6}),bytes:statSync(video).size,sha256:sha256(readFileSync(video))};
       });
