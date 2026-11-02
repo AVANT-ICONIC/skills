@@ -2,7 +2,7 @@ name: Mechanism Studio Stage 0 upstream compatibility
 on:
   pull_request:
     paths:
-      - 'mechanism-studio/benchmark/**'
+      - '.github/benchmarks/mechanism-studio/**'
       - '.github/workflows/mechanism-studio-stage0.yml'
   workflow_dispatch:
 
@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   benchmark:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
@@ -21,7 +21,7 @@ jobs:
         with:
           node-version: '22'
       - name: Verify local benchmark invariants
-        run: node --test mechanism-studio/benchmark/benchmark.test.mjs
+        run: node --test .github/benchmarks/mechanism-studio/benchmark.test.mjs
       - name: Fetch immutable public upstream
         shell: bash
         run: |
@@ -40,7 +40,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          node mechanism-studio/benchmark/benchmark.mjs \
+          node .github/benchmarks/mechanism-studio/benchmark.mjs \
             --upstream "$RUNNER_TEMP/teardown" \
             --output "$GITHUB_WORKSPACE/.artifacts/mechanism-stage0"
       - name: Preserve benchmark evidence, including failure receipts
