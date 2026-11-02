@@ -37,6 +37,16 @@ function regular(path){
   if(!existsSync(path)||!lstatSync(path).isFile())throw Error('INPUT_NOT_REGULAR_FILE: '+path);
   return path;
 }
+function safePackageFile(root,rel){
+  validateRelative(rel);
+  if(!lstatSync(root).isDirectory())throw Error('PACKAGE_ROOT_REJECTED');
+  let current=root;
+  for(const component of rel.split('/').slice(0,-1)){
+    current=join(current,component);
+    if(!lstatSync(current).isDirectory())throw Error('PACKAGE_DIRECTORY_REJECTED: '+rel);
+  }
+  return join(root,rel);
+}
 function checkedDigest(path){
   const buffer=readFileSync(regular(path));return {bytes:buffer.length,sha256:sha(buffer)};
 }
@@ -55,7 +65,7 @@ export function verifyPackage(folder){
   const names=m.assets.map(a=>validateRelative(a.path));
   if(new Set(names).size!==FILES.length||FILES.some(([name])=>!names.includes(name)))throw Error('ASSET_TABLE_INCOMPLETE');
   for(const item of m.assets){
-    const actual=checkedDigest(join(root,item.path));
+    const actual=checkedDigest(safePackageFile(root,item.path));
     if(actual.bytes!==item.bytes||actual.sha256!==item.sha256)throw Error('ASSET_HASH_MISMATCH: '+item.path);
   }
   const required=['viewer','video','poster','evidence'];
