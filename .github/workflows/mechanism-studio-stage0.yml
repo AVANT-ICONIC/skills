@@ -1,0 +1,61 @@
+name: Mechanism Studio Stage 0 upstream compatibility
+on:
+  pull_request:
+    paths:
+      - '.github/benchmarks/mechanism-studio/**'
+      - '.github/workflows/mechanism-studio-stage0.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify local benchmark invariants
+        run: node --test .github/benchmarks/mechanism-studio/benchmark.test.mjs
+      - name: Fetch immutable public upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          git clone --quiet --no-checkout https://github.com/elvarofficial/teardown.git "$RUNNER_TEMP/teardown"
+          git -C "$RUNNER_TEMP/teardown" checkout --quiet --detach a91262ac1109051e014662d42ecb0b7bc1f113b1
+          test "$(git -C "$RUNNER_TEMP/teardown" rev-parse HEAD)" = 'a91262ac1109051e014662d42ecb0b7bc1f113b1'
+      - name: Install pinned build and browser dependencies
+        shell: bash
+        working-directory: ${{ runner.temp }}/teardown
+        run: |
+          set -euo pipefail
+          npm ci --ignore-scripts --no-audit --no-fund
+          npx playwright install chromium
+      - name: Install FFmpeg for frame-accurate MP4 probing
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg
+          ffmpeg -version | head -n 1
+          ffprobe -version | head -n 1
+      - name: Run compatibility checks and collect evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          node .github/benchmarks/mechanism-studio/benchmark.mjs \
+            --upstream "$RUNNER_TEMP/teardown" \
+            --output "$GITHUB_WORKSPACE/.artifacts/mechanism-stage0"
+      - name: Preserve benchmark evidence, including failure receipts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mechanism-studio-stage0-evidence
+          path: .artifacts/mechanism-stage0/
+          if-no-files-found: warn
+          retention-days: 7
