@@ -41,6 +41,16 @@ test('symlink output artifact is not accepted',()=>fixture(({dir,m,save})=>{
  unlinkSync(link);symlinkSync(target,link);save();
  assert.throws(()=>verifyPackage(dir),/INPUT_NOT_REGULAR_FILE/);
 }));
+test('symlinked parent directory cannot escape package root',()=>fixture(({dir,m,save})=>{
+ const viewer=path.join(dir,'viewer');
+ const outside=path.join(dir,'outside-viewer');
+ mkdirSync(outside);
+ writeFileSync(path.join(outside,'index.html'),'fixture:viewer/index.html');
+ rmSync(viewer,{recursive:true,force:true});
+ symlinkSync(outside,viewer,'dir');
+ save();
+ assert.throws(()=>verifyPackage(dir),/PACKAGE_DIRECTORY_REJECTED/);
+}));
 test('strict ffprobe metadata interpretation',()=>{
  const sample={streams:[{codec_type:'video',codec_name:'h264',pix_fmt:'yuv420p',nb_frames:'6',avg_frame_rate:'6/1',width:640,height:360}]};
  assert.deepEqual(checkProbe(sample),{fpsNumerator:6,fpsDenominator:1,frameCount:6,width:640,height:360});
