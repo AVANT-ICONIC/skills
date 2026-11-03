@@ -28,7 +28,9 @@ export function createSliderStage(canvas){
  for(const [color,power,x,y,z] of [[0xffffff,3.0,-60,90,105],[0x4ed1db,2.6,90,-50,80],[0xffb27a,1.3,-90,-50,70]]){
   const lamp=new THREE.DirectionalLight(color,power);lamp.position.set(x,y,z);scene.add(lamp);
  }
- const holder=new THREE.Group();scene.add(holder);
+ const holder=new THREE.Group();
+ // Keep the mechanism fully visible between editorial title, telemetry and operator console.
+ holder.scale.setScalar(.73);holder.position.set(32,6,0);scene.add(holder);
  const board=new THREE.Mesh(new THREE.BoxGeometry(L+2*R+60,98,6),materials.board);
  board.position.set((L+R)/2-6,0,-13);holder.add(board);
  const inset=new THREE.Mesh(new THREE.BoxGeometry(L+2*R+54,91,.7),materials.carbon);
