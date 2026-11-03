@@ -12,7 +12,8 @@ if(!engineArg||!dirArg||!outArg)throw Error('Usage: node verify-generated.mjs UP
 const engine=resolve(engineArg),dir=resolve(dirArg),out=resolve(outArg);
 mkdirSync(out,{recursive:true});
 const request=JSON.parse(readFileSync(join(dir,'request.json'),'utf8'));
-const html=join(out,'dist',request.id+'.html');
+const buildRoot=resolve(process.env.MECHANISM_BUILD_OUT||out);
+const html=join(buildRoot,'dist',request.id+'.html');
 const hash=b=>createHash('sha256').update(b).digest('hex');
 const receipt={schema:'avant.machine-generation-evidence/1',
   requestId:request.id,mechanism:request.mechanism,state:'NOT_EVALUATED',film:request.video,
@@ -22,7 +23,7 @@ const receipt={schema:'avant.machine-generation-evidence/1',
     'CI SwiftShader is not a physical GPU, and network interception is not OS sandbox']};
 function run(cmd,args,timeoutMs=120000){
  const r=spawnSync(cmd,args,{cwd:engine,encoding:'utf8',
-  env:{...process.env,TEARDOWN_OUT:out},maxBuffer:8*1024*1024,timeout:timeoutMs});
+  env:{...process.env,TEARDOWN_OUT:buildRoot},maxBuffer:8*1024*1024,timeout:timeoutMs});
  if(r.error||r.status!==0)throw Error('COMMAND_FAILED '+cmd+': '+String(r.error?.message||r.stderr).slice(-1500));
  return r.stdout||'';
 }
