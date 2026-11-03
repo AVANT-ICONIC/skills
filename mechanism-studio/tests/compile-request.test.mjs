@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync,existsSync,mkdtempSync,rmSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join,resolve} from 'node:path';
+import {pathToFileURL} from 'node:url';
 import {fileURLToPath} from 'node:url';
 import {compileRequest,validateRequest} from '../scripts/compile-request.mjs';
 
@@ -62,5 +63,26 @@ test('compiler generates two isolated reproducible folders with real config',()=
    assert.equal(sources.physicalCertification,false);
    assert.throws(()=>compileRequest({request:data,out}),/OUTPUT_EXISTS/);
   }
+ }finally{rmSync(d,{recursive:true,force:true});}
+});
+
+test('non-default generated slider dimensions change actual model geometry',async()=>{
+ const d=mkdtempSync(join(tmpdir(),'mechanism-variant-'));
+ try{
+  const request=clone(slider);
+  request.id='slider-crank-compact-variant';
+  request.parameters.crankRadiusMm.value=24;
+  request.parameters.rodLengthMm.value=80;
+  request.parameters.inputRpm.value=18;
+  const output=join(d,request.id);
+  compileRequest({request,out:output});
+  const imported=await import(pathToFileURL(join(output,'model.mjs')).href);
+  const tdc=imported.evaluateSliderCrank(0);
+  const bdc=imported.evaluateSliderCrank(.5);
+  assert.ok(Math.abs(tdc.strokeMm)<1e-9);
+  assert.ok(Math.abs(bdc.strokeMm-48)<1e-9);
+  assert.ok(Math.abs(tdc.pistonX-104)<1e-9);
+  assert.equal(tdc.rpm,18);
+  assert.equal(imported.CONFIG,undefined,'numeric config stays private to model import');
  }finally{rmSync(d,{recursive:true,force:true});}
 });
