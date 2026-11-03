@@ -60,6 +60,21 @@ TEARDOWN_OUT=/tmp/mechanism-geneva \
 
 Open in a supported WebGL2-capable browser from a local file. The page has orbit, zoom, speed, pause, 15° stepping, top view, illustrative x-ray opacity and exploded part-spacing.
 
+## Package the verified original machine
+
+After the real browser and encoder smoke test has passed, the original package can be exported using the **same centralized integrity verifier** as the upstream example packages. This generates the viewer, MP4, poster, evidence report, independently authored model source, references, MIT license and notice in one hash-checked folder.
+
+~~~bash
+node mechanism-studio/examples/geneva-indexer/package.mjs \
+  /path/to/pinned/teardown \
+  /path/to/passed/geneva-smoke-output \
+  /path/to/new/geneva-preview
+
+node mechanism-studio/scripts/verify.mjs /path/to/new/geneva-preview
+~~~
+
+The CLI rejects a missing required smoke-test receipt, wrong upstream commit, lockfile mismatch, invalid film metadata, or an existing target directory. `releaseReady=false` remains mandatory and no external code is downloaded by the packaging command.
+
 ## Verification and known gaps
 
 Seven pure model tests pass locally (Node.js 22). The first real CI build, interaction, screenshot, deterministic seek, offline and MP4 verification is pending; report it separately, not as already passed. CI software-GPU performance is not representative of integrated mobile devices.
