@@ -8,7 +8,7 @@ The goal is not to publish another pile of prompts. Each skill should introduce 
 
 ### `mechanism-studio`
 
-**Experimental model-driven 3D mechanism explainers and evidence-backed packaging.** Uses a pinned external Teardown engine; current executable capability packages vetted upstream V8/Cessna examples as offline HTML, MP4, poster and integrity-verified evidence. It is not yet a general-purpose generator or physically certified simulator.
+**Experimental model-driven 3D mechanism explainers and evidence-backed packaging.** Uses a pinned external Teardown engine; current executable capability packages vetted upstream V8/Cessna examples and builds one original Geneva indexing demonstrator with interactive HTML, deterministic film and integrity-verified evidence. It is not yet a general-purpose generator or physically certified simulator.
 
 See [`mechanism-studio/SKILL.md`](./mechanism-studio/SKILL.md) for portable agent instructions and [its README](./mechanism-studio/README.md) for the verified preview workflow and limitations.
 

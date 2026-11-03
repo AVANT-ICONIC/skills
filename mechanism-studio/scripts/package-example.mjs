@@ -28,6 +28,16 @@ const FILES=[
   ['LICENSES/teardown-MIT.txt','license'],
   ['NOTICE','notice']
 ];
+const ORIGINAL_FILES=[
+  ['viewer/index.html','html'],
+  ['video/film.mp4','mp4'],
+  ['preview/poster.png','png'],
+  ['evidence/report.json','json'],
+  ['evidence/model.mjs','source'],
+  ['evidence/sources.md','text'],
+  ['LICENSES/teardown-MIT.txt','license'],
+  ['NOTICE','notice']
+];
 function exec(cmd,args,cwd){
   const r=spawnSync(cmd,args,{cwd,encoding:'utf8',timeout:30000,maxBuffer:1000000});
   if(r.error||r.status!==0)throw Error('DEPENDENCY_ERROR: '+cmd+' '+(r.stderr||r.error?.message||'').slice(-500));
@@ -58,12 +68,14 @@ export function verifyPackage(folder){
   const root=resolve(folder);
   const file=regular(join(root,'manifest.json'));
   const m=JSON.parse(readFileSync(file,'utf8'));
-  if(m.schema!=='avant.mechanism-package/1'||m.tier!=='compatibility-preview')throw Error('SCHEMA_REJECTED');
+  if(m.schema!=='avant.mechanism-package/1'||!['compatibility-preview','original-preview'].includes(m.tier))throw Error('SCHEMA_REJECTED');
+  const expected=m.tier==='original-preview'?ORIGINAL_FILES:FILES;
+  if(m.tier==='original-preview'&&(m.model?.classification!=='idealized-source-grounded'||m.model?.lockingCam!==false||m.model?.verifiedEngineering!==false))throw Error('MODEL_PROVENANCE_INVALID');
   if(!VALID_ID.test(m.packageId))throw Error('PACKAGE_ID_REJECTED');
   if(m.generator?.revision!==PIN.revision||m.generator?.packageLockSha256!==PIN.packageLockSha256)throw Error('UPSTREAM_REJECTED');
-  if(!Array.isArray(m.assets)||m.assets.length!==FILES.length)throw Error('ASSET_TABLE_INVALID');
+  if(!Array.isArray(m.assets)||m.assets.length!==expected.length)throw Error('ASSET_TABLE_INVALID');
   const names=m.assets.map(a=>validateRelative(a.path));
-  if(new Set(names).size!==FILES.length||FILES.some(([name])=>!names.includes(name)))throw Error('ASSET_TABLE_INCOMPLETE');
+  if(new Set(names).size!==expected.length||expected.some(([name])=>!names.includes(name)))throw Error('ASSET_TABLE_INCOMPLETE');
   for(const item of m.assets){
     const actual=checkedDigest(safePackageFile(root,item.path));
     if(actual.bytes!==item.bytes||actual.sha256!==item.sha256)throw Error('ASSET_HASH_MISMATCH: '+item.path);

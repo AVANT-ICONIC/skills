@@ -10,7 +10,7 @@ Model first, visuals second. One authoritative state must drive geometry, charts
 
 ## Current status
 
-Experimental Stage 1: **the provided CLI packages already-built, trusted upstream V8 and Cessna examples only**. It is NOT a general-purpose text-to-machine generator or a production-certified engineering tool. Refer to the [canonical specification](https://github.com/AVANT-ICONIC/skills/pull/17). Do not claim that a skill file alone implements 3D generation.
+Experimental Stage 2: the skill packages already-built, trusted V8/Cessna examples **and ships one independently authored four-slot Geneva mechanism** with live controls, shared deterministic film model, and source-backed package. It is NOT a general-purpose text-to-machine generator or a production-certified engineering tool. Refer to the [canonical specification](https://github.com/AVANT-ICONIC/skills/pull/17). Do not claim that a skill file alone implements 3D generation.
 
 ## Activation
 
@@ -44,6 +44,18 @@ node --test mechanism-studio/tests/*.test.mjs
 ~~~
 
 The package CLI validates source revision/lock, passes of mandatory upstream compatibility checks, actual video metadata, and every copied file digest. It writes a versioned manifest, offline viewer, MP4, poster, benchmark evidence and MIT license/NOTICE. It does not clone, install, render a new machine or overwrite an existing output.
+
+## Original Geneva mechanism (implemented and CI-verified)
+
+The original machine lives at [examples/geneva-indexer](examples/geneva-indexer/README.md). Its independent kinematic model, Three.js assembly and single shared live/capture entrypoint are source-backed. The 4-slot output advances 90° per driver revolution, with a 75% ideal dwell. **No physical locking cam or forces are modeled.**
+
+Run model tests with:
+
+~~~bash
+node --test mechanism-studio/examples/geneva-indexer/model.test.mjs
+~~~
+
+Build via the **explicitly prepared, pinned upstream** external-folder builder; the example README provides the commands. [CI's Geneva workflow](../.github/workflows/mechanism-studio-geneva.yml) builds the actual HTML, captures 18 short preview film frames, exercises controls, checks pixel-level repeatability, and packages the original as an integrity-verified preview. The independent source and limitation report are in the package.
 
 ## Future implementation (not shipped)
 
