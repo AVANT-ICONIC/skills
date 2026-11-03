@@ -96,7 +96,7 @@ export function createSliderStage(canvas){
   crankGroup.position.z=explode?-13:0;
   pistonGroup.position.set(state.pistonX,0,explode?27:0);
   materials.piston.opacity=xray?.37:1;materials.piston.transparent=!!xray;materials.piston.depthWrite=!xray;
-  const angle=view==='top'?0:orbitY,d=288*zoom,target=new THREE.Vector3((L+R)/2,-12,-2);
+  const angle=view==='top'?0:orbitY,d=288*zoom,target=new THREE.Vector3((L+R)/2,innerWidth>=1600?15:-12,-2);
   axis.position.set(target.x+Math.sin(orbitX)*d,target.y+Math.sin(angle)*d,target.z+Math.cos(orbitX)*Math.cos(angle)*d);
   axis.lookAt(target);
   renderer.render(scene,axis);
