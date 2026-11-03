@@ -56,6 +56,8 @@ export function packageGenerated({upstream,generated,evidence,build,out}){
  if(receipt.state!=='PASS'||receipt.requestId!==request.id||receipt.mechanism!==request.mechanism||
    !EXPECTED_CHECKS.every(id=>receipt.checks?.some(x=>x.id===id&&x.status==='PASS')))
    throw Error('FILM_RECEIPT_INCOMPLETE');
+ if(request.video.width>=1920&&!receipt.checks.some(x=>x.id==='full-hd-layout-and-legibility'&&x.status==='PASS'))
+   throw Error('FULL_HD_LAYOUT_EVIDENCE_MISSING');
  const film=regular(join(ev,'film.mp4'));
  const streams=JSON.parse(run('ffprobe',['-v','error','-show_streams','-of','json',film],root)).streams;
  const video=streams.find(x=>x.codec_type==='video'),audio=streams.find(x=>x.codec_type==='audio');
