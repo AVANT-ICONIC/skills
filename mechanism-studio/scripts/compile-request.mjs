@@ -99,7 +99,10 @@ export function compileRequest({request,out}){
     if(normalized.mechanism==='slider-crank'){
       const vals=Object.fromEntries(Object.entries(normalized.parameters).map(([k,v])=>[k,v.value]));
       writeFileSync(join(generated,'machine-config.mjs'),
-        '/* Verified numeric configuration. No dynamically sourced code. */\nexport const CONFIG=Object.freeze('+JSON.stringify(vals,null,2)+');\n');
+        '/* Verified numeric configuration. No dynamically sourced code. */\nexport const CONFIG=Object.freeze('+JSON.stringify({...vals,video:normalized.video},null,2)+');\n');
+    }else{
+      writeFileSync(join(generated,'machine-config.mjs'),
+        '/* Verified film profile, no executable user source. */\nexport const CONFIG=Object.freeze('+JSON.stringify({video:normalized.video},null,2)+');\n');
     }
     writeFileSync(join(generated,'request.json'),JSON.stringify(normalized,null,2)+'\n');
     writeFileSync(join(generated,'source-register.json'),JSON.stringify({
@@ -115,7 +118,7 @@ export function compileRequest({request,out}){
       'This illustrative mechanism is not engineering-certified. Run actual model/browser/video gates separately.\n');
     renameSync(generated,dest);
     return {directory:dest,id:normalized.id,mechanism:normalized.mechanism,
-      files:paths.length+5+(normalized.mechanism==='slider-crank'?1:0),
+      files:8,
       film:normalized.video,sourceCount:normalized.references.length,
       buildVerified:false,renderVerified:false,releaseReady:false};
   }catch(e){rmSync(generated,{recursive:true,force:true});throw e;}
