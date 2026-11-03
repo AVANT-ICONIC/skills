@@ -130,8 +130,8 @@ export function createGenevaStage(canvas){
     plate.material[0].opacity=xray?.36:1;
     plate.material[0].transparent=xray;
     plate.material[0].depthWrite=!xray;
-    const t=view==='top'?0:orbitY,a=orbitX,dist=169*zoom;
-    const target=new THREE.Vector3(23,0,-1);
+    const t=view==='top'?0:orbitY,a=orbitX,dist=202*zoom;
+    const target=new THREE.Vector3(23,-5,-1);
     camera.position.set(target.x+Math.sin(a)*dist,target.y+Math.sin(t)*dist,target.z+Math.cos(a)*Math.cos(t)*dist);
     camera.lookAt(target);
     renderer.render(scene,camera);
