@@ -72,7 +72,7 @@ export function validateRequest(input){
   }
   const video=toObject(x.video,'VIDEO');
   if(![24,25,30].includes(video.fps)||!Number.isInteger(video.durationSeconds)||video.durationSeconds<6||video.durationSeconds>30||
-    video.width!==1280||video.height!==720)throw Error('VIDEO_PROFILE_UNSUPPORTED');
+    ![[1280,720],[1920,1080]].some(([w,h])=>video.width===w&&video.height===h))throw Error('VIDEO_PROFILE_UNSUPPORTED');
   const normalized={
     schema:x.schema,id:x.id,mechanism:x.mechanism,
     description:x.description.trim(),classification:x.classification,
