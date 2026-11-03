@@ -51,6 +51,35 @@ test('symlinked parent directory cannot escape package root',()=>fixture(({dir,m
  save();
  assert.throws(()=>verifyPackage(dir),/PACKAGE_DIRECTORY_REJECTED/);
 }));
+test('original preview shares hash verification and requires honest model classification',()=>{
+ const dir=mkdtempSync(path.join(tmpdir(),'mechanism-original-test-'));
+ try{
+  const paths=['viewer/index.html','video/film.mp4','preview/poster.png',
+    'evidence/report.json','evidence/model.mjs','evidence/sources.md',
+    'LICENSES/teardown-MIT.txt','NOTICE'];
+  const assets=paths.map(p=>{
+   const b=Buffer.from('original fixture '+p),file=path.join(dir,p);
+   mkdirSync(path.dirname(file),{recursive:true});writeFileSync(file,b);
+   return {path:p,bytes:b.length,sha256:h(b)};
+  });
+  const m={
+   schema:'avant.mechanism-package/1',packageId:'geneva-test-original',
+   tier:'original-preview',releaseReady:false,
+   model:{classification:'idealized-source-grounded',lockingCam:false,verifiedEngineering:false},
+   generator:{revision:'a91262ac1109051e014662d42ecb0b7bc1f113b1',
+    packageLockSha256:'39297ac60ef6ae04a93f4716c6bbd6ae48bbd3f116e583d6700274a113012b1e'},
+   timebase:{fpsNumerator:6,fpsDenominator:1,frameCount:18},
+   entrypoints:{viewer:paths[0],video:paths[1],poster:paths[2],evidence:paths[3]},assets
+  };
+  const save=()=>writeFileSync(path.join(dir,'manifest.json'),JSON.stringify(m));
+  save();assert.equal(verifyPackage(dir).files,8);
+  m.model.lockingCam=true;save();
+  assert.throws(()=>verifyPackage(dir),/MODEL_PROVENANCE_INVALID/);
+  m.model.lockingCam=false;save();
+  writeFileSync(path.join(dir,'evidence/model.mjs'),'tampered');
+  assert.throws(()=>verifyPackage(dir),/ASSET_HASH_MISMATCH/);
+ }finally{rmSync(dir,{recursive:true,force:true});}
+});
 test('strict ffprobe metadata interpretation',()=>{
  const sample={streams:[{codec_type:'video',codec_name:'h264',pix_fmt:'yuv420p',nb_frames:'6',avg_frame_rate:'6/1',width:640,height:360}]};
  assert.deepEqual(checkProbe(sample),{fpsNumerator:6,fpsDenominator:1,frameCount:6,width:640,height:360});
