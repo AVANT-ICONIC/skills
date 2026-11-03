@@ -1,4 +1,4 @@
-name: Mechanism Studio sourced brief generation + 720p film
+name: Mechanism Studio sourced generation + Full HD film
 on:
   pull_request:
     paths:
@@ -8,7 +8,6 @@ on:
       - 'mechanism-studio/scripts/package-generated.mjs'
       - 'mechanism-studio/scripts/package-example.mjs'
       - 'mechanism-studio/tests/**'
-      - 'mechanism-studio/tests/compile-request.test.mjs'
       - 'mechanism-studio/requests/**'
       - 'mechanism-studio/examples/slider-crank/**'
       - 'mechanism-studio/examples/geneva-indexer/**'
@@ -82,7 +81,7 @@ jobs:
               "$RUNNER_TEMP/teardown" "$RUNNER_TEMP/generated/$id" \
               "$GITHUB_WORKSPACE/.artifacts/generated/evidence/$id"
           done
-      - name: Package final sourced 720p24 film, original foley and evidence
+      - name: Package final sourced 1080p30 film, original foley and evidence
         shell: bash
         run: |
           set -euo pipefail
@@ -105,7 +104,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: mechanism-studio-sourced-720p-film
+          name: mechanism-studio-sourced-fullhd-film
           path: .artifacts/generated/
           if-no-files-found: warn
           retention-days: 7
