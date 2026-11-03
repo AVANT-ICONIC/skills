@@ -4,7 +4,7 @@ import {stateAtTime,evaluateSliderCrank} from './model.mjs';
 import {createSliderStage} from './stage.js';
 
 const format=(x,n=1)=>x.toFixed(n);
-const DEFAULTS={duration:8,fps:24,theme:'dark',accent:'#ffab76',
+const DEFAULTS={duration:CONFIG.video.durationSeconds,fps:CONFIG.video.fps,theme:'dark',accent:'#ffab76',
   hud:{enabled:false,title:'SLIDER CRANK / 01',subtitle:'MECHANISM STUDIO'},
   director:{enabled:false},
   stages:[{at:0,name:'TDC'},{at:1,name:'POWER / OUT'},{at:2,name:'BDC'},{at:3,name:'RETURN'}]};
