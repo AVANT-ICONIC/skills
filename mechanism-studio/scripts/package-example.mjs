@@ -38,6 +38,18 @@ const ORIGINAL_FILES=[
   ['LICENSES/teardown-MIT.txt','license'],
   ['NOTICE','notice']
 ];
+const GENERATED_FILES=[
+  ['viewer/index.html','html'],
+  ['video/film.mp4','mp4'],
+  ['preview/poster.png','png'],
+  ['preview/contact-sheet.png','png'],
+  ['evidence/report.json','json'],
+  ['evidence/request.json','json'],
+  ['evidence/source-register.json','json'],
+  ['evidence/model.mjs','source'],
+  ['LICENSES/teardown-MIT.txt','license'],
+  ['NOTICE','notice']
+];
 function exec(cmd,args,cwd){
   const r=spawnSync(cmd,args,{cwd,encoding:'utf8',timeout:30000,maxBuffer:1000000});
   if(r.error||r.status!==0)throw Error('DEPENDENCY_ERROR: '+cmd+' '+(r.stderr||r.error?.message||'').slice(-500));
@@ -68,9 +80,12 @@ export function verifyPackage(folder){
   const root=resolve(folder);
   const file=regular(join(root,'manifest.json'));
   const m=JSON.parse(readFileSync(file,'utf8'));
-  if(m.schema!=='avant.mechanism-package/1'||!['compatibility-preview','original-preview'].includes(m.tier))throw Error('SCHEMA_REJECTED');
-  const expected=m.tier==='original-preview'?ORIGINAL_FILES:FILES;
+  if(m.schema!=='avant.mechanism-package/1'||!['compatibility-preview','original-preview','generated-study-preview'].includes(m.tier))throw Error('SCHEMA_REJECTED');
+  const expected=m.tier==='original-preview'?ORIGINAL_FILES:m.tier==='generated-study-preview'?GENERATED_FILES:FILES;
   if(m.tier==='original-preview'&&(m.model?.classification!=='idealized-source-grounded'||m.model?.lockingCam!==false||m.model?.verifiedEngineering!==false))throw Error('MODEL_PROVENANCE_INVALID');
+  if(m.tier==='generated-study-preview'&&
+    (m.model?.classification!=='reference-grounded'||m.model?.verifiedEngineering!==false))
+    throw Error('MODEL_PROVENANCE_INVALID');
   if(!VALID_ID.test(m.packageId))throw Error('PACKAGE_ID_REJECTED');
   if(m.generator?.revision!==PIN.revision||m.generator?.packageLockSha256!==PIN.packageLockSha256)throw Error('UPSTREAM_REJECTED');
   if(!Array.isArray(m.assets)||m.assets.length!==expected.length)throw Error('ASSET_TABLE_INVALID');
@@ -79,6 +94,20 @@ export function verifyPackage(folder){
   for(const item of m.assets){
     const actual=checkedDigest(safePackageFile(root,item.path));
     if(actual.bytes!==item.bytes||actual.sha256!==item.sha256)throw Error('ASSET_HASH_MISMATCH: '+item.path);
+  }
+  if(m.tier==='generated-study-preview'){
+    const request=JSON.parse(readFileSync(safePackageFile(root,'evidence/request.json'),'utf8'));
+    const sources=JSON.parse(readFileSync(safePackageFile(root,'evidence/source-register.json'),'utf8'));
+    if(request.id!==m.packageId||request.schema!=='avant.mechanism-request/1'||
+      !Array.isArray(request.references)||request.references.length<1||
+      sources.requestId!==request.id||sources.sourcesFetched!==false||
+      sources.physicalCertification!==false||request.mechanism!==m.model.mechanism)
+      throw Error('SOURCE_MANIFEST_MISMATCH');
+    if(request.video?.fps!==m.timebase?.fpsNumerator||
+      request.video?.durationSeconds*request.video?.fps!==m.timebase?.frameCount||
+      request.video?.width!==m.timebase?.width||
+      request.video?.height!==m.timebase?.height)
+      throw Error('FILM_REQUEST_MISMATCH');
   }
   const required=['viewer','video','poster','evidence'];
   for(const k of required){
