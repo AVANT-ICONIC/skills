@@ -1,6 +1,13 @@
 # Mechanism Studio: implementation tasks and proof gates
 
-Status: **PLANNED — NONE OF THESE TASKS ARE IMPLEMENTED OR VERIFIED**
+Status: **IMPLEMENTATION UNDER REVIEW — partial receipts exist in separate, unmerged PRs; no full MVP release gate has passed.**
+
+### Evidence checkpoint (2026-11-03)
+
+- [PR #18: pinned upstream compatibility](https://github.com/AVANT-ICONIC/skills/pull/18): GitHub CI verified four built V8/Cessna HTML examples, browser seeking and controls, two short H.264 clips, lock hash and numerical pinion invariant. Integrated hardware GPU and OS-level sandbox are NOT_EVALUATED.
+- [PR #19: public portable skill and example packaging](https://github.com/AVANT-ICONIC/skills/pull/19): CI verified two preview packages with viewer/video/evidence and SHA-256 receipts. A generalized reference-to-model generator, explicit dependency doctor, and production film are not yet implemented.
+- [PR #20: original Geneva indexer](https://github.com/AVANT-ICONIC/skills/pull/20): 7 pure kinematic tests, 10 real browser/video smoke checks, a source-grounded original 3D viewer and an 18-frame H.264 sample. The output is packaged with a verified source and license/evidence manifest. Physical locking cam, full production visual QA, mobile GPU, and sandbox gates remain open.
+- The checkboxes below are **full milestone acceptance tasks**, not a count of draft source commits. Keep a task unchecked until all its specified acceptance evidence is available and reviewed, even if substantial partial work exists.
 Specification: [proposal](proposal.md), [requirements](requirements.md), [design](design.md).
 Task ordering is intentionally narrow. Every milestone is a separate reviewable change; follow existing AVANT-ICONIC skills rules and keep all executable implementation outside the specification PR.
 
