@@ -151,7 +151,7 @@ try{
    const probe=JSON.parse(run('ffprobe',['-v','quiet','-show_streams','-show_format','-of','json',film]));
    const v=probe.streams?.find(s=>s.codec_type==='video');
    const a=probe.streams?.find(s=>s.codec_type==='audio');
-   assert.equal(v?.codec_name,'h264');assert.equal(v.width,1280);assert.equal(v.height,720);
+   assert.equal(v?.codec_name,'h264');assert.equal(v.width,request.video.width);assert.equal(v.height,request.video.height);
    assert.equal(Number(v.nb_frames),request.video.fps*request.video.durationSeconds);
    assert.equal(a?.codec_name,'aac');assert.equal(Number(a.sample_rate),48000);
    assert.ok(Number(probe.format?.duration)>=request.video.durationSeconds-.02);
