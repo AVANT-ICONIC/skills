@@ -2,7 +2,7 @@
 
 A **public, portable** Agent Skill for source-grounded, model-driven mechanical explainers.
 
-Current executable functionality: verify and package **already generated** Teardown V8 and Cessna example artifacts into standalone compatibility previews: HTML, MP4, poster, hash-verified evidence and upstream notice. It is **not yet** an autonomous machine generator.
+Current executable functionality: verify and package trusted Teardown V8/Cessna examples **and generate one original, source-grounded Geneva indexing machine** with a shared live/film entrypoint. The Geneva output includes HTML, MP4, poster, model source, provenance and hash-verified evidence. It is **not yet** an autonomous arbitrary-machine generator.
 
 ## Setup and prerequisites
 
@@ -23,6 +23,21 @@ node mechanism-studio/scripts/verify.mjs /path/to/new/v8-preview
 
 The Stage 0 output contains report.json, machine-film.mp4, machine-live-1.png and upstream-dist/dist/machine-live.html, where machine is v8 or cessna. Generate it using the checked-in [benchmark](../.github/benchmarks/mechanism-studio/README.md) on an explicitly prepared, isolated host.
 
+## Original four-slot Geneva reference machine
+
+See [the original Geneva source, geometry, tests and honest limitations](examples/geneva-indexer/README.md). The packaged original is **not** a manufacturing-ready mechanism: it models exact idealized 90° indexing and dwell but not physical locking-cam forces. The first CI-tested film is 18 frames at 6 fps, H.264, 640×360.
+
+~~~bash
+node --test mechanism-studio/examples/geneva-indexer/model.test.mjs
+# Build from the explicitly prepared Teardown checkout:
+TEARDOWN_OUT=/tmp/geneva-out node sims/build.mjs /absolute/path/to/skills/mechanism-studio/examples/geneva-indexer
+# After the original Geneva smoke test has passed:
+node mechanism-studio/examples/geneva-indexer/package.mjs /path/to/pinned/teardown /tmp/geneva-out /path/to/new/geneva-preview
+node mechanism-studio/scripts/verify.mjs /path/to/new/geneva-preview
+~~~
+
+[Original Geneva CI workflow](../.github/workflows/mechanism-studio-geneva.yml) generates real browser frames, interactions, video and a portable original-preview package.
+
 ## Package format
 
 ~~~text
@@ -40,4 +55,4 @@ The manifest records timebase, entrypoints, upstream immutable revision, source 
 
 **Preview limitations:** short low-fps capture, software GPU, borrowed upstream mechanisms, no independent hardware benchmark, incomplete process sandbox proof and attribution audit. releaseReady=false always.
 
-The implementation plan lives in [PR #17](https://github.com/AVANT-ICONIC/skills/pull/17). Downstream consumer design is tracked separately in [Motion OS #6](https://github.com/AVANT-ICONIC/motion-os/pull/6) and [ICONICUT #2](https://github.com/AVANT-ICONIC/iconicut/pull/2). Next, a safe generated-machine adapter and one new source-grounded mechanism need to be built and verified before the actual standalone MVP is complete.
+The implementation plan lives in [PR #17](https://github.com/AVANT-ICONIC/skills/pull/17). Downstream consumer design is tracked separately in [Motion OS #6](https://github.com/AVANT-ICONIC/motion-os/pull/6) and [ICONICUT #2](https://github.com/AVANT-ICONIC/iconicut/pull/2). The first original reference mechanism has now been built and verified; remaining MVP gates include generalized reference-to-machine generation, a full-duration production video, independent hardware-GPU performance, and host-level sandbox isolation.
