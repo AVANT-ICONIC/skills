@@ -7,6 +7,7 @@ import {mkdirSync,readFileSync,writeFileSync,existsSync,statSync} from 'node:fs'
 import {resolve,join} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import assert from 'node:assert/strict';
+import {writeMechanicalWav} from './audio.mjs';
 const [engineArg,dirArg,outArg]=process.argv.slice(2);
 if(!engineArg||!dirArg||!outArg)throw Error('Usage: node verify-generated.mjs UPSTREAM GENERATED_DIR OUTPUT_DIR');
 const engine=resolve(engineArg),dir=resolve(dirArg),out=resolve(outArg);
@@ -137,6 +138,26 @@ try{
    }
    assert.ok(new Set(names.map(x=>x.sha256)).size>=3,'FILM_VISUALLY_STATIC');
    return {codec:stream.codec_name,width:stream.width,height:stream.height,frames:stream.nb_frames,fps:stream.avg_frame_rate,decoded:names};
+  });
+  await check('original-foley-and-final-film-mux',()=>{
+   const video=join(out,'film-video-only.mp4');
+   const wav=join(out,'original-mechanical-foley.wav');
+   const film=join(out,'film.mp4');
+   const sound=writeMechanicalWav(wav,{durationSeconds:request.video.durationSeconds,
+     inputRpm:request.parameters.inputRpm.value});
+   run('ffmpeg',['-v','error','-y','-i',video,'-i',wav,
+      '-c:v','copy','-c:a','aac','-b:a','160k','-ar','48000',
+      '-shortest','-movflags','+faststart',film],240000);
+   const probe=JSON.parse(run('ffprobe',['-v','quiet','-show_streams','-show_format','-of','json',film]));
+   const v=probe.streams?.find(s=>s.codec_type==='video');
+   const a=probe.streams?.find(s=>s.codec_type==='audio');
+   assert.equal(v?.codec_name,'h264');assert.equal(v.width,1280);assert.equal(v.height,720);
+   assert.equal(Number(v.nb_frames),request.video.fps*request.video.durationSeconds);
+   assert.equal(a?.codec_name,'aac');assert.equal(Number(a.sample_rate),48000);
+   assert.ok(Number(probe.format?.duration)>=request.video.durationSeconds-.02);
+   return {videoBytes:statSync(film).size,sha256:hash(readFileSync(film)),
+      audioCodec:a.codec_name,videoCodec:v.codec_name,sourceSound:sound.basis,
+      durationSeconds:Number(probe.format.duration)};
   });
  }
  receipt.state='PASS';
