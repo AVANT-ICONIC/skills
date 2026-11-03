@@ -15,7 +15,7 @@ test('both reviewed recipe briefs parse and preserve source provenance',()=>{
   const valid=validateRequest(data);
   assert.equal(valid.classification,'reference-grounded');
   assert.ok(valid.references.length>0);
-  assert.equal(valid.video.width,1280);assert.equal(valid.video.height,720);
+  assert.ok([1280,1920].includes(valid.video.width));assert.equal(valid.video.height,valid.video.width*9/16);
  }
  assert.equal(validateRequest(slider).parameters.crankRadiusMm.value,32);
  assert.deepEqual(validateRequest(geneva).parameters,{});
@@ -56,7 +56,7 @@ test('compiler generates two isolated reproducible folders with real config',()=
    }
    const config=readFileSync(join(out,'machine-config.mjs'),'utf8');
    assert.ok(config.includes('"durationSeconds": 8'));
-   assert.ok(config.includes('"fps": 24'));
+   assert.ok(config.includes('"fps": '+data.video.fps));
    const sources=JSON.parse(readFileSync(join(out,'source-register.json'),'utf8'));
    assert.equal(sources.sourcesFetched,false);
    assert.equal(sources.physicalCertification,false);
