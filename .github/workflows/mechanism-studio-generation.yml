@@ -4,6 +4,10 @@ on:
     paths:
       - 'mechanism-studio/scripts/compile-request.mjs'
       - 'mechanism-studio/scripts/verify-generated.mjs'
+      - 'mechanism-studio/scripts/audio.mjs'
+      - 'mechanism-studio/scripts/package-generated.mjs'
+      - 'mechanism-studio/scripts/package-example.mjs'
+      - 'mechanism-studio/tests/**'
       - 'mechanism-studio/tests/compile-request.test.mjs'
       - 'mechanism-studio/requests/**'
       - 'mechanism-studio/examples/slider-crank/**'
@@ -28,7 +32,7 @@ jobs:
       - name: Verify source-grounded request validation and both mathematical models
         run: |
           set -euo pipefail
-          node --test mechanism-studio/tests/compile-request.test.mjs
+          node --test mechanism-studio/tests/compile-request.test.mjs mechanism-studio/tests/audio.test.mjs mechanism-studio/tests/package-example.test.mjs
           node --test mechanism-studio/examples/slider-crank/model.test.mjs
           node --test mechanism-studio/examples/geneva-indexer/model.test.mjs
       - name: Compile two distinct mechanism families from checked source briefs
@@ -78,6 +82,25 @@ jobs:
               "$RUNNER_TEMP/teardown" "$RUNNER_TEMP/generated/$id" \
               "$GITHUB_WORKSPACE/.artifacts/generated/evidence/$id"
           done
+      - name: Package final sourced 720p24 film, original foley and evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          node mechanism-studio/scripts/package-generated.mjs \
+            "$RUNNER_TEMP/teardown" \
+            "$RUNNER_TEMP/generated/slider-crank-study-002" \
+            "$GITHUB_WORKSPACE/.artifacts/generated/evidence/slider-crank-study-002" \
+            "$GITHUB_WORKSPACE/.artifacts/generated" \
+            "$GITHUB_WORKSPACE/.artifacts/generated-study-package"
+          node mechanism-studio/scripts/verify.mjs "$GITHUB_WORKSPACE/.artifacts/generated-study-package"
+      - name: Publish verified generated-study CI package
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mechanism-studio-sourced-film-package
+          path: .artifacts/generated-study-package/
+          if-no-files-found: error
+          retention-days: 7
       - name: Upload source-brief generation evidence and encoded video
         if: always()
         uses: actions/upload-artifact@v4
