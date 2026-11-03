@@ -1,0 +1,49 @@
+{
+  "schema": "avant.mechanism-request/1",
+  "id": "slider-crank-study-002",
+  "mechanism": "slider-crank",
+  "description": "Original in-line slider crank demonstration with deterministic kinematics and cinematic instrument readouts.",
+  "classification": "reference-grounded",
+  "references": [
+    {
+      "id": "planex",
+      "type": "technical-reference",
+      "title": "Planex2D slider-crank formula and displacement curves",
+      "url": "https://planex2d.org/docs/examples/slider-crank.html",
+      "redistribution": "link-only"
+    },
+    {
+      "id": "engineeringkit",
+      "type": "technical-reference",
+      "title": "EngineeringKit exact ideal slider crank kinematics",
+      "url": "https://cpoli.github.io/engineeringkit/api/mechanical_engineering.html",
+      "redistribution": "link-only"
+    }
+  ],
+  "parameters": {
+    "crankRadiusMm": {
+      "value": 32,
+      "unit": "mm",
+      "provenance": "assumed",
+      "note": "Illustrative demonstrator size; no physical part measurement is claimed."
+    },
+    "rodLengthMm": {
+      "value": 105,
+      "unit": "mm",
+      "provenance": "assumed",
+      "note": "Illustrative rod length with feasible l/r ratio, not a manufacturer's specification."
+    },
+    "inputRpm": {
+      "value": 15,
+      "unit": "rpm",
+      "provenance": "assumed",
+      "note": "Pedagogical film speed selected for visible full cycles; not a real engine operating speed."
+    }
+  },
+  "video": {
+    "fps": 24,
+    "durationSeconds": 8,
+    "width": 1280,
+    "height": 720
+  }
+}
