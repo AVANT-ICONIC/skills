@@ -106,6 +106,30 @@ try{
    }
    return {stepTurns:1/24,views:['top-view','xray','explode']};
   });
+  if(request.mechanism==='slider-crank'&&request.video.width>=1920){
+   await check('full-hd-layout-and-legibility',async()=>{
+    await page.setViewportSize({width:1920,height:1080});
+    await page.evaluate(()=>window.SIM.render(2));
+    const layout=await page.evaluate(()=>{
+      const box=name=>{
+        const r=document.querySelector(name).getBoundingClientRect();
+        return {left:r.left,right:r.right,top:r.top,bottom:r.bottom,width:r.width,height:r.height};
+      };
+      return {telemetry:box('.telemetry'),controls:box('.controls'),
+        title:box('.titlegroup'),
+        headingPixels:parseFloat(getComputedStyle(document.querySelector('.titlegroup h1')).fontSize),
+        headerPixels:parseFloat(getComputedStyle(document.querySelector('.telemetry-header')).fontSize)};
+    });
+    assert.ok(layout.controls.right<layout.telemetry.left-10,'DASHBOARD_OVERLAP');
+    assert.ok(layout.title.right<layout.telemetry.left,'TITLE_TELEMETRY_OVERLAP');
+    assert.ok(layout.headingPixels>=64,'TITLE_TOO_SMALL');
+    assert.ok(layout.headerPixels>=11,'INSTRUMENT_LABELS_TOO_SMALL');
+    assert.ok(layout.controls.bottom<=1080&&layout.telemetry.bottom<=1080,'LAYOUT_OFFSCREEN');
+    const png=await page.screenshot({path:join(out,'layout-1080.png'),timeout:90000});
+    assert.ok(png.length>20000);
+    return layout;
+   });
+  }
   await check('network-and-console-gate',()=>{assert.deepEqual(errors,[]);assert.deepEqual(remote,[]);return{errors,remote};});
   await context.close();
  }finally{await browser.close();}
