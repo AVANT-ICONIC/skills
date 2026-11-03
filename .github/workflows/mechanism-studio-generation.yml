@@ -72,10 +72,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          export MECHANISM_BUILD_OUT="$GITHUB_WORKSPACE/.artifacts/generated"
           for id in slider-crank-study-002 geneva-four-slot-study-001; do
             node mechanism-studio/scripts/verify-generated.mjs \
               "$RUNNER_TEMP/teardown" "$RUNNER_TEMP/generated/$id" \
-              "$GITHUB_WORKSPACE/.artifacts/generated"
+              "$GITHUB_WORKSPACE/.artifacts/generated/evidence/$id"
           done
       - name: Upload source-brief generation evidence and encoded video
         if: always()
