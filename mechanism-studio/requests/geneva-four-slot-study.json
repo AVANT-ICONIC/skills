@@ -1,0 +1,23 @@
+{
+  "schema": "avant.mechanism-request/1",
+  "id": "geneva-four-slot-study-001",
+  "mechanism": "geneva-4",
+  "description": "Original ideal four-slot Geneva intermittent index mechanism using independently derived classic geometry.",
+  "classification": "reference-grounded",
+  "references": [
+    {
+      "id": "planex-geneva",
+      "type": "technical-reference",
+      "title": "Planex2D four-slot Geneva intermittent motion and locking discussion",
+      "url": "https://planex2d.org/docs/examples/geneva-drive.html",
+      "redistribution": "link-only"
+    }
+  ],
+  "parameters": {},
+  "video": {
+    "fps": 24,
+    "durationSeconds": 8,
+    "width": 1280,
+    "height": 720
+  }
+}
