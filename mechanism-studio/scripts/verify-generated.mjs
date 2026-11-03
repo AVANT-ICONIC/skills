@@ -170,7 +170,7 @@ try{
    const sound=writeMechanicalWav(wav,{durationSeconds:request.video.durationSeconds,
      inputRpm:request.parameters.inputRpm.value});
    run('ffmpeg',['-v','error','-y','-i',video,'-i',wav,
-      '-c:v','copy','-c:a','aac','-b:a','160k','-ar','48000',
+      '-c:v','copy','-af','volume=8dB','-c:a','aac','-b:a','160k','-ar','48000',
       '-shortest','-movflags','+faststart',film],240000);
    const probe=JSON.parse(run('ffprobe',['-v','quiet','-show_streams','-show_format','-of','json',film]));
    const v=probe.streams?.find(s=>s.codec_type==='video');
