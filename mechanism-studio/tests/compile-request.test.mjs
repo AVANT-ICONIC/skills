@@ -40,7 +40,7 @@ test('unsupported machines and arbitrary code parameters never reach templates',
 });
 test('film dimensions and timebase must use supported profile',()=>{
  const a=clone(slider);a.video.fps=7;assert.throws(()=>validateRequest(a),/VIDEO_PROFILE_UNSUPPORTED/);
- const b=clone(slider);b.video.width=1920;assert.throws(()=>validateRequest(b),/VIDEO_PROFILE_UNSUPPORTED/);
+ const b=clone(slider);b.video.width=1536;assert.throws(()=>validateRequest(b),/VIDEO_PROFILE_UNSUPPORTED/);
  const c=clone(slider);c.video.durationSeconds=50;assert.throws(()=>validateRequest(c),/VIDEO_PROFILE_UNSUPPORTED/);
 });
 test('compiler generates two isolated reproducible folders with real config',()=>{
