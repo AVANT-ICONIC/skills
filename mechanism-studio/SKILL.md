@@ -10,7 +10,7 @@ Model first, visuals second. One authoritative state must drive geometry, charts
 
 ## Current status
 
-Experimental Stage 2: the skill packages already-built, trusted V8/Cessna examples **and ships one independently authored four-slot Geneva mechanism** with live controls, shared deterministic film model, and source-backed package. It is NOT a general-purpose text-to-machine generator or a production-certified engineering tool. Refer to the [canonical specification](https://github.com/AVANT-ICONIC/skills/pull/17). Do not claim that a skill file alone implements 3D generation.
+Experimental Stage 2: the skill packages vetted V8/Cessna upstream examples, ships the independent four-slot Geneva demonstrator, **and compiles strictly validated source briefs into either Geneva or parameterized slider-crank scenes**. It renders a tested **1080p30 film with original synthetic mechanical audio**, and packages source provenance alongside viewer/film evidence. This is a bounded reviewed-recipe compiler, NOT arbitrary text/photo-to-CAD or a production-certified engineering tool. Refer to the [canonical specification](https://github.com/AVANT-ICONIC/skills/pull/17). Do not claim that a skill file alone implements 3D generation.
 
 ## Activation
 
@@ -23,7 +23,7 @@ Use for moving mechanical explainers, cutaways, interactive machines, simulation
 3. Use the immutable [upstream lock](upstream.lock.json). Do not fetch latest, vendor or fork the Teardown runtime automatically; an agent must prepare dependencies explicitly in an isolated workspace.
 4. Generated JS and native dependencies are untrusted. A browser request filter is not an OS-level sandbox. Never execute unreviewed customer sources with privileged filesystem access, credentials or outbound access.
 5. Inspect real screenshots, UI control behavior, film frames, model invariants, provenance, rights and decoded media before completing. Mark unexecuted gates NOT_EVALUATED.
-6. Existing package outputs are **compatibility previews** and always declare releaseReady=false. No autonomous deployment or publication.
+6. All generated studies and compatibility outputs are **review previews** with mandatory releaseReady=false. Hardware GPU, certified mechanics and OS-level isolation remain unverified. No automatic deployment or publication.
 7. Motion OS, ICONICUT, Blender, a Claude-specific command and paid providers are never mandatory for the standalone skill.
 
 ## Existing implementation: package a vetted example
@@ -62,3 +62,21 @@ Build via the **explicitly prepared, pinned upstream** external-folder builder; 
 Reference -> numerical/kinematic checks -> isolated generated machine folder -> pinned Teardown adapter -> interactive controls and film timeline -> reproducible capture -> inspect decoded frames and offline behavior -> full package with source/rights and evidence receipts. A new original mechanism and full production-quality video are still required for standalone MVP completion.
 
 Read [runtime and package details](README.md) and the pending technical design in specification PR #17. When prerequisites or evidence are absent, fail explicitly rather than manufacturing success.
+
+
+## Structured generation workflow (reviewed recipes only)
+
+Use [machine brief format and documented commands](requests/README.md). A source-backed JSON request must identify a supported mechanism family, verified-safe numeric units/ranges, provenance classes and technical reference URLs. **References are recorded, not automatically fetched or asserted true.** All guessed dimensions are labeled assumed or illustrative.
+
+~~~bash
+node mechanism-studio/scripts/compile-request.mjs --list
+node mechanism-studio/scripts/compile-request.mjs \
+  --request mechanism-studio/requests/slider-crank-study.json \
+  --out /tmp/slider-crank-study-002
+~~~
+
+After preparing the immutable Teardown revision in an isolated environment, build the generated folder with its existing external-machine builder. The [generation CI](../.github/workflows/mechanism-studio-generation.yml) performs real Chromium/offline/control/seek checks, captures a full **1920×1080, 30 fps, eight-second** video, synthesizes original illustrative machine audio, and muxes AAC into H.264 MP4. Independent source and audio tests run before builds.
+
+A successful, inspected generated run can be packaged by `scripts/package-generated.mjs` and verified using the **same canonical** `scripts/verify.mjs`. It includes interactive HTML, final MP4, poster, decoded-frame contact sheet, request/source register, model source, full runtime receipts, notices and per-file SHA-256 hashes.
+
+**Honest limitations:** two reviewed mechanism families only; remote references not fetched or automatically validated; physical forces/locking/certification not supplied; hardware GPU/mobile and host-level sandbox not evaluated. Film quality gates test the real decoded output, but no guarantee for arbitrary machines.

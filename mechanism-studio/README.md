@@ -1,8 +1,8 @@
-# Mechanism Studio (experimental Stage 1)
+# Mechanism Studio (experimental Stage 2, reviewed recipe generator)
 
 A **public, portable** Agent Skill for source-grounded, model-driven mechanical explainers.
 
-Current executable functionality: verify and package trusted Teardown V8/Cessna examples **and generate one original, source-grounded Geneva indexing machine** with a shared live/film entrypoint. The Geneva output includes HTML, MP4, poster, model source, provenance and hash-verified evidence. It is **not yet** an autonomous arbitrary-machine generator.
+Current executable functionality: package vetted Teardown V8/Cessna upstream examples, render the independent Geneva four-slot reference, and **compile structured source-backed briefs for two reviewed mechanism families: Geneva and slider-crank**. The slider-crank has a tested **1080p30 eight-second H.264/AAC film** with original synthesized mechanical foley, a live interactive HTML viewer, and a versioned hash-verified evidence package. It remains bounded and does not generate arbitrary mechanisms from images or natural-language descriptions.
 
 ## Setup and prerequisites
 
@@ -55,4 +55,20 @@ The manifest records timebase, entrypoints, upstream immutable revision, source 
 
 **Preview limitations:** short low-fps capture, software GPU, borrowed upstream mechanisms, no independent hardware benchmark, incomplete process sandbox proof and attribution audit. releaseReady=false always.
 
-The implementation plan lives in [PR #17](https://github.com/AVANT-ICONIC/skills/pull/17). Downstream consumer design is tracked separately in [Motion OS #6](https://github.com/AVANT-ICONIC/motion-os/pull/6) and [ICONICUT #2](https://github.com/AVANT-ICONIC/iconicut/pull/2). The first original reference mechanism has now been built and verified; remaining MVP gates include generalized reference-to-machine generation, a full-duration production video, independent hardware-GPU performance, and host-level sandbox isolation.
+The implementation plan lives in [PR #17](https://github.com/AVANT-ICONIC/skills/pull/17). Downstream consumer design is tracked separately in [Motion OS #6](https://github.com/AVANT-ICONIC/motion-os/pull/6) and [ICONICUT #2](https://github.com/AVANT-ICONIC/iconicut/pull/2). The bounded source-brief generator and full-duration Full HD film are implemented and CI-tested; remaining MVP gates include arbitrary reference interpretation (including real-image analysis), independent engineering/source verification, hardware/mobile GPU performance, complete licensing review, and host-level sandbox isolation.
+
+
+## Two reviewed families and Full HD film
+
+Refer to [the structured request guide](requests/README.md) and the included machine briefs. Inputs require linked technical references and explicitly labeled dimension assumptions. Unknown types are rejected. The compiler only emits reviewed source templates and numeric configuration; it **does not fetch linked sources or execute untrusted user scripts**.
+
+~~~bash
+node mechanism-studio/scripts/compile-request.mjs --list
+node mechanism-studio/scripts/compile-request.mjs \
+  --request mechanism-studio/requests/slider-crank-study.json \
+  --out /tmp/slider-crank-study-002
+~~~
+
+The generated directory is then built by the separately prepared pinned Teardown builder. The [full generation + film workflow](../.github/workflows/mechanism-studio-generation.yml) runs model, security, browser, offline playback, video, original foley and package integrity checks in ephemeral CI.
+
+The Full HD example uses **1920×1080 at 30 fps for eight seconds (240 frames)**, H.264 video plus 48 kHz AAC original designed sound, verified with FFprobe and decoded-frame samples. The reusable generated-study package holds **viewer HTML, final MP4, poster, contact sheet, request, technical source register, model source, real test receipts, notices and hashes**. Its `releaseReady` flag remains false until the separate hardware, sandbox, source-audit and release review gates pass.

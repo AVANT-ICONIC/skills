@@ -1,10 +1,11 @@
 import {runSim} from 'teardown-kit/runtime.js';
 import {createGenevaStage} from './stage.js';
 import {DEG,GENEVA,evaluateGeneva} from './model.mjs';
+import {CONFIG} from './machine-config.mjs';
 
 /** One authored model for both interactive HTML and arbitrary-time film. */
 const DEFAULTS={
-  duration:8,fps:30,theme:'dark',accent:'#f2a56a',
+  duration:CONFIG.video.durationSeconds,fps:CONFIG.video.fps,theme:'dark',accent:'#f2a56a',
   hud:{enabled:false,title:'GENEVA / 04',subtitle:'MECHANISM STUDIO'},
   director:{enabled:false},
   stages:[{at:0,name:'DWELL'},{at:1.88,name:'ENTER'},{at:2.5,name:'INDEX'},{at:3.13,name:'EXIT'}]

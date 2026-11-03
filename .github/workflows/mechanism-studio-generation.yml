@@ -1,0 +1,110 @@
+name: Mechanism Studio sourced generation + Full HD film
+on:
+  pull_request:
+    paths:
+      - 'mechanism-studio/scripts/compile-request.mjs'
+      - 'mechanism-studio/scripts/verify-generated.mjs'
+      - 'mechanism-studio/scripts/audio.mjs'
+      - 'mechanism-studio/scripts/package-generated.mjs'
+      - 'mechanism-studio/scripts/package-example.mjs'
+      - 'mechanism-studio/tests/**'
+      - 'mechanism-studio/requests/**'
+      - 'mechanism-studio/examples/slider-crank/**'
+      - 'mechanism-studio/examples/geneva-indexer/**'
+      - '.github/workflows/mechanism-studio-generation.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  generation:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify source-grounded request validation and both mathematical models
+        run: |
+          set -euo pipefail
+          node --test mechanism-studio/tests/compile-request.test.mjs mechanism-studio/tests/audio.test.mjs mechanism-studio/tests/package-example.test.mjs
+          node --test mechanism-studio/examples/slider-crank/model.test.mjs
+          node --test mechanism-studio/examples/geneva-indexer/model.test.mjs
+      - name: Compile two distinct mechanism families from checked source briefs
+        run: |
+          set -euo pipefail
+          node mechanism-studio/scripts/compile-request.mjs \
+            --request mechanism-studio/requests/slider-crank-study.json \
+            --out "$RUNNER_TEMP/generated/slider-crank-study-002"
+          node mechanism-studio/scripts/compile-request.mjs \
+            --request mechanism-studio/requests/geneva-four-slot-study.json \
+            --out "$RUNNER_TEMP/generated/geneva-four-slot-study-001"
+      - name: Fetch verified and immutable Teardown dependency
+        shell: bash
+        run: |
+          set -euo pipefail
+          git clone --quiet --no-checkout https://github.com/elvarofficial/teardown.git "$RUNNER_TEMP/teardown"
+          git -C "$RUNNER_TEMP/teardown" checkout --quiet --detach a91262ac1109051e014662d42ecb0b7bc1f113b1
+          test "$(git -C "$RUNNER_TEMP/teardown" rev-parse HEAD)" = 'a91262ac1109051e014662d42ecb0b7bc1f113b1'
+          echo '39297ac60ef6ae04a93f4716c6bbd6ae48bbd3f116e583d6700274a113012b1e  '"$RUNNER_TEMP/teardown/package-lock.json" | sha256sum -c -
+      - name: Install pinned build and playback dependencies in ephemeral runner
+        shell: bash
+        working-directory: ${{ runner.temp }}/teardown
+        run: |
+          set -euo pipefail
+          npm ci --ignore-scripts --no-audit --no-fund
+          npx playwright install chromium
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg
+      - name: Build both sourced machines without modifying Teardown
+        shell: bash
+        working-directory: ${{ runner.temp }}/teardown
+        run: |
+          set -euo pipefail
+          export TEARDOWN_OUT="$GITHUB_WORKSPACE/.artifacts/generated"
+          node sims/build.mjs \
+            "$RUNNER_TEMP/generated/slider-crank-study-002" \
+            "$RUNNER_TEMP/generated/geneva-four-slot-study-001"
+          test -s "$TEARDOWN_OUT/dist/slider-crank-study-002.html"
+          test -s "$TEARDOWN_OUT/dist/geneva-four-slot-study-001.html"
+      - name: Real Chromium viewer and production-profile film checks
+        shell: bash
+        run: |
+          set -euo pipefail
+          export MECHANISM_BUILD_OUT="$GITHUB_WORKSPACE/.artifacts/generated"
+          for id in slider-crank-study-002 geneva-four-slot-study-001; do
+            node mechanism-studio/scripts/verify-generated.mjs \
+              "$RUNNER_TEMP/teardown" "$RUNNER_TEMP/generated/$id" \
+              "$GITHUB_WORKSPACE/.artifacts/generated/evidence/$id"
+          done
+      - name: Package final sourced 1080p30 film, original foley and evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          node mechanism-studio/scripts/package-generated.mjs \
+            "$RUNNER_TEMP/teardown" \
+            "$RUNNER_TEMP/generated/slider-crank-study-002" \
+            "$GITHUB_WORKSPACE/.artifacts/generated/evidence/slider-crank-study-002" \
+            "$GITHUB_WORKSPACE/.artifacts/generated" \
+            "$GITHUB_WORKSPACE/.artifacts/generated-study-package"
+          node mechanism-studio/scripts/verify.mjs "$GITHUB_WORKSPACE/.artifacts/generated-study-package"
+      - name: Publish verified generated-study CI package
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mechanism-studio-sourced-film-package
+          path: .artifacts/generated-study-package/
+          if-no-files-found: error
+          retention-days: 7
+      - name: Upload source-brief generation evidence and encoded video
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mechanism-studio-sourced-fullhd-film
+          path: .artifacts/generated/
+          if-no-files-found: warn
+          retention-days: 7

@@ -89,3 +89,39 @@ test('strict ffprobe metadata interpretation',()=>{
 test('reject unexpected machine before touching disk',()=>{
  assert.throws(()=>packageExample({machine:'anything',upstream:'/missing',run:'/missing',out:'/missing'}),/MACHINE_UNSUPPORTED/);
 });
+
+
+test('source-grounded film packages verify integrity, embedded brief and timebase',()=>{
+ const dir=mkdtempSync(path.join(tmpdir(),'mechanism-generated-test-'));
+ try{
+  const names=['viewer/index.html','video/film.mp4','preview/poster.png',
+   'preview/contact-sheet.png','evidence/report.json','evidence/request.json',
+   'evidence/source-register.json','evidence/model.mjs','LICENSES/teardown-MIT.txt','NOTICE'];
+  const content={
+   'evidence/request.json':JSON.stringify({schema:'avant.mechanism-request/1',id:'slider-study-test',
+    mechanism:'slider-crank',references:[{id:'reference'}],
+    video:{fps:24,durationSeconds:8,width:1280,height:720}}),
+   'evidence/source-register.json':JSON.stringify({requestId:'slider-study-test',sourcesFetched:false,
+    physicalCertification:false})
+  };
+  const assets=names.map(name=>{
+   const bytes=Buffer.from(content[name]||'tested:'+name),file=path.join(dir,name);
+   mkdirSync(path.dirname(file),{recursive:true});writeFileSync(file,bytes);
+   return {path:name,bytes:bytes.length,sha256:h(bytes)};
+  });
+  const m={schema:'avant.mechanism-package/1',packageId:'slider-study-test',tier:'generated-study-preview',
+   releaseReady:false,model:{classification:'reference-grounded',verifiedEngineering:false,mechanism:'slider-crank'},
+   generator:{revision:'a91262ac1109051e014662d42ecb0b7bc1f113b1',
+    packageLockSha256:'39297ac60ef6ae04a93f4716c6bbd6ae48bbd3f116e583d6700274a113012b1e'},
+   timebase:{fpsNumerator:24,fpsDenominator:1,frameCount:192,width:1280,height:720},
+   entrypoints:{viewer:names[0],video:names[1],poster:names[2],evidence:names[4]},assets};
+  const save=()=>writeFileSync(path.join(dir,'manifest.json'),JSON.stringify(m));
+  save();assert.equal(verifyPackage(dir).files,10);
+  m.timebase.frameCount=191;save();assert.throws(()=>verifyPackage(dir),/FILM_REQUEST_MISMATCH/);
+  m.timebase.frameCount=192;m.model.verifiedEngineering=true;save();
+  assert.throws(()=>verifyPackage(dir),/MODEL_PROVENANCE_INVALID/);
+  m.model.verifiedEngineering=false;save();
+  writeFileSync(path.join(dir,'evidence/source-register.json'),'{}');
+  assert.throws(()=>verifyPackage(dir),/ASSET_HASH_MISMATCH/);
+ }finally{rmSync(dir,{recursive:true,force:true});}
+});

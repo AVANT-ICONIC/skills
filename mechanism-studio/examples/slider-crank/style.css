@@ -1,0 +1,56 @@
+
+/* Slider-crank specific presentation adjustments; canonical console CSS is shared. */
+.titlegroup em{color:#f6b278}
+.metric-lead strong{font-size:51px}
+.metric-lead strong span{font-size:15px}
+.metrics-two .metric strong{font-size:23px}
+.metrics-two .metric strong span{font-size:11px}
+.drawing-left{left:22%;top:56%}
+.drawing-right{left:54%;top:65%}
+@media(max-width:700px){.metric-lead{display:none}.metrics-two .metric strong{font-size:19px}}
+
+
+/* Film layout at Full HD. Keep the same design system, improve density and readable type. */
+@media(min-width:1600px){
+  .topbar{top:39px;left:58px;right:58px;font-size:13px;letter-spacing:2.8px}
+  .topbar:after{top:46px}
+  .brandmark strong{font-size:23px}
+  .brandmark span,.topref{font-size:12px}
+  .titlegroup{top:220px;left:58px}
+  .eyebrow{font-size:13px;letter-spacing:3.4px}
+  .titlegroup h1{font-size:76px;line-height:1.04;letter-spacing:-4px;margin:23px 0}
+  .titlegroup p{font-size:16px;line-height:1.75}
+  .telemetry{top:153px;right:56px;width:403px;min-height:605px;padding:28px 28px 24px}
+  .telemetry-header{font-size:12px;letter-spacing:1.65px}
+  .model-tag{font-size:11px}
+  .metric label{font-size:12px}
+  .metric-lead{margin-top:32px;padding-bottom:27px}
+  .metric-lead strong{font-size:76px;letter-spacing:-5px}
+  .metric-lead strong span{font-size:21px}
+  .metric small{font-size:11px}
+  .metrics-two{margin:25px 0 23px}
+  .metrics-two .metric strong{font-size:32px;letter-spacing:-2px}
+  .metrics-two .metric strong span{font-size:14px}
+  .statusbox{padding:17px 14px;margin-bottom:20px}
+  .statusbox b{font-size:13px}
+  .statusbox small{font-size:10px}
+  .readout-row{padding:11px 0;font-size:11px}
+  .readout-row b{font-size:13px}
+  .angle-chart{padding-top:21px}
+  .angle-title{font-size:11px}
+  .angle-chart svg{height:106px}
+  .metric-foot{font-size:10px}
+  .controls{left:395px;right:502px;max-width:none;bottom:69px;padding:23px 29px 20px}
+  .ctl-header{font-size:12px}
+  .ctl-main{margin:20px 0 17px;gap:16px}
+  .ctl-play,.ctl-btn{height:56px}
+  .ctl-play{width:64px;font-size:25px}
+  .ctl-btn{width:69px;font-size:14px}
+  .range-head{font-size:12px}
+  .range-head b{font-size:13px}
+  .ctl-options button{padding:11px 15px;font-size:12px}
+  .ctl-options span{font-size:10px}
+  .drawing-left{left:25%;top:67%}
+  .drawing-right{left:57%;top:70%}
+  .footer-note{bottom:34px;left:59px;font-size:10px}
+}
