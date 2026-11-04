@@ -58,6 +58,12 @@ The manifest records timebase, entrypoints, upstream immutable revision, source 
 The implementation plan lives in [PR #17](https://github.com/AVANT-ICONIC/skills/pull/17). Downstream consumer design is tracked separately in [Motion OS #6](https://github.com/AVANT-ICONIC/motion-os/pull/6) and [ICONICUT #2](https://github.com/AVANT-ICONIC/iconicut/pull/2). The bounded source-brief generator and full-duration Full HD film are implemented and CI-tested; remaining MVP gates include arbitrary reference interpretation (including real-image analysis), independent engineering/source verification, hardware/mobile GPU performance, complete licensing review, and host-level sandbox isolation.
 
 
+## Model-claim evidence gate
+
+A source URL is not proof. Before running compiled mechanism code, [`scripts/audit-model.mjs`](scripts/audit-model.mjs) hash-checks reviewed templates and numeric config, then verifies analytic closure, geometry and motion invariants for both families. Source documents remain explicitly **NOT_EVALUATED**, and assumed dimensions are not relabeled as measurements.
+
+See [model-claim traceability](docs/model-claim-traceability.md). Portable generated packages now include `evidence/model-audit.json`, with **eleven** individually hashed assets, and reject missing/forged claim receipts.
+
 ## Two reviewed families and Full HD film
 
 Refer to [the structured request guide](requests/README.md) and the included machine briefs. Inputs require linked technical references and explicitly labeled dimension assumptions. Unknown types are rejected. The compiler only emits reviewed source templates and numeric configuration; it **does not fetch linked sources or execute untrusted user scripts**.
