@@ -117,8 +117,11 @@ runSim(DEFAULTS,({canvas,capture})=>{
   resize:scene.resize,
   render(t){
    lastTime=t;
-   const turns=ctl.paused?ctl.hold:ctl.offset+t*ctl.rpm/60;
-   lastTurns=turns;lastState=evaluateSliderCrank(turns,{...CONFIG,inputRpm:ctl.rpm});
+   // Film must be a pure function of absolute time, not live operator controls.
+   const turns=filmDirector.active?t*CONFIG.inputRpm/60:
+      (ctl.paused?ctl.hold:ctl.offset+t*ctl.rpm/60);
+   lastTurns=turns;
+   lastState=evaluateSliderCrank(turns,{...CONFIG,inputRpm:filmDirector.active?CONFIG.inputRpm:ctl.rpm});
    const shot=filmDirector.active?evaluateFilmDirection(t,CONFIG.video):null;
    filmDirector.last=shot;
    scene.render(lastState,shot?{...ctl,filmCamera:shot.camera,xray:shot.xray,explode:shot.exploded}:ctl);
