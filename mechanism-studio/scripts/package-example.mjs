@@ -47,6 +47,7 @@ const GENERATED_FILES=[
   ['evidence/request.json','json'],
   ['evidence/source-register.json','json'],
   ['evidence/model-audit.json','json'],
+  ['evidence/mechanism-graph.json','json'],
   ['evidence/model.mjs','source'],
   ['LICENSES/teardown-MIT.txt','license'],
   ['NOTICE','notice']
@@ -105,6 +106,19 @@ export function verifyPackage(folder){
       sources.physicalCertification!==false||request.mechanism!==m.model.mechanism)
       throw Error('SOURCE_MANIFEST_MISMATCH');
     const modelAudit=JSON.parse(readFileSync(safePackageFile(root,'evidence/model-audit.json'),'utf8'));
+    const graphBytes=checkedDigest(safePackageFile(root,'evidence/mechanism-graph.json'));
+    if(modelAudit.mechanismGraph?.schema!=='avant.mechanism-graph/1'||
+       modelAudit.mechanismGraph.sha256!==graphBytes.sha256||
+       m.model?.mechanismGraph!=='evidence/mechanism-graph.json'||
+       m.model?.solver!==modelAudit.mechanismGraph.solver||
+       m.model?.graphDriven!==modelAudit.mechanismGraph.runtimeDriven)
+       throw Error('GRAPH_AUDIT_MISMATCH');
+    const graph=JSON.parse(readFileSync(safePackageFile(root,'evidence/mechanism-graph.json'),'utf8'));
+    if(graph.schema!=='avant.mechanism-graph/1'||graph.id!==request.id||
+      graph.mechanism!==request.mechanism||graph.certifiedPhysics!==false||
+      graph.provenance?.externalDocumentsVerified!==false||
+      !Array.isArray(graph.joints)||!Array.isArray(graph.bodies))
+      throw Error('GRAPH_CONTENT_MISMATCH');
     if(modelAudit.schema!=='avant.mechanism-model-audit/1'||modelAudit.requestId!==request.id||
       modelAudit.mechanism!==request.mechanism||modelAudit.status!=='PASS'||
       modelAudit.scientificSourceVerification!=='NOT_EVALUATED'||
