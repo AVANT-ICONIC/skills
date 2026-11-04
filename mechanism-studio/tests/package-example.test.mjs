@@ -99,14 +99,15 @@ test('source-grounded film packages verify integrity, embedded brief and timebas
    'evidence/source-register.json','evidence/model-audit.json','evidence/model.mjs','LICENSES/teardown-MIT.txt','NOTICE'];
   const content={
    'evidence/request.json':JSON.stringify({schema:'avant.mechanism-request/1',id:'slider-study-test',
-    mechanism:'slider-crank',references:[{id:'reference'}],
+    mechanism:'slider-crank',references:[{id:'reference',url:'https://example.org/slider'}],
     video:{fps:24,durationSeconds:8,width:1280,height:720}}),
    'evidence/source-register.json':JSON.stringify({requestId:'slider-study-test',sourcesFetched:false,
     physicalCertification:false}),
    'evidence/model-audit.json':JSON.stringify({schema:'avant.mechanism-model-audit/1',requestId:'slider-study-test',
       mechanism:'slider-crank',status:'PASS',scientificSourceVerification:'NOT_EVALUATED',
       sourceDocumentsRetrieved:false,certifiedPhysics:false,
-      claims:[{status:'PASS'},{status:'PASS'},{status:'PASS'}]})
+      references:[{id:'reference',url:'https://example.org/slider',contentChecked:false}],
+      claims:['rod','stroke','formula'].map(id=>({id,status:'PASS',referenceIds:['reference'],measured:0,tolerance:1e-8}))})
   };
   const assets=names.map(name=>{
    const bytes=Buffer.from(content[name]||'tested:'+name),file=path.join(dir,name);
