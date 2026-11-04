@@ -9,6 +9,7 @@ import {createHash} from 'node:crypto';
 import {join,resolve,dirname} from 'node:path';
 import {pathToFileURL,fileURLToPath} from 'node:url';
 import {validateRequest,makeMachineConfig} from './compile-request.mjs';
+import {makeMechanismGraph,graphDigestInput,makeGraphModule,solvePlanarGraph} from './mechanism-graph.mjs';
 
 const ROOT=resolve(dirname(fileURLToPath(import.meta.url)),'..');
 const SHA=b=>createHash('sha256').update(b).digest('hex');
@@ -106,6 +107,16 @@ export async function auditGenerated(generated){
     fingerprints[name]=requireExact(directory,join(recipe,name),name);
   }
   fingerprints['film-direction.mjs']=requireExact(directory,join(ROOT,'scripts/film-direction.mjs'),'film-direction.mjs');
+  fingerprints['mechanism-graph.mjs']=requireExact(directory,join(ROOT,'scripts/mechanism-graph.mjs'),'mechanism-graph.mjs');
+  const graph=makeMechanismGraph(request);
+  const expectedGraph=Buffer.from(graphDigestInput(graph));
+  const graphSource=safeRead(join(directory,'mechanism-graph.json'));
+  if(SHA(expectedGraph)!==SHA(graphSource))throw Error('AUDIT_MACHINE_GRAPH_MISMATCH');
+  fingerprints['mechanism-graph.json']=SHA(graphSource);
+  const compiledGraph=Buffer.from(makeGraphModule(graph));
+  const graphModule=safeRead(join(directory,'machine-graph.mjs'));
+  if(SHA(compiledGraph)!==SHA(graphModule))throw Error('AUDIT_GRAPH_MODULE_MISMATCH');
+  fingerprints['machine-graph.mjs']=SHA(graphModule);
   const sharedStyle=safeRead(join(ROOT,'examples/geneva-indexer/style.css'));
   const expectedStyle=request.mechanism==='slider-crank'
     ?Buffer.concat([sharedStyle,Buffer.from('\n'),safeRead(join(recipe,'style.css'))])
@@ -124,11 +135,26 @@ export async function auditGenerated(generated){
   const evidence=request.mechanism==='slider-crank'
     ?sliderProof(model,config,request.references[0].id)
     :genevaProof(model,request.references[0].id);
+  if(request.mechanism==='slider-crank'){
+    for(let i=0;i<=360;i++){
+      const actual=solvePlanarGraph(graph,i/360).state;
+      const delivered=model.evaluateSliderCrank(i/360,config);
+      near(actual.pistonX,delivered.pistonX,1e-9,'slider.graph-vs-render-pose');
+    }
+  }else{
+    const p=model.GENEVA;
+    for(const name of ['slots','crankRadiusMm','centerDistanceMm','pinRadiusMm'])
+      near(graph.parameters[name],p[name],1e-10,'geneva.graph-default-'+name);
+  }
   return {
     schema:'avant.mechanism-model-audit/1',requestId:request.id,mechanism:request.mechanism,
     status:'PASS',scope:'reviewed-recipe-integrity-and-internal-kinematics',
     scientificSourceVerification:'NOT_EVALUATED',sourceDocumentsRetrieved:false,
     certifiedPhysics:false,files:fingerprints,
+    mechanismGraph:{schema:graph.schema,sha256:SHA(graphSource),solver:graph.solver,
+      bodies:graph.bodies.length,joints:graph.joints.length,
+      runtimeDriven:request.mechanism==='slider-crank',
+      limitations:request.mechanism==='geneva-4'?['Graph describes Geneva topology; existing independently verified solver remains authoritative']:[]},
     references:request.references.map(x=>({id:x.id,url:x.url,redistribution:x.redistribution,
       contentChecked:false})),claims:evidence,
     assumptions:Object.entries(request.parameters).filter(([,p])=>['assumed','illustrative'].includes(p.provenance)).map(([id,p])=>({id,value:p.value,unit:p.unit})),
