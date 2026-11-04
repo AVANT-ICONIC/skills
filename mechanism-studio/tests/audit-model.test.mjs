@@ -34,6 +34,13 @@ test('modified kinematic model is rejected before any dynamic module import',tem
  writeFileSync(join(output,'model.mjs'),'throw Error("SHOULD_NEVER_EXECUTE");\n');
  await assert.rejects(auditGenerated(output),/AUDIT_TEMPLATE_CHANGED: model.mjs/);
 }));
+test('unreviewed CSS is rejected before model or WebGL execution',temp(async dir=>{
+ const output=join(dir,'slider');
+ compileRequest({request:slider,out:output});
+ const css=join(output,'style.css');
+ writeFileSync(css,readFileSync(css,'utf8')+'\n@import url("https://untrusted.example/track.css");');
+ await assert.rejects(auditGenerated(output),/AUDIT_TEMPLATE_CHANGED: style.css/);
+}));
 test('forged numeric configuration is rejected before module evaluation',temp(async dir=>{
  const output=join(dir,'slider');
  compileRequest({request:slider,out:output});
