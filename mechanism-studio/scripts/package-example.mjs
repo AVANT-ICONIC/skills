@@ -110,7 +110,13 @@ export function verifyPackage(folder){
       modelAudit.scientificSourceVerification!=='NOT_EVALUATED'||
       modelAudit.sourceDocumentsRetrieved!==false||modelAudit.certifiedPhysics!==false||
       !Array.isArray(modelAudit.claims)||modelAudit.claims.length<3||
-      modelAudit.claims.some(c=>c.status!=='PASS'))
+      !Array.isArray(modelAudit.references)||modelAudit.references.length!==request.references.length||
+      modelAudit.references.some((r,i)=>r.id!==request.references[i].id||
+        r.url!==request.references[i].url||r.contentChecked!==false)||
+      modelAudit.claims.some(c=>c.status!=='PASS'||typeof c.id!=='string'||
+        !Array.isArray(c.referenceIds)||!c.referenceIds.length||
+        c.referenceIds.some(id=>!request.references.some(r=>r.id===id))||
+        !Number.isFinite(c.measured)||!Number.isFinite(c.tolerance)))
       throw Error('MODEL_AUDIT_MISMATCH');
     if(request.video?.fps!==m.timebase?.fpsNumerator||
       request.video?.durationSeconds*request.video?.fps!==m.timebase?.frameCount||
