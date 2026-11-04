@@ -3,6 +3,7 @@ on:
   pull_request:
     paths:
       - 'mechanism-studio/scripts/compile-request.mjs'
+      - 'mechanism-studio/scripts/mechanism-graph.mjs'
       - 'mechanism-studio/scripts/audit-model.mjs'
       - 'mechanism-studio/scripts/verify-generated.mjs'
       - 'mechanism-studio/scripts/audio.mjs'
