@@ -68,7 +68,7 @@ The compiler outputs inspectable graph JSON, an executable but data-only graph m
 
 A source URL is not proof. Before running compiled mechanism code, [`scripts/audit-model.mjs`](scripts/audit-model.mjs) hash-checks reviewed templates and numeric config, then verifies analytic closure, geometry and motion invariants for both families. Source documents remain explicitly **NOT_EVALUATED**, and assumed dimensions are not relabeled as measurements.
 
-See [model-claim traceability](docs/model-claim-traceability.md). Portable generated packages now include `evidence/model-audit.json`, with **eleven** individually hashed assets, and reject missing/forged claim receipts.
+See [model-claim traceability](docs/model-claim-traceability.md). Portable generated packages now include `evidence/model-audit.json`, with **12** individually hashed assets including the machine graph, and reject missing/forged claim receipts.
 
 ## Two reviewed families and Full HD film
 
