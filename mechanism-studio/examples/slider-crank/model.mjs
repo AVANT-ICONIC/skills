@@ -1,31 +1,26 @@
 /**
- * Ideal in-line slider-crank geometry.
- * x = r cos(theta) + sqrt(l²-r² sin²(theta)).
- * The position is measured from the crank center along the piston axis.
- * https://planex2d.org/docs/examples/slider-crank.html
- * https://cpoli.github.io/engineeringkit/api/mechanical_engineering.html
- * No friction, torque, combustion, bearing loads or collision physics.
+ * Inline slider-crank adapter to the canonical declarative kinematic graph.
+ * Pose of each rigid body is solved from its reviewed joint constraints.
+ * Forces, wear, combustion and manufacturing tolerances are not modeled.
  */
 import {CONFIG} from './machine-config.mjs';
-const TAU=2*Math.PI;
+import {GRAPH} from './machine-graph.mjs';
+import {makeSliderGraph,solvePlanarGraph} from './mechanism-graph.mjs';
+
+/** Absolute driver turns, no mutable previous-frame state. */
 export function evaluateSliderCrank(turns,config=CONFIG){
-  const {crankRadiusMm:r,rodLengthMm:l,inputRpm:rpm}=config;
-  if(!Number.isFinite(turns)||![r,l,rpm].every(Number.isFinite)||r<=0||l<=r||rpm<=0)
-    throw new TypeError('INVALID_KINEMATIC_INPUT');
-  const angleRad=turns*TAU,si=Math.sin(angleRad),co=Math.cos(angleRad);
-  const root=Math.sqrt(l*l-r*r*si*si);
-  const crankX=r*co,crankY=r*si;
-  const pistonX=crankX+root;
-  const strokeMm=(r+l)-pistonX;
-  const rodAngleRad=Math.atan2(-crankY,root);
-  const angularVelocityRadS=rpm*TAU/60;
-  const velocityMmS=(-r*si-r*r*si*co/root)*angularVelocityRadS;
-  return Object.freeze({turns,angleRad,phaseDeg:((turns*360)%360+360)%360,
-    crankX,crankY,pistonX,strokeMm,rodAngleRad,
-    velocityMmS,angularVelocityRadS,
-    strokeTotalMm:2*r,rodLengthMm:l,crankRadiusMm:r,rpm});
+ const {crankRadiusMm:r,rodLengthMm:l,inputRpm:rpm}=config||{};
+ if(!Number.isFinite(turns)||![r,l,rpm].every(Number.isFinite)||
+   r<=0||l<=r||rpm<=0)throw new TypeError('INVALID_KINEMATIC_INPUT');
+ // Reuse the compiled graph for all ordinary film frames. An explicitly
+ // supplied alternative valid geometry is compiled to the same graph schema.
+ const g=(r===GRAPH.parameters.crankRadiusMm&&l===GRAPH.parameters.rodLengthMm)
+   ?GRAPH:makeSliderGraph({id:GRAPH.id,crankRadiusMm:r,rodLengthMm:l,inputRpm:rpm,
+      sourceIds:GRAPH.provenance.sourceIds});
+ const solved=solvePlanarGraph(g,turns,{rpm});
+ return Object.freeze(solved.state);
 }
 export function stateAtTime(t,config=CONFIG){
-  if(!Number.isFinite(t))throw new TypeError('INVALID_TIME');
-  return evaluateSliderCrank(t*config.inputRpm/60,config);
+ if(!Number.isFinite(t))throw new TypeError('INVALID_TIME');
+ return evaluateSliderCrank(t*config.inputRpm/60,config);
 }
