@@ -58,6 +58,12 @@ The manifest records timebase, entrypoints, upstream immutable revision, source 
 The implementation plan lives in [PR #17](https://github.com/AVANT-ICONIC/skills/pull/17). Downstream consumer design is tracked separately in [Motion OS #6](https://github.com/AVANT-ICONIC/motion-os/pull/6) and [ICONICUT #2](https://github.com/AVANT-ICONIC/iconicut/pull/2). The bounded source-brief generator and full-duration Full HD film are implemented and CI-tested; remaining MVP gates include arbitrary reference interpretation (including real-image analysis), independent engineering/source verification, hardware/mobile GPU performance, complete licensing review, and host-level sandbox isolation.
 
 
+## Graph-driven motion
+
+[Mechanism Graph v1](docs/declarative-machine-graph.md) is the first portable, explicit **body–joint–constraint contract**. It supports reviewed planar bodies, revolute and prismatic joints, and a closed-form positive-root slider-crank solver. The graph computes crank, rod and piston body poses from actual joint anchors, and the existing 3D scene renders those states. The companion Geneva representation intentionally declares an **unimplemented graph solver**, retaining the independently verified original motion code.
+
+The compiler outputs inspectable graph JSON, an executable but data-only graph module and the pinned canonical solver; the auditor hashes all of them and recomputes their constraints. The generated film package includes the graph in its evidence bundle (**12 individually hashed files**). Graph v1 is not untrusted script execution, arbitrary source interpretation or a physics/material-load certification.
+
 ## Model-claim evidence gate
 
 A source URL is not proof. Before running compiled mechanism code, [`scripts/audit-model.mjs`](scripts/audit-model.mjs) hash-checks reviewed templates and numeric config, then verifies analytic closure, geometry and motion invariants for both families. Source documents remain explicitly **NOT_EVALUATED**, and assumed dimensions are not relabeled as measurements.
