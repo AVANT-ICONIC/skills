@@ -106,6 +106,13 @@ export async function auditGenerated(generated){
     fingerprints[name]=requireExact(directory,join(recipe,name),name);
   }
   fingerprints['film-direction.mjs']=requireExact(directory,join(ROOT,'scripts/film-direction.mjs'),'film-direction.mjs');
+  const sharedStyle=safeRead(join(ROOT,'examples/geneva-indexer/style.css'));
+  const expectedStyle=request.mechanism==='slider-crank'
+    ?Buffer.concat([sharedStyle,Buffer.from('\n'),safeRead(join(recipe,'style.css'))])
+    :sharedStyle;
+  const actualStyle=safeRead(join(directory,'style.css'));
+  if(SHA(actualStyle)!==SHA(expectedStyle))throw Error('AUDIT_TEMPLATE_CHANGED: style.css');
+  fingerprints['style.css']=SHA(actualStyle);
   const expected=Buffer.from(makeMachineConfig(request));
   const actual=safeRead(join(directory,'machine-config.mjs'));
   if(SHA(expected)!==SHA(actual))throw Error('AUDIT_MACHINE_CONFIG_MISMATCH');
