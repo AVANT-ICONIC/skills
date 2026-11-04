@@ -12,7 +12,7 @@ The audit deliberately refuses to label a source as independently verified. A li
 ## Traceability contract
 
 1. **Request:** normalized `avant.mechanism-request/1` with source IDs, HTTPS reference URLs, parameters, units, provenance and film profile.
-2. **Recipe identity:** before running any generated code, hash-match `main.js`, `stage.js`, `model.mjs`, `film-direction.mjs` against checked-in reviewed modules and `machine-config.mjs` against canonical serialization of the validated brief. Unexpected edits abort the audit.
+2. **Recipe and graph identity:** before running any generated code, hash-match `main.js`, `stage.js`, `model.mjs`, `film-direction.mjs`, `mechanism-graph.mjs` and `style.css` against reviewed modules; compare `machine-config.mjs`, `machine-graph.mjs` and `mechanism-graph.json` against canonical serialization of the validated brief. Unexpected edits, altered joint topology and mismatched numerical constraints abort the audit.
 3. **Independent mathematical checks:** run pure model calculations on many absolute-angle samples, comparing against separate geometric closure equations rather than merely testing output strings.
 4. **Source honesty:** attach source IDs and numerical residuals to each claim, but mark external-document verification `NOT_EVALUATED` and `sourceDocumentsRetrieved=false`. Assumed dimensions remain explicit.
 5. **Delivery:** include the audit in the versioned package under `evidence/model-audit.json`, hash the entire file, and require a green claim receipt before packaging.

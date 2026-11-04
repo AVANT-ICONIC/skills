@@ -96,8 +96,13 @@ test('source-grounded film packages verify integrity, embedded brief and timebas
  try{
   const names=['viewer/index.html','video/film.mp4','preview/poster.png',
    'preview/contact-sheet.png','evidence/report.json','evidence/request.json',
-   'evidence/source-register.json','evidence/model-audit.json','evidence/model.mjs','LICENSES/teardown-MIT.txt','NOTICE'];
+   'evidence/source-register.json','evidence/model-audit.json','evidence/mechanism-graph.json','evidence/model.mjs','LICENSES/teardown-MIT.txt','NOTICE'];
+  const graph={schema:'avant.mechanism-graph/1',id:'slider-study-test',mechanism:'slider-crank',
+   certifiedPhysics:false,solver:'inline-slider-crank-positive-root/1',
+   provenance:{externalDocumentsVerified:false},bodies:[{id:'ground'}],joints:[{id:'drive'}]};
+  const graphText=JSON.stringify(graph);
   const content={
+   'evidence/mechanism-graph.json':graphText,
    'evidence/request.json':JSON.stringify({schema:'avant.mechanism-request/1',id:'slider-study-test',
     mechanism:'slider-crank',references:[{id:'reference',url:'https://example.org/slider'}],
     video:{fps:24,durationSeconds:8,width:1280,height:720}}),
@@ -106,6 +111,8 @@ test('source-grounded film packages verify integrity, embedded brief and timebas
    'evidence/model-audit.json':JSON.stringify({schema:'avant.mechanism-model-audit/1',requestId:'slider-study-test',
       mechanism:'slider-crank',status:'PASS',scientificSourceVerification:'NOT_EVALUATED',
       sourceDocumentsRetrieved:false,certifiedPhysics:false,
+      mechanismGraph:{schema:'avant.mechanism-graph/1',
+        sha256:h(Buffer.from(graphText)),solver:'inline-slider-crank-positive-root/1',runtimeDriven:true},
       references:[{id:'reference',url:'https://example.org/slider',contentChecked:false}],
       claims:['rod','stroke','formula'].map(id=>({id,status:'PASS',referenceIds:['reference'],measured:0,tolerance:1e-8}))})
   };
@@ -115,13 +122,14 @@ test('source-grounded film packages verify integrity, embedded brief and timebas
    return {path:name,bytes:bytes.length,sha256:h(bytes)};
   });
   const m={schema:'avant.mechanism-package/1',packageId:'slider-study-test',tier:'generated-study-preview',
-   releaseReady:false,model:{classification:'reference-grounded',verifiedEngineering:false,mechanism:'slider-crank'},
+   releaseReady:false,model:{classification:'reference-grounded',verifiedEngineering:false,mechanism:'slider-crank',
+     mechanismGraph:'evidence/mechanism-graph.json',solver:'inline-slider-crank-positive-root/1',graphDriven:true},
    generator:{revision:'a91262ac1109051e014662d42ecb0b7bc1f113b1',
     packageLockSha256:'39297ac60ef6ae04a93f4716c6bbd6ae48bbd3f116e583d6700274a113012b1e'},
    timebase:{fpsNumerator:24,fpsDenominator:1,frameCount:192,width:1280,height:720},
    entrypoints:{viewer:names[0],video:names[1],poster:names[2],evidence:names[4]},assets};
   const save=()=>writeFileSync(path.join(dir,'manifest.json'),JSON.stringify(m));
-  save();assert.equal(verifyPackage(dir).files,11);
+  save();assert.equal(verifyPackage(dir).files,12);
   m.timebase.frameCount=191;save();assert.throws(()=>verifyPackage(dir),/FILM_REQUEST_MISMATCH/);
   m.timebase.frameCount=192;m.model.verifiedEngineering=true;save();
   assert.throws(()=>verifyPackage(dir),/MODEL_PROVENANCE_INVALID/);

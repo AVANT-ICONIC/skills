@@ -53,13 +53,18 @@ test('compiler generates two isolated reproducible folders with real config',()=
    const out=join(d,data.id);
    const receipt=compileRequest({request:data,out});
    assert.equal(receipt.releaseReady,false);
-   assert.equal(receipt.files,9);
-   for(const name of ['main.js','stage.js','model.mjs','style.css','machine-config.mjs','film-direction.mjs','request.json','source-register.json','README.md']){
+   assert.equal(receipt.files,12);
+   for(const name of ['main.js','stage.js','model.mjs','style.css','machine-config.mjs','film-direction.mjs','mechanism-graph.mjs','machine-graph.mjs','mechanism-graph.json','request.json','source-register.json','README.md']){
     assert.ok(existsSync(join(out,name)),name);
    }
    const config=readFileSync(join(out,'machine-config.mjs'),'utf8');
    assert.ok(config.includes('"durationSeconds": 8'));
    assert.ok(config.includes('"fps": '+data.video.fps));
+   const graph=JSON.parse(readFileSync(join(out,'mechanism-graph.json'),'utf8'));
+   assert.equal(graph.schema,'avant.mechanism-graph/1');
+   assert.equal(graph.mechanism,data.mechanism);
+   assert.equal(graph.certifiedPhysics,false);
+   assert.ok(graph.joints.length>=3);
    const sources=JSON.parse(readFileSync(join(out,'source-register.json'),'utf8'));
    assert.equal(sources.sourcesFetched,false);
    assert.equal(sources.physicalCertification,false);

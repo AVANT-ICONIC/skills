@@ -8,6 +8,7 @@ import {copyFileSync,existsSync,mkdirSync,readFileSync,renameSync,rmSync,writeFi
 import {dirname,join,resolve,sep,basename} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {parseArgs} from 'node:util';
+import {makeMechanismGraph,makeGraphModule,graphDigestInput} from './mechanism-graph.mjs';
 
 const ROOT=resolve(dirname(fileURLToPath(import.meta.url)),'..');
 const ID=/^[a-z][a-z0-9-]{2,63}$/;
@@ -105,6 +106,10 @@ export function compileRequest({request,out}){
     for(const name of paths)copyFileSync(join(inputDirectory,name),join(generated,name));
     // One canonical director is copied, not a second independent recipe engine.
     copyFileSync(join(ROOT,'scripts/film-direction.mjs'),join(generated,'film-direction.mjs'));
+    copyFileSync(join(ROOT,'scripts/mechanism-graph.mjs'),join(generated,'mechanism-graph.mjs'));
+    const graph=makeMechanismGraph(normalized);
+    writeFileSync(join(generated,'machine-graph.mjs'),makeGraphModule(graph));
+    writeFileSync(join(generated,'mechanism-graph.json'),graphDigestInput(graph));
     const baseCSS=readFileSync(join(ROOT,'examples/geneva-indexer/style.css'),'utf8');
     const css=normalized.mechanism==='slider-crank'
       ?baseCSS+'\n'+readFileSync(join(inputDirectory,'style.css'),'utf8')
@@ -125,7 +130,7 @@ export function compileRequest({request,out}){
       'This illustrative mechanism is not engineering-certified. Run actual model/browser/video gates separately.\n');
     renameSync(generated,dest);
     return {directory:dest,id:normalized.id,mechanism:normalized.mechanism,
-      files:9,
+      files:12,
       film:normalized.video,sourceCount:normalized.references.length,
       buildVerified:false,renderVerified:false,releaseReady:false};
   }catch(e){rmSync(generated,{recursive:true,force:true});throw e;}
