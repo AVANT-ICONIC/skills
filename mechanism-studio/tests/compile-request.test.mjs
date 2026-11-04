@@ -51,7 +51,7 @@ test('compiler generates two isolated reproducible folders with real config',()=
    const out=join(d,data.id);
    const receipt=compileRequest({request:data,out});
    assert.equal(receipt.releaseReady,false);
-   assert.equal(receipt.files,8);
+   assert.equal(receipt.files,9);
    for(const name of ['main.js','stage.js','model.mjs','style.css','machine-config.mjs','request.json','source-register.json','README.md']){
     assert.ok(existsSync(join(out,name)),name);
    }
