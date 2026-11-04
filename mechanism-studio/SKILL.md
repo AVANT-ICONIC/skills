@@ -64,6 +64,16 @@ Reference -> numerical/kinematic checks -> isolated generated machine folder -> 
 Read [runtime and package details](README.md) and the pending technical design in specification PR #17. When prerequisites or evidence are absent, fail explicitly rather than manufacturing success.
 
 
+## Independent model-claim audit
+
+Before running any generated JavaScript in the renderer, use the [model-claim traceability contract](docs/model-claim-traceability.md). The auditor validates immutable reviewed module hashes, recomputes the numeric configuration from the brief, and tests independent geometric invariants for either supported machine family.
+
+~~~bash
+node mechanism-studio/scripts/audit-model.mjs /tmp/slider-crank-study-002 /tmp/slider-crank-study-002/audit.json
+~~~
+
+A passed audit confirms **internal kinematic consistency only**. It does **not** mean the linked technical papers were fetched, the chosen dimensions were measured, or physical forces were certified. Generated film packages now require the audit evidence, with `releaseReady=false`.
+
 ## Structured generation workflow (reviewed recipes only)
 
 Use [machine brief format and documented commands](requests/README.md). A source-backed JSON request must identify a supported mechanism family, verified-safe numeric units/ranges, provenance classes and technical reference URLs. **References are recorded, not automatically fetched or asserted true.** All guessed dimensions are labeled assumed or illustrative.

@@ -21,7 +21,7 @@ const EXPECTED_CHECKS=[
 ];
 const FILES=[
  'viewer/index.html','video/film.mp4','preview/poster.png','preview/contact-sheet.png',
- 'evidence/report.json','evidence/request.json','evidence/source-register.json',
+ 'evidence/report.json','evidence/request.json','evidence/source-register.json','evidence/model-audit.json',
  'evidence/model.mjs','LICENSES/teardown-MIT.txt','NOTICE'
 ];
 function regular(p){if(!existsSync(p)||!lstatSync(p).isFile())throw Error('INPUT_NOT_REGULAR: '+p);return p;}
@@ -57,6 +57,11 @@ export function packageGenerated({upstream,generated,evidence,build,out}){
  const sources=JSON.parse(readFileSync(regular(join(src,'source-register.json')),'utf8'));
  if(request.id!==sources.requestId||sources.sourcesFetched!==false||sources.physicalCertification!==false)
    throw Error('SOURCING_RECEIPT_INVALID');
+ const audit=JSON.parse(readFileSync(regular(join(src,'audit.json')),'utf8'));
+ if(audit.schema!=='avant.mechanism-model-audit/1'||audit.status!=='PASS'||
+   audit.requestId!==request.id||audit.mechanism!==request.mechanism||
+   audit.sourceDocumentsRetrieved!==false||audit.certifiedPhysics!==false)
+   throw Error('REVIEWED_MODEL_AUDIT_REQUIRED');
  const receipt=JSON.parse(readFileSync(regular(join(ev,'report.json')),'utf8'));
  if(receipt.state!=='PASS'||receipt.requestId!==request.id||receipt.mechanism!==request.mechanism||
    !EXPECTED_CHECKS.every(id=>receipt.checks?.some(x=>x.id===id&&x.status==='PASS')))
@@ -85,6 +90,7 @@ export function packageGenerated({upstream,generated,evidence,build,out}){
    'evidence/report.json':join(ev,'report.json'),
    'evidence/request.json':join(src,'request.json'),
    'evidence/source-register.json':join(src,'source-register.json'),
+   'evidence/model-audit.json':join(src,'audit.json'),
    'evidence/model.mjs':join(src,'model.mjs')
   };
   for(const [target,from] of Object.entries(input))copyFileSync(regular(from),join(stage,target));
@@ -109,6 +115,7 @@ export function packageGenerated({upstream,generated,evidence,build,out}){
    schema:'avant.mechanism-package/1',packageId:request.id,tier:'generated-study-preview',releaseReady:false,
    generator:{name:'teardown',repository:PIN.repository,revision:PIN.revision,packageLockSha256:PIN.packageLockSha256},
    model:{classification:'reference-grounded',verifiedEngineering:false,mechanism:request.mechanism,
+     independentConstraintProof:'evidence/model-audit.json',
      sourceCount:request.references.length,provenance:'source-register-only-no-remote-retrieval'},
    timebase:{fpsNumerator:request.video.fps,fpsDenominator:1,
      frameCount:request.video.fps*request.video.durationSeconds,

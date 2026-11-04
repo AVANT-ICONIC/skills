@@ -96,13 +96,18 @@ test('source-grounded film packages verify integrity, embedded brief and timebas
  try{
   const names=['viewer/index.html','video/film.mp4','preview/poster.png',
    'preview/contact-sheet.png','evidence/report.json','evidence/request.json',
-   'evidence/source-register.json','evidence/model.mjs','LICENSES/teardown-MIT.txt','NOTICE'];
+   'evidence/source-register.json','evidence/model-audit.json','evidence/model.mjs','LICENSES/teardown-MIT.txt','NOTICE'];
   const content={
    'evidence/request.json':JSON.stringify({schema:'avant.mechanism-request/1',id:'slider-study-test',
-    mechanism:'slider-crank',references:[{id:'reference'}],
+    mechanism:'slider-crank',references:[{id:'reference',url:'https://example.org/slider'}],
     video:{fps:24,durationSeconds:8,width:1280,height:720}}),
    'evidence/source-register.json':JSON.stringify({requestId:'slider-study-test',sourcesFetched:false,
-    physicalCertification:false})
+    physicalCertification:false}),
+   'evidence/model-audit.json':JSON.stringify({schema:'avant.mechanism-model-audit/1',requestId:'slider-study-test',
+      mechanism:'slider-crank',status:'PASS',scientificSourceVerification:'NOT_EVALUATED',
+      sourceDocumentsRetrieved:false,certifiedPhysics:false,
+      references:[{id:'reference',url:'https://example.org/slider',contentChecked:false}],
+      claims:['rod','stroke','formula'].map(id=>({id,status:'PASS',referenceIds:['reference'],measured:0,tolerance:1e-8}))})
   };
   const assets=names.map(name=>{
    const bytes=Buffer.from(content[name]||'tested:'+name),file=path.join(dir,name);
@@ -116,7 +121,7 @@ test('source-grounded film packages verify integrity, embedded brief and timebas
    timebase:{fpsNumerator:24,fpsDenominator:1,frameCount:192,width:1280,height:720},
    entrypoints:{viewer:names[0],video:names[1],poster:names[2],evidence:names[4]},assets};
   const save=()=>writeFileSync(path.join(dir,'manifest.json'),JSON.stringify(m));
-  save();assert.equal(verifyPackage(dir).files,10);
+  save();assert.equal(verifyPackage(dir).files,11);
   m.timebase.frameCount=191;save();assert.throws(()=>verifyPackage(dir),/FILM_REQUEST_MISMATCH/);
   m.timebase.frameCount=192;m.model.verifiedEngineering=true;save();
   assert.throws(()=>verifyPackage(dir),/MODEL_PROVENANCE_INVALID/);

@@ -83,6 +83,16 @@ export function validateRequest(input){
   };
   return Object.freeze(normalized);
 }
+/** Canonical serialization shared by compiler and audited model input. */
+export function makeMachineConfig(normalized){
+  const values=normalized.mechanism==='slider-crank'
+    ?{...Object.fromEntries(Object.entries(normalized.parameters).map(([k,v])=>[k,v.value])),video:normalized.video}
+    :{video:normalized.video};
+  const prefix=normalized.mechanism==='slider-crank'
+    ?'/* Verified typed configuration. No dynamically sourced code. */'
+    :'/* Verified film profile, no executable user source. */';
+  return prefix+'\nexport const CONFIG=Object.freeze('+JSON.stringify(values,null,2)+');\n';
+}
 export function compileRequest({request,out}){
   const normalized=validateRequest(request);
   const dest=validatePathLocation(ROOT,out);
@@ -100,14 +110,7 @@ export function compileRequest({request,out}){
       ?baseCSS+'\n'+readFileSync(join(inputDirectory,'style.css'),'utf8')
       :baseCSS;
     writeFileSync(join(generated,'style.css'),css);
-    if(normalized.mechanism==='slider-crank'){
-      const vals=Object.fromEntries(Object.entries(normalized.parameters).map(([k,v])=>[k,v.value]));
-      writeFileSync(join(generated,'machine-config.mjs'),
-        '/* Verified typed configuration. No dynamically sourced code. */\nexport const CONFIG=Object.freeze('+JSON.stringify({...vals,video:normalized.video},null,2)+');\n');
-    }else{
-      writeFileSync(join(generated,'machine-config.mjs'),
-        '/* Verified film profile, no executable user source. */\nexport const CONFIG=Object.freeze('+JSON.stringify({video:normalized.video},null,2)+');\n');
-    }
+    writeFileSync(join(generated,'machine-config.mjs'),makeMachineConfig(normalized));
     writeFileSync(join(generated,'request.json'),JSON.stringify(normalized,null,2)+'\n');
     writeFileSync(join(generated,'source-register.json'),JSON.stringify({
       requestId:normalized.id,classification:normalized.classification,
