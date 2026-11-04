@@ -64,6 +64,12 @@ Reference -> numerical/kinematic checks -> isolated generated machine folder -> 
 Read [runtime and package details](README.md) and the pending technical design in specification PR #17. When prerequisites or evidence are absent, fail explicitly rather than manufacturing success.
 
 
+## Declarative machine graph (experimental)
+
+[Mechanism Graph v1](docs/declarative-machine-graph.md) now expresses parts, revolute/prismatic joints, input motion and constraints as inspectable millimetre-based data. The slider-crank's **actual body poses** are solved from this approved graph and drive the existing interactive viewer and deterministic Full HD film. The Geneva graph describes reviewed topology but **does not yet replace** its established ideal solver.
+
+The compiler emits `mechanism-graph.json`, `machine-graph.mjs` and an unchanged copy of the canonical graph interpreter. Audits reject modified joints, sources or config before browser execution. Film packages now include the inspectable graph and require a linked mathematical proof. This is still a bounded graph language, not arbitrary mechanical CAD or a general-purpose physics solver.
+
 ## Independent model-claim audit
 
 Before running any generated JavaScript in the renderer, use the [model-claim traceability contract](docs/model-claim-traceability.md). The auditor validates immutable reviewed module hashes, recomputes the numeric configuration from the brief, and tests independent geometric invariants for either supported machine family.
