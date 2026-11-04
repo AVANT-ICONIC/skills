@@ -3,6 +3,7 @@ on:
   pull_request:
     paths:
       - 'mechanism-studio/scripts/compile-request.mjs'
+      - 'mechanism-studio/scripts/audit-model.mjs'
       - 'mechanism-studio/scripts/verify-generated.mjs'
       - 'mechanism-studio/scripts/audio.mjs'
       - 'mechanism-studio/scripts/package-generated.mjs'
@@ -44,6 +45,15 @@ jobs:
           node mechanism-studio/scripts/compile-request.mjs \
             --request mechanism-studio/requests/geneva-four-slot-study.json \
             --out "$RUNNER_TEMP/generated/geneva-four-slot-study-001"
+      - name: Prove trusted template identity and independent kinematic invariants
+        shell: bash
+        run: |
+          set -euo pipefail
+          for id in slider-crank-study-002 geneva-four-slot-study-001; do
+            node mechanism-studio/scripts/audit-model.mjs \
+              "$RUNNER_TEMP/generated/$id" "$RUNNER_TEMP/generated/$id/audit.json"
+            test -s "$RUNNER_TEMP/generated/$id/audit.json"
+          done
       - name: Fetch verified and immutable Teardown dependency
         shell: bash
         run: |
