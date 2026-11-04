@@ -32,11 +32,16 @@ function run(cmd,args,cwd,timeout=120000){
  return r.stdout||'';
 }
 function contactSheet(inputs,output,engine){
- const names=['a','b','c','d'];
+ if(![4,6].includes(inputs.length))throw Error('CONTACT_SHEET_COUNT_UNSUPPORTED');
+ const names=['a','b','c','d','e','f'].slice(0,inputs.length);
  const args=['-v','error','-y'];
  for(const p of inputs)args.push('-i',p);
- const filter=names.map((n,i)=>'['+i+':v]scale=640:360['+n+']').join(';')+
-   ';[a][b][c][d]xstack=inputs=4:layout=0_0|w0_0|0_h0|w0_h0[v]';
+ const stack=names.map((n,i)=>'['+i+':v]scale=640:360['+n+']').join(';');
+ const layout=inputs.length===6
+  ?'0_0|640_0|1280_0|0_360|640_360|1280_360'
+  :'0_0|640_0|0_360|640_360';
+ const filter=stack+';'+names.map(n=>'['+n+']').join('')+
+   'xstack=inputs='+inputs.length+':layout='+layout+'[v]';
  args.push('-filter_complex',filter,'-map','[v]','-frames:v','1',output);
  run('ffmpeg',args,engine);
 }
@@ -58,6 +63,9 @@ export function packageGenerated({upstream,generated,evidence,build,out}){
    throw Error('FILM_RECEIPT_INCOMPLETE');
  if(request.video.width>=1920&&!receipt.checks.some(x=>x.id==='full-hd-layout-and-legibility'&&x.status==='PASS'))
    throw Error('FULL_HD_LAYOUT_EVIDENCE_MISSING');
+ if(request.video.direction==='cinematic'&&!receipt.checks.some(x=>
+     x.id==='actual-cinematic-camera-storyboard'&&x.status==='PASS'))
+   throw Error('CINEMATIC_FRAME_EVIDENCE_MISSING');
  const film=regular(join(ev,'film.mp4'));
  const streams=JSON.parse(run('ffprobe',['-v','error','-show_streams','-of','json',film],root)).streams;
  const video=streams.find(x=>x.codec_type==='video'),audio=streams.find(x=>x.codec_type==='audio');
@@ -80,8 +88,11 @@ export function packageGenerated({upstream,generated,evidence,build,out}){
    'evidence/model.mjs':join(src,'model.mjs')
   };
   for(const [target,from] of Object.entries(input))copyFileSync(regular(from),join(stage,target));
-  contactSheet([.5,2.5,4.5,6.5].map(t=>regular(join(ev,'decoded-'+t+'.png'))),
-    join(stage,'preview/contact-sheet.png'),root);
+  const cinematic=request.video.direction==='cinematic';
+  const samples=cinematic
+    ?[0,1,2,3,4,5].map(i=>regular(join(ev,'cinematic-'+i+'.png')))
+    :[.5,2.5,4.5,6.5].map(t=>regular(join(ev,'decoded-'+t+'.png')));
+  contactSheet(samples,join(stage,'preview/contact-sheet.png'),root);
   writeFileSync(join(stage,'LICENSES/teardown-MIT.txt'),license);
   writeFileSync(join(stage,'NOTICE'),[
    'AVANT Mechanism Studio original generated study: '+request.id,
@@ -102,7 +113,8 @@ export function packageGenerated({upstream,generated,evidence,build,out}){
    timebase:{fpsNumerator:request.video.fps,fpsDenominator:1,
      frameCount:request.video.fps*request.video.durationSeconds,
      width:request.video.width,height:request.video.height,
-     audio:'original-synthesized-illustrative-aac-48000hz'},
+     audio:'original-synthesized-illustrative-aac-48000hz',
+     cameraDirection:request.video.direction||'technical'},
    entrypoints:{viewer:'viewer/index.html',video:'video/film.mp4',
      poster:'preview/poster.png',evidence:'evidence/report.json'},
    offline:{remoteRequestsObserved:0,hardwareGpuUnverified:true,hostSandboxUnverified:true},
