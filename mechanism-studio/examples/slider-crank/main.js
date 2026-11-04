@@ -2,6 +2,7 @@ import {runSim} from 'teardown-kit/runtime.js';
 import {CONFIG} from './machine-config.mjs';
 import {stateAtTime,evaluateSliderCrank} from './model.mjs';
 import {createSliderStage} from './stage.js';
+import {evaluateFilmDirection} from './film-direction.mjs';
 
 const format=(x,n=1)=>x.toFixed(n);
 const DEFAULTS={duration:CONFIG.video.durationSeconds,fps:CONFIG.video.fps,theme:'dark',accent:'#ffab76',
@@ -38,7 +39,8 @@ runSim(DEFAULTS,({canvas,capture})=>{
   '<button id="step-forward" class="ctl-btn" title="Step crank forward 15 degrees">+15°</button></div>',
   '<div class="ctl-options"><button id="top-view">TOP VIEW</button><button id="xray">X-RAY</button>',
   '<button id="explode">EXPLODED</button><span>DRAG TO ORBIT · SCROLL TO ZOOM</span></div></section>',
-  '<div class="footer-note">SOURCE / EXACT IDEAL IN-LINE SLIDER-CRANK GEOMETRY · NUMERICAL INPUTS ARE ILLUSTRATIVE</div>'
+  '<div class="footer-note">SOURCE / EXACT IDEAL IN-LINE SLIDER-CRANK GEOMETRY · NUMERICAL INPUTS ARE ILLUSTRATIVE</div>',
+  '<div id="film-director" aria-hidden="true"><span>CINEMATIC MOTION STUDY</span><strong id="film-caption"></strong><small id="film-frame"></small></div>'
  ].join('');
  document.getElementById('app').appendChild(ui);
  const $=id=>ui.querySelector('#'+id);
@@ -54,6 +56,7 @@ runSim(DEFAULTS,({canvas,capture})=>{
  $('chart-path').setAttribute('d',chart.join(' '));
  const ctl={rpm:CONFIG.inputRpm,offset:0,hold:0,paused:false,view:'oblique',xray:false,explode:false};
  let lastTime=0,lastTurns=0,lastState=stateAtTime(0);
+ const filmDirector={active:!!capture&&CONFIG.video.direction==='cinematic',last:null};
  function paint(s){
   $('output-angle').innerHTML=format(s.strokeMm,1)+'<span> mm</span>';
   $('input-angle').innerHTML=format(s.phaseDeg,0)+'<span>°</span>';
@@ -102,7 +105,12 @@ runSim(DEFAULTS,({canvas,capture})=>{
  canvas.addEventListener('wheel',e=>{e.preventDefault();scene.setZoom(Math.sign(e.deltaY)*.05);},{passive:false});
  window.MECHANISM={
   get snapshot(){return {...lastState};},
-  get capabilities(){return {seek:true,live:true,source:'slider-crank',controls:['rpm','pause','step','orbit','zoom','xray','explode']};}
+  get capabilities(){return {seek:true,live:true,source:'slider-crank',controls:['rpm','pause','step','orbit','zoom','xray','explode'],cinematicDirection:true};},
+  director:{
+   get active(){return filmDirector.active;},
+   get snapshot(){return filmDirector.last?{...filmDirector.last,camera:{...filmDirector.last.camera}}:null;},
+   setEnabled(enabled){filmDirector.active=!!enabled;return filmDirector.active;}
+  }
  };
  if(capture)ui.dataset.capture='true';
  return {
@@ -111,7 +119,12 @@ runSim(DEFAULTS,({canvas,capture})=>{
    lastTime=t;
    const turns=ctl.paused?ctl.hold:ctl.offset+t*ctl.rpm/60;
    lastTurns=turns;lastState=evaluateSliderCrank(turns,{...CONFIG,inputRpm:ctl.rpm});
-   scene.render(lastState,ctl);paint(lastState);
+   const shot=filmDirector.active?evaluateFilmDirection(t,CONFIG.video):null;
+   filmDirector.last=shot;
+   scene.render(lastState,shot?{...ctl,filmCamera:shot.camera,xray:shot.xray,explode:shot.exploded}:ctl);
+   paint(lastState);
+   $('film-director').dataset.enabled=shot?'true':'false';
+   if(shot){$('film-caption').textContent=shot.caption;$('film-frame').textContent=String(shot.frame+1).padStart(3,'0')+' / '+shot.totalFrames;}
    return {stage:'CRANK',rpm:ctl.rpm,strokeMm:lastState.strokeMm};
   }
  };
