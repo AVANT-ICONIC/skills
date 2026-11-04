@@ -44,6 +44,7 @@
     "fps": 30,
     "durationSeconds": 8,
     "width": 1920,
-    "height": 1080
+    "height": 1080,
+    "direction": "cinematic"
   }
 }

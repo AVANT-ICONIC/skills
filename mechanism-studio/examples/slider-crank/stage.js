@@ -89,15 +89,18 @@ export function createSliderStage(canvas){
  }
  function setOrbit(dx,dy){orbitX=Math.max(-.58,Math.min(.58,orbitX+dx));orbitY=Math.max(-.43,Math.min(.43,orbitY+dy));}
  function setZoom(delta){zoom=Math.max(.70,Math.min(1.4,zoom+delta));}
- function render(state,{xray=false,explode=false,view='oblique'}={}){
+ function render(state,{xray=false,explode=false,view='oblique',filmCamera=null}={}){
+  const blend=v=>v===true?1:(Number.isFinite(v)?Math.max(0,Math.min(1,v)):0);
+  const separation=blend(explode),transparency=blend(xray);
   crankGroup.rotation.z=state.angleRad;
-  rodGroup.position.set(state.crankX,state.crankY,explode?20:8);
+  rodGroup.position.set(state.crankX,state.crankY,8+12*separation);
   rodGroup.rotation.z=state.rodAngleRad;
-  crankGroup.position.z=explode?-13:0;
-  pistonGroup.position.set(state.pistonX,0,explode?27:0);
-  materials.piston.opacity=xray?.37:1;materials.piston.transparent=!!xray;materials.piston.depthWrite=!xray;
-  const angle=view==='top'?0:orbitY,d=288*zoom,target=new THREE.Vector3((L+R)/2,innerWidth>=1600?15:-12,-2);
-  axis.position.set(target.x+Math.sin(orbitX)*d,target.y+Math.sin(angle)*d,target.z+Math.cos(orbitX)*Math.cos(angle)*d);
+  crankGroup.position.z=-13*separation;
+  pistonGroup.position.set(state.pistonX,0,27*separation);
+  materials.piston.opacity=1-.63*transparency;materials.piston.transparent=transparency>0;materials.piston.depthWrite=transparency===0;
+  const cx=filmCamera?.orbitX??orbitX,angle=filmCamera?.orbitY??(view==='top'?0:orbitY),
+    d=288*(filmCamera?.zoom??zoom),target=new THREE.Vector3((L+R)/2,innerWidth>=1600?15:-12,-2);
+  axis.position.set(target.x+Math.sin(cx)*d,target.y+Math.sin(angle)*d,target.z+Math.cos(cx)*Math.cos(angle)*d);
   axis.lookAt(target);
   renderer.render(scene,axis);
  }

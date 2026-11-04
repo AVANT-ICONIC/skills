@@ -19,6 +19,7 @@ test('both reviewed recipe briefs parse and preserve source provenance',()=>{
   assert.ok([1280,1920].includes(valid.video.width));assert.equal(valid.video.height,valid.video.width*9/16);
  }
  assert.equal(validateRequest(slider).parameters.crankRadiusMm.value,32);
+ assert.equal(validateRequest(slider).video.direction,'cinematic','CI fixture must exercise the film director');
  assert.deepEqual(validateRequest(geneva).parameters,{});
 });
 test('missing, duplicate and unrelated sources fail closed',()=>{
@@ -43,6 +44,7 @@ test('film dimensions and timebase must use supported profile',()=>{
  const a=clone(slider);a.video.fps=7;assert.throws(()=>validateRequest(a),/VIDEO_PROFILE_UNSUPPORTED/);
  const b=clone(slider);b.video.width=1536;assert.throws(()=>validateRequest(b),/VIDEO_PROFILE_UNSUPPORTED/);
  const c=clone(slider);c.video.durationSeconds=50;assert.throws(()=>validateRequest(c),/VIDEO_PROFILE_UNSUPPORTED/);
+ const d=clone(slider);d.video.direction='js';assert.throws(()=>validateRequest(d),/VIDEO_DIRECTION_UNSUPPORTED/);
 });
 test('compiler generates two isolated reproducible folders with real config',()=>{
  const d=mkdtempSync(join(tmpdir(),'mechanism-compiler-'));
@@ -51,8 +53,8 @@ test('compiler generates two isolated reproducible folders with real config',()=
    const out=join(d,data.id);
    const receipt=compileRequest({request:data,out});
    assert.equal(receipt.releaseReady,false);
-   assert.equal(receipt.files,8);
-   for(const name of ['main.js','stage.js','model.mjs','style.css','machine-config.mjs','request.json','source-register.json','README.md']){
+   assert.equal(receipt.files,9);
+   for(const name of ['main.js','stage.js','model.mjs','style.css','machine-config.mjs','film-direction.mjs','request.json','source-register.json','README.md']){
     assert.ok(existsSync(join(out,name)),name);
    }
    const config=readFileSync(join(out,'machine-config.mjs'),'utf8');

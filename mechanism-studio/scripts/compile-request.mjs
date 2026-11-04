@@ -71,13 +71,15 @@ export function validateRequest(input){
     if(l<2.2*r||l>5*r)throw Error('ROD_RATIO_UNSAFE');
   }
   const video=toObject(x.video,'VIDEO');
+  const direction=video.direction??'technical';
+  if(!['cinematic','technical'].includes(direction))throw Error('VIDEO_DIRECTION_UNSUPPORTED');
   if(![24,25,30].includes(video.fps)||!Number.isInteger(video.durationSeconds)||video.durationSeconds<6||video.durationSeconds>30||
     ![[1280,720],[1920,1080]].some(([w,h])=>video.width===w&&video.height===h))throw Error('VIDEO_PROFILE_UNSUPPORTED');
   const normalized={
     schema:x.schema,id:x.id,mechanism:x.mechanism,
     description:x.description.trim(),classification:x.classification,
     references:refs,parameters:params,
-    video:{fps:video.fps,durationSeconds:video.durationSeconds,width:video.width,height:video.height}
+    video:{fps:video.fps,durationSeconds:video.durationSeconds,width:video.width,height:video.height,direction}
   };
   return Object.freeze(normalized);
 }
@@ -91,6 +93,8 @@ export function compileRequest({request,out}){
   try{
     mkdirSync(generated,{recursive:true});
     for(const name of paths)copyFileSync(join(inputDirectory,name),join(generated,name));
+    // One canonical director is copied, not a second independent recipe engine.
+    copyFileSync(join(ROOT,'scripts/film-direction.mjs'),join(generated,'film-direction.mjs'));
     const baseCSS=readFileSync(join(ROOT,'examples/geneva-indexer/style.css'),'utf8');
     const css=normalized.mechanism==='slider-crank'
       ?baseCSS+'\n'+readFileSync(join(inputDirectory,'style.css'),'utf8')
@@ -99,7 +103,7 @@ export function compileRequest({request,out}){
     if(normalized.mechanism==='slider-crank'){
       const vals=Object.fromEntries(Object.entries(normalized.parameters).map(([k,v])=>[k,v.value]));
       writeFileSync(join(generated,'machine-config.mjs'),
-        '/* Verified numeric configuration. No dynamically sourced code. */\nexport const CONFIG=Object.freeze('+JSON.stringify({...vals,video:normalized.video},null,2)+');\n');
+        '/* Verified typed configuration. No dynamically sourced code. */\nexport const CONFIG=Object.freeze('+JSON.stringify({...vals,video:normalized.video},null,2)+');\n');
     }else{
       writeFileSync(join(generated,'machine-config.mjs'),
         '/* Verified film profile, no executable user source. */\nexport const CONFIG=Object.freeze('+JSON.stringify({video:normalized.video},null,2)+');\n');
@@ -118,7 +122,7 @@ export function compileRequest({request,out}){
       'This illustrative mechanism is not engineering-certified. Run actual model/browser/video gates separately.\n');
     renameSync(generated,dest);
     return {directory:dest,id:normalized.id,mechanism:normalized.mechanism,
-      files:8,
+      files:9,
       film:normalized.video,sourceCount:normalized.references.length,
       buildVerified:false,renderVerified:false,releaseReady:false};
   }catch(e){rmSync(generated,{recursive:true,force:true});throw e;}

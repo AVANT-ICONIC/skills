@@ -6,6 +6,7 @@ on:
       - 'mechanism-studio/scripts/verify-generated.mjs'
       - 'mechanism-studio/scripts/audio.mjs'
       - 'mechanism-studio/scripts/package-generated.mjs'
+      - 'mechanism-studio/scripts/film-direction.mjs'
       - 'mechanism-studio/scripts/package-example.mjs'
       - 'mechanism-studio/tests/**'
       - 'mechanism-studio/requests/**'
@@ -31,7 +32,7 @@ jobs:
       - name: Verify source-grounded request validation and both mathematical models
         run: |
           set -euo pipefail
-          node --test mechanism-studio/tests/compile-request.test.mjs mechanism-studio/tests/audio.test.mjs mechanism-studio/tests/package-example.test.mjs
+          node --test mechanism-studio/tests/*.test.mjs
           node --test mechanism-studio/examples/slider-crank/model.test.mjs
           node --test mechanism-studio/examples/geneva-indexer/model.test.mjs
       - name: Compile two distinct mechanism families from checked source briefs

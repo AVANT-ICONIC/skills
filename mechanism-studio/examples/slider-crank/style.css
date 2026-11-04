@@ -54,3 +54,21 @@
   .drawing-right{left:57%;top:70%}
   .footer-note{bottom:34px;left:59px;font-size:10px}
 }
+
+
+/* Reusable time-addressed film language. Hidden in the interactive viewer. */
+#film-director{display:none;position:absolute;left:38%;top:14%;width:26%;
+  color:#d7edf5;pointer-events:none;text-align:left;
+  border-left:2px solid rgba(255,170,110,.8);padding:11px 0 11px 17px;
+  background:linear-gradient(90deg,rgba(7,21,33,.56),transparent);letter-spacing:1px}
+#film-director[data-enabled="true"]{display:flex;flex-direction:column;gap:7px}
+#film-director span{font-size:10px;letter-spacing:2.8px;color:#75afbe}
+#film-director strong{font-size:15px;letter-spacing:1.6px;color:#f5debe;font-weight:600}
+#film-director small{font-size:10px;letter-spacing:1.4px;color:#8daab8}
+@media(min-width:1600px){
+ #film-director{left:40%;top:15%;padding:17px 0 17px 21px}
+ #film-director span{font-size:13px}
+ #film-director strong{font-size:20px}
+ #film-director small{font-size:13px}
+}
+@media(max-width:700px){#film-director{top:19%;left:38%;width:56%;padding:8px;font-size:8px}}
