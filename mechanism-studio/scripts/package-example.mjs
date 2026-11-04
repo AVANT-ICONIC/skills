@@ -46,6 +46,7 @@ const GENERATED_FILES=[
   ['evidence/report.json','json'],
   ['evidence/request.json','json'],
   ['evidence/source-register.json','json'],
+  ['evidence/model-audit.json','json'],
   ['evidence/model.mjs','source'],
   ['LICENSES/teardown-MIT.txt','license'],
   ['NOTICE','notice']
@@ -103,6 +104,14 @@ export function verifyPackage(folder){
       sources.requestId!==request.id||sources.sourcesFetched!==false||
       sources.physicalCertification!==false||request.mechanism!==m.model.mechanism)
       throw Error('SOURCE_MANIFEST_MISMATCH');
+    const modelAudit=JSON.parse(readFileSync(safePackageFile(root,'evidence/model-audit.json'),'utf8'));
+    if(modelAudit.schema!=='avant.mechanism-model-audit/1'||modelAudit.requestId!==request.id||
+      modelAudit.mechanism!==request.mechanism||modelAudit.status!=='PASS'||
+      modelAudit.scientificSourceVerification!=='NOT_EVALUATED'||
+      modelAudit.sourceDocumentsRetrieved!==false||modelAudit.certifiedPhysics!==false||
+      !Array.isArray(modelAudit.claims)||modelAudit.claims.length<3||
+      modelAudit.claims.some(c=>c.status!=='PASS'))
+      throw Error('MODEL_AUDIT_MISMATCH');
     if(request.video?.fps!==m.timebase?.fpsNumerator||
       request.video?.durationSeconds*request.video?.fps!==m.timebase?.frameCount||
       request.video?.width!==m.timebase?.width||
