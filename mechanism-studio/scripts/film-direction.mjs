@@ -14,7 +14,9 @@ export const SHOTS = Object.freeze([
     camera:Object.freeze({orbitX:-.32,orbitY:-.22,zoom:1.04}),explode:.88,xray:0}),
   Object.freeze({at:.79,id:'section',caption:'05 / INTERNAL MOTION',
     camera:Object.freeze({orbitX:.12,orbitY:.10,zoom:.99}),explode:.08,xray:.70}),
-  Object.freeze({at:1,id:'overview',caption:'06 / COMPLETE MOTION',
+  Object.freeze({at:.94,id:'complete',caption:'06 / COMPLETE MOTION',
+    camera:Object.freeze({orbitX:-.16,orbitY:-.10,zoom:1.08}),explode:0,xray:0}),
+  Object.freeze({at:1,id:'complete',caption:'06 / COMPLETE MOTION',
     camera:Object.freeze({orbitX:-.16,orbitY:-.10,zoom:1.08}),explode:0,xray:0})
 ]);
 const keys=['orbitX','orbitY','zoom'];
