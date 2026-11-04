@@ -21,7 +21,7 @@ const EXPECTED_CHECKS=[
 ];
 const FILES=[
  'viewer/index.html','video/film.mp4','preview/poster.png','preview/contact-sheet.png',
- 'evidence/report.json','evidence/request.json','evidence/source-register.json','evidence/model-audit.json',
+ 'evidence/report.json','evidence/request.json','evidence/source-register.json','evidence/model-audit.json','evidence/mechanism-graph.json',
  'evidence/model.mjs','LICENSES/teardown-MIT.txt','NOTICE'
 ];
 function regular(p){if(!existsSync(p)||!lstatSync(p).isFile())throw Error('INPUT_NOT_REGULAR: '+p);return p;}
@@ -58,6 +58,9 @@ export function packageGenerated({upstream,generated,evidence,build,out}){
  if(request.id!==sources.requestId||sources.sourcesFetched!==false||sources.physicalCertification!==false)
    throw Error('SOURCING_RECEIPT_INVALID');
  const audit=JSON.parse(readFileSync(regular(join(src,'audit.json')),'utf8'));
+ if(audit.mechanismGraph?.schema!=='avant.mechanism-graph/1'||
+   audit.mechanismGraph.sha256!==digest(join(src,'mechanism-graph.json')).sha256)
+   throw Error('GRAPH_RECEIPT_MISMATCH');
  if(audit.schema!=='avant.mechanism-model-audit/1'||audit.status!=='PASS'||
    audit.requestId!==request.id||audit.mechanism!==request.mechanism||
    audit.sourceDocumentsRetrieved!==false||audit.certifiedPhysics!==false)
@@ -91,6 +94,7 @@ export function packageGenerated({upstream,generated,evidence,build,out}){
    'evidence/request.json':join(src,'request.json'),
    'evidence/source-register.json':join(src,'source-register.json'),
    'evidence/model-audit.json':join(src,'audit.json'),
+   'evidence/mechanism-graph.json':join(src,'mechanism-graph.json'),
    'evidence/model.mjs':join(src,'model.mjs')
   };
   for(const [target,from] of Object.entries(input))copyFileSync(regular(from),join(stage,target));
@@ -116,6 +120,9 @@ export function packageGenerated({upstream,generated,evidence,build,out}){
    generator:{name:'teardown',repository:PIN.repository,revision:PIN.revision,packageLockSha256:PIN.packageLockSha256},
    model:{classification:'reference-grounded',verifiedEngineering:false,mechanism:request.mechanism,
      independentConstraintProof:'evidence/model-audit.json',
+     mechanismGraph:'evidence/mechanism-graph.json',
+     solver:audit.mechanismGraph.solver,
+     graphDriven:audit.mechanismGraph.runtimeDriven,
      sourceCount:request.references.length,provenance:'source-register-only-no-remote-retrieval'},
    timebase:{fpsNumerator:request.video.fps,fpsDenominator:1,
      frameCount:request.video.fps*request.video.durationSeconds,
