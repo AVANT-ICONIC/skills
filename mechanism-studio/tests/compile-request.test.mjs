@@ -19,6 +19,7 @@ test('both reviewed recipe briefs parse and preserve source provenance',()=>{
   assert.ok([1280,1920].includes(valid.video.width));assert.equal(valid.video.height,valid.video.width*9/16);
  }
  assert.equal(validateRequest(slider).parameters.crankRadiusMm.value,32);
+ assert.equal(validateRequest(slider).video.direction,'cinematic','CI fixture must exercise the film director');
  assert.deepEqual(validateRequest(geneva).parameters,{});
 });
 test('missing, duplicate and unrelated sources fail closed',()=>{
