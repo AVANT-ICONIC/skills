@@ -36,6 +36,10 @@ The generated directory contains `main.js`, `model.mjs`, `stage.js`, the canonic
 
 It is NOT yet signed, certified, safe to run with untrusted templates, or production-released. Do not execute generated JS with user credentials or privileged filesystem access. The CI runner is ephemeral, and browser network interception alone is **not** a complete security boundary.
 
+## Graph representation
+
+The validated compiler also produces `mechanism-graph.json` and `machine-graph.mjs`. These are derived from the typed brief and reviewed body/joint schema rather than copied from customer JavaScript. For the slider-crank, the model's actual pose and velocity now come from a canonical joint-constraint evaluator. See [the graph-v1 contract](../docs/declarative-machine-graph.md). The Geneva graph remains descriptive until its graph solver is validated.
+
 ## Video profiles and QA
 
 Supported **16:9** film targets:
