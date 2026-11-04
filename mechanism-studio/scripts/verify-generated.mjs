@@ -58,6 +58,12 @@ try{
    assert.equal(meta.fps,request.video.fps);assert.equal(meta.duration,request.video.durationSeconds);
    return meta;
   });
+  if(request.mechanism==='slider-crank')await check('director-supported-and-live-isolated',async()=>{
+    const director=await page.evaluate(()=>window.MECHANISM?.director?.active);
+    assert.equal(director,request.video.direction==='cinematic');
+    await page.evaluate(()=>window.MECHANISM.director.setEnabled(false));
+    return {filmDirectionRequested:request.video.direction||'technical',directorOriginallyActive:director,liveControlsIsolated:true};
+  });
   const getSnapshot=()=>page.evaluate(kind=>kind==='slider-crank'?window.MECHANISM.snapshot:window.GENEVA.snapshot,request.mechanism);
   const snapshots={};const shotHashes={};
   for(const t of [0,2,4,6]){
@@ -129,6 +135,29 @@ try{
     assert.ok(png.length>20000);
     return layout;
    });
+  }
+  if(request.mechanism==='slider-crank'&&request.video.direction==='cinematic'){
+    await check('actual-cinematic-camera-storyboard',async()=>{
+      const frames=[0,1.7,3.3,5.1,6.6,7.7],shots=[],hashes=[];
+      await page.evaluate(()=>window.MECHANISM.director.setEnabled(true));
+      for(const [i,t] of frames.entries()){
+        await page.evaluate(t=>window.SIM.render(t),t);
+        const shot=await page.evaluate(()=>window.MECHANISM.director.snapshot);
+        assert.ok(shot&&shot.frame>=0&&shot.frame<request.video.fps*request.video.durationSeconds);
+        assert.equal(shot.shotNumber,i+1,'SHOT_ORDER');
+        assert.equal(shot.totalFrames,request.video.fps*request.video.durationSeconds);
+        const png=await page.screenshot({path:join(out,'cinematic-'+i+'.png'),timeout:90000,animations:'disabled'});
+        assert.ok(png.length>18000,'CINEMA_FRAME_EMPTY');
+        shots.push({t,id:shot.shotId,shotNumber:shot.shotNumber,camera:shot.camera,
+          exploded:shot.exploded,xray:shot.xray,sha256:hash(png)});
+        hashes.push(hash(png));
+      }
+      assert.equal(new Set(hashes).size,6,'CINEMA_SHOTS_NOT_DISTINCT');
+      await page.evaluate(()=>window.SIM.render(1.7));
+      const replay=await page.screenshot({timeout:90000,animations:'disabled'});
+      assert.equal(hash(replay),hashes[1],'CINEMA_NONDETERMINISTIC');
+      return {shots,repeatFrameIdentical:true};
+    });
   }
   await check('network-and-console-gate',()=>{assert.deepEqual(errors,[]);assert.deepEqual(remote,[]);return{errors,remote};});
   await context.close();
