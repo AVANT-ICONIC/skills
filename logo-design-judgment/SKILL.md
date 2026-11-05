@@ -10,7 +10,7 @@ A logo is a communication device, not decoration. Its primary job is to identify
 
 Core sequence: **research -> concept -> shape -> test -> refine -> system -> deliver.** Do not skip to shape. Do not stop before test.
 
-Attribution note: this skill is a synthesis of one creator's demonstrated workflow (Satori Graphics), distilled by the skill author from the public videos listed in references/source-notes.md. Items marked [creator] are his argued judgment, shown with examples in the videos but not independently proven; items marked [common] are broadly held in the design field. The tags mark the primary lessons, not every line. Treat both as strong defaults to apply with brief-specific reasoning, not laws.
+Attribution note: this skill is a synthesis of one creator's demonstrated workflow (Satori Graphics), distilled by the skill author from the public videos listed in references/source-notes.md. Items marked [creator] are his argued judgment, shown with examples in the videos but not independently proven. Untagged passages are the author's synthesis and application guidance from the same sources. Treat everything here as strong defaults to apply with brief-specific reasoning, not laws.
 
 ## 1. Research before any sketching
 
@@ -56,7 +56,7 @@ More concept guidance:
 - **Look for negative space tied to a keyword** [creator, Bolt/Koto case]: the lightning bolt sits as negative space between the L and T of a bold wordmark. A wordmark with an idea inside it beats a wordmark with an icon bolted on. Keep cutout shapes compound/editable in the vector file.
 - **One-sentence rule**: if you cannot explain the concept in one sentence, it is too complicated. Simplify until you can.
 - **Sketch first, software second**: bring sketches into the vector tool as locked guides. Opening the shape tools without a concept produces decoration.
-- **Iterate by copying forward** [creator]: duplicate the design and change one thing per pass. The first copy-forward pass usually beats the original; treat that as a working habit, not a guarantee. Small moves can have outsized effects (a tiny scale-down plus slight rotation fixed a whole composition).
+- **Iterate by copying forward** [creator]: duplicate the design and change one thing per pass - his working habit on real projects. Small moves can have outsized effects (a tiny scale-down plus slight rotation fixed a whole composition).
 - **Know when to stop** [creator]: more time does not mean more design. When a concept has run its course, stop - his 10-minute result arguably beat his 1-hour result in the same brief. Treat this as one demonstrated example, not a universal law about time budgets.
 
 ## 3. Shape, type and color decisions
@@ -75,17 +75,17 @@ More concept guidance:
 - Combination mark: most common and flexible; package icon + wordmark + combined versions.
 - Emblem: authority, tradition, teams/institutions (Starbucks). Can feel dated.
 - Mascot: friendly, food/family brands. High risk, hard to age well.
-- Do not add a symbol because "a logo is supposed to have one." Some brands are better served by a wordmark alone. A logo does not have to literally show what the company does [common; creator's quiz doctrine].
+- Do not add a symbol because "a logo is supposed to have one." Some brands are better served by a wordmark alone. A logo does not have to literally show what the company does [creator's quiz doctrine].
 
 **Typeface as message** [creator's ladder, a rubric rather than a ranking]:
 - Amateur: a generic or favorite font mismatched to the brief (Papyrus for a rugged brand), auto tracking, no manual kerning.
 - Pro: typeface psychology matched to the brief, manual kerning by eye (outline the text or nudge by keyboard), optical spacing.
 - Master: a bespoke or customized logotype, with the symbol and type sharing the same psychological register for the audience.
 - Useful signals [creator]: lowercase reads approachable/friendly; italics read dynamic/forward-moving; bold condensed italic sans reads as strength and motion (Nike); a light refined serif reads as formal elegance (Aston Martin).
-- Check: does the typeface match the brand voice, stay legible from header to favicon, and survive weight/spacing adjustments?
+- Check: does the typeface match the brand voice, stay legible across the sizes the wordmark itself will actually be used at, and survive weight/spacing adjustments? Small sizes are served by a separate simplified symbol when needed (see the small-size test), not by forcing the full wordmark.
 
 **Color**:
-- Driven by brand identity and the emotional effect on the audience - not client preference, not trends [creator, common].
+- Driven by brand identity and the emotional effect on the audience - not client preference, not trends [creator].
 - **Conform vs contrast is a deliberate decision** [creator]: Taco Bell's purple stands apart from fast-food red/yellow. Say which you are doing and why. Origin can also choose the palette (IKEA uses the Swedish flag); emotion can split it (FedEx pairs action-orange with a calming, professional purple).
 - **The mark must work without its color effects**: test flat and grayscale. If recognition collapses without the gradient, the form is weak [creator; amateur tier relies on the gradient for the logo to "work"].
 - **Know when to break convention** [creator's master tier]: a desaturated soft red for an insurance brand aimed at a radical, elite audience - warming, bold, differentiating - where the pro-safe choice was trust-blue. Rule-breaking is a skill applied to a researched audience, not a license.
