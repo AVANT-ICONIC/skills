@@ -73,7 +73,7 @@ See [`geometric-design/SKILL.md`](./geometric-design/SKILL.md).
 
 **Source-grounded logo design judgment, distilled from demonstrated practice.**
 
-Logo Design Judgment distills a named creator's long-form teaching (Satori Graphics) into transferable decision rules: brief-to-concept reasoning, the recognition and reproduction gates a mark must pass, geometry and optical correction, type and mark consistency, and presentation craft. Every rubric is labeled as the creator's argued judgment or widely held practice, with per-video provenance and timestamped notes; visual lessons were grounded in actually inspected frames during distillation. Coverage is stated honestly: 17 of 20 unique source videos, with the untranscribed gaps disclosed in the reference notes.
+Logo Design Judgment distills a named creator's long-form teaching (Satori Graphics) into transferable decision rules: brief-to-concept reasoning, the recognition and reproduction gates a mark must pass, geometry and optical correction, type and mark consistency, and presentation craft. Primary lessons are tagged as the creator's argued judgment and untagged passages are the author's synthesis, with per-video provenance and selected timestamps; key visual lessons were grounded in actually inspected frames during distillation. Coverage is stated honestly: 17 of 20 unique source videos, with the untranscribed gaps disclosed in the reference notes.
 
 See [`logo-design-judgment/SKILL.md`](./logo-design-judgment/SKILL.md).
 
