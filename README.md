@@ -69,6 +69,14 @@ Geometric Design covers monochrome symbol construction, nested layout regions, s
 
 See [`geometric-design/SKILL.md`](./geometric-design/SKILL.md).
 
+### `logo-design-judgment`
+
+**Source-grounded logo design judgment, distilled from demonstrated practice.**
+
+Logo Design Judgment distills a named creator's long-form teaching (Satori Graphics) into transferable decision rules: brief-to-concept reasoning, the recognition and reproduction gates a mark must pass, geometry and optical correction, type and mark consistency, and presentation craft. Every rubric is labeled as the creator's argued judgment or widely held practice, with per-video provenance and timestamped notes; visual lessons were grounded in actually inspected frames during distillation. Coverage is stated honestly: 17 of 20 unique source videos, with the untranscribed gaps disclosed in the reference notes.
+
+See [`logo-design-judgment/SKILL.md`](./logo-design-judgment/SKILL.md).
+
 ### `openspec-workflow`
 
 **Native OpenSpec change routing from intent to verified implementation.**
@@ -263,7 +271,7 @@ The repository follows the open Agent Skills convention: each skill is a folder 
 
 ## Status
 
-The collection currently includes twelve skills: `anti-sloprush`, `architecture-guard`, `futurequake`, `game-studio`, `gauntlet-loop`, `geometric-design`, `intent-mode`, `openspec-workflow`, `seo-aiseo`, `test-velocity`, `video-watch`, and `visual-output`.
+The collection currently includes thirteen skills: `anti-sloprush`, `architecture-guard`, `futurequake`, `game-studio`, `gauntlet-loop`, `geometric-design`, `intent-mode`, `logo-design-judgment`, `openspec-workflow`, `seo-aiseo`, `test-velocity`, `video-watch`, and `visual-output`.
 
 ## Development
 
