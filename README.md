@@ -41,6 +41,14 @@ See [`architecture-guard/SKILL.md`](./architecture-guard/SKILL.md).
 
 **Standing across all coding projects:** the skill includes a human-grade craftsmanship contract for clearly organized modules, a maintained root README, precise usage/code documentation, substantive Markdown in `docs/` (with standard root-file exceptions), one authoritative implementation per domain behavior, and actual verification rather than AI self-certification. Load it for new repository scaffolds, implementation, substantive reviews and refactors; no special prompt is needed once the agent workflow routes to it.
 
+### `colour-theory-judgment`
+
+**Source-grounded colour-theory judgment for visual design, distilled from demonstrated teaching.**
+
+Colour Theory Judgment distills a named creator's long-form teaching (Satori Graphics) into transferable decision rules: why colour meaning comes from context rather than fixed charts, the five layers of colour strategy (functional, emotional, cultural, competitive, strategic), assigning every palette colour a defined job, and using colour contrast to direct attention. Primary lessons are tagged as the creator's argued judgment and untagged passages are the author's synthesis, with provenance and selected timestamps; key visual lessons were grounded in actually inspected frames during distillation. Coverage is stated honestly in the reference notes: the video's colour teaching is covered in full, its other design skills are not.
+
+See [`colour-theory-judgment/SKILL.md`](./colour-theory-judgment/SKILL.md).
+
 ### `futurequake`
 
 **Executable modifiability testing for real codebases.**
@@ -139,6 +147,7 @@ skills/
 ├── README.md
 ├── anti-sloprush/       # Revision-bound single-agent release contract
 ├── architecture-guard/  # Architecture governance and React ESLint example
+├── colour-theory-judgment/  # Colour theory judgment; references
 ├── futurequake/        # Modifiability experiments; references, examples, metrics helper
 ├── game-studio/        # Game design; concept-core references and packaging helper
 ├── gauntlet-loop/      # Artifact QA; references and optional executable checks
@@ -263,7 +272,7 @@ The repository follows the open Agent Skills convention: each skill is a folder 
 
 ## Status
 
-The collection currently includes twelve skills: `anti-sloprush`, `architecture-guard`, `futurequake`, `game-studio`, `gauntlet-loop`, `geometric-design`, `intent-mode`, `openspec-workflow`, `seo-aiseo`, `test-velocity`, `video-watch`, and `visual-output`.
+The collection currently includes thirteen skills: `anti-sloprush`, `architecture-guard`, `colour-theory-judgment`, `futurequake`, `game-studio`, `gauntlet-loop`, `geometric-design`, `intent-mode`, `openspec-workflow`, `seo-aiseo`, `test-velocity`, `video-watch`, and `visual-output`.
 
 ## Development
 
