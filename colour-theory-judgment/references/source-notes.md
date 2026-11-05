@@ -17,16 +17,18 @@ they are evidence for the author, not part of this package.
 The video teaches four design skills. This skill covers its colour teaching only:
 
 - Covered: the colour-theory section (0:05-7:22) and the colour-contrast material inside the
-  contrast section (35:30-46:30, through the video close).
+  contrast section (35:30-46:30; the video runs 47:32 and ends with a brief outro after the
+  contrast teaching).
 - Not covered: the branding/marketing-psychology section (about 7:23-16:00), the design-tools
   landscape section (about 16:00-34:00), and the non-colour hierarchy, flow, and contrast
   material (focal points, size hierarchy, temporal flow, contrast of size, type, style,
   texture, emotion, and concepts). Those are separate subjects.
 
-The full timed caption transcript was read end to end; the ten demonstrated moments below were
-visually inspected and confirmed to match their narration.
+The full timed caption transcript was read end to end; the ten on-screen moments below were
+visually inspected. Demonstrated examples among them were confirmed against their narration;
+moments that are title or text cards rather than demonstrations are marked as such.
 
-## Demonstrated moments inspected
+## On-screen moments inspected
 
 | Timestamp | What is on screen | Teaching it grounds |
 | --- | --- | --- |
@@ -47,8 +49,18 @@ visually inspected and confirmed to match their narration.
   creator's own enumeration consistently say five. SKILL.md uses five.
 - Colour-emotion pairings (warm as energetic, cool as calm, grayscale plus a single colour as
   sombre) are presented as the creator's guide-not-rulebook framing, not verified psychology.
-- The claim that industry colour monopolies persist "because they work" is the creator's
-  argument and stays inside [creator] tags.
+- The competitive-layer material (industry colour monopolies, borrowing sector associations)
+  is labeled in SKILL.md as the creator's strategic hypothesis to test against the actual
+  audience and product, not an established mechanism; borrowing an industry colour does not
+  automatically confer trust.
+- The WCAG and colour-alone guidance in SKILL.md section 4 is the author's addition, not from
+  the video, and is attributed there with its primary W3C sources; a measured contrast ratio
+  is one check, not an accessibility certification, and a grayscale view is not proof of
+  colour-vision accessibility.
+- Status-colour meanings (error red, success green) are described as product-culture
+  conventions to keep consistent within a product, not universal rules.
+- Functional testing in the SKILL.md working sequence is continuous: constraints checked at
+  first assembly, re-checked after revisions, and repeated as final validation.
 - The "no fixed meanings" thesis is bounded in SKILL.md: it corrects rigid colour-meaning
   charts, not learned functional conventions (error red, success green) or legibility and
   accessibility obligations, which stand independently of context.
