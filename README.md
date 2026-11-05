@@ -152,6 +152,7 @@ skills/
 ├── gauntlet-loop/      # Artifact QA; references and optional executable checks
 ├── geometric-design/   # Geometry audits and tokens; offline Node tools
 ├── intent-mode/        # Intent reconstruction
+├── logo-design-judgment/  # Logo design judgment; references
 ├── openspec-workflow/  # Native OpenSpec lifecycle routing
 ├── seo-aiseo/          # Search audits; references
 ├── test-velocity/      # Test architecture, measurement and stack recipes
