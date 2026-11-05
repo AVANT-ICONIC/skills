@@ -8,12 +8,12 @@ videos plus the playlist "Master Logo Design in JUST 7 Days!".
 - V3 (course): https://www.youtube.com/watch?v=l9_BM1opTj8
 - Playlist: https://www.youtube.com/playlist?list=PL-c9Rq56P4Kk7GHLNic7GCEPTSv6aFtj5
 
-Each lesson below carries its source video and approximate timestamp, and item headings link to
-their videos. Key frames from the videos were inspected during distillation to ground the visual
+Each video below has its own notes with selected approximate timestamps for the demonstrated
+moments, and item headings link to their videos. Key frames from the videos were inspected during distillation to ground the visual
 lessons; they are evidence for the author, not part of this package.
 
-Labels: [creator] = the creator's argued judgment or rubric (shown with examples in the videos, not
-independently validated). [common] = widely held design practice. Where the videos state legal or
+Label: [creator] = the creator's argued judgment or rubric (shown with examples in the videos, not
+independently validated). Untagged passages are the skill author's synthesis of the source material. Where the videos state legal or
 psychological claims as fact, they are recorded here as the creator's caution or vocabulary, not as
 verified law or proven science.
 
