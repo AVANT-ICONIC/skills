@@ -1,8 +1,10 @@
 # Source notes and provenance
 
-All material derives from one long-form video on the Satori Graphics YouTube channel:
+The design teaching derives from one long-form video on the Satori Graphics YouTube channel:
 
 - "The 4 Design Skills That Give You An Unfair Advantage!" - https://www.youtube.com/watch?v=GEOmxbCs-c8 (47:32, published 2026-10-30)
+
+The accessibility guidance in SKILL.md section 4 is the author's addition, sourced independently from primary W3C references: WCAG 2.2 (https://www.w3.org/TR/WCAG22/), Understanding Use of Color (https://www.w3.org/WAI/WCAG22/Understanding/use-of-color), and Understanding Non-text Contrast (https://www.w3.org/WAI/WCAG22/Understanding/non-text-contrast). Everything else is the author's synthesis of the source material or an explicitly marked author addition.
 
 Label: [creator] = the creator's argued judgment (shown with examples in the video, not
 independently validated). Untagged passages are the skill author's synthesis of the source
@@ -17,8 +19,7 @@ they are evidence for the author, not part of this package.
 The video teaches four design skills. This skill covers its colour teaching only:
 
 - Covered: the colour-theory section (0:05-7:22) and the colour-contrast material inside the
-  contrast section (35:30-46:30; the video runs 47:32 and ends with a brief outro after the
-  contrast teaching).
+  contrast section (35:30-46:30 of the 47:32 video).
 - Not covered: the branding/marketing-psychology section (about 7:23-16:00), the design-tools
   landscape section (about 16:00-34:00), and the non-colour hierarchy, flow, and contrast
   material (focal points, size hierarchy, temporal flow, contrast of size, type, style,
