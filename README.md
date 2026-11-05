@@ -45,7 +45,7 @@ See [`architecture-guard/SKILL.md`](./architecture-guard/SKILL.md).
 
 **Source-grounded colour-theory judgment for visual design, distilled from demonstrated teaching.**
 
-Colour Theory Judgment distills a named creator's long-form teaching (Satori Graphics) into transferable decision rules: why colour meaning comes from context rather than fixed charts, the five layers of colour strategy (functional, emotional, cultural, competitive, strategic), assigning every palette colour a defined job, and using colour contrast to direct attention. Primary lessons are tagged as the creator's argued judgment and untagged passages are the author's synthesis, with provenance and selected timestamps; key visual lessons were grounded in actually inspected frames during distillation. Coverage is stated honestly in the reference notes: the video's colour teaching is covered in full, its other design skills are not.
+Colour Theory Judgment distills a named creator's long-form teaching (Satori Graphics) into transferable decision rules: why colour meaning comes from context rather than fixed charts, the five layers of colour strategy (functional, emotional, cultural, competitive, strategic), assigning every palette colour a defined job, and using colour contrast to direct attention. Primary lessons are tagged as the creator's argued judgment and untagged passages are the author's synthesis, with provenance and selected timestamps; key visual lessons were grounded in actually inspected frames during distillation. Coverage is stated honestly in the reference notes: selected colour sections and lessons from the video are covered, its other design skills are not.
 
 See [`colour-theory-judgment/SKILL.md`](./colour-theory-judgment/SKILL.md).
 
