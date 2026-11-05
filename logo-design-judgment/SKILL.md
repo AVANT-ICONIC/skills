@@ -10,7 +10,7 @@ A logo is a communication device, not decoration. Its primary job is to identify
 
 Core sequence: **research -> concept -> shape -> test -> refine -> system -> deliver.** Do not skip to shape. Do not stop before test.
 
-Attribution note: this skill distills one creator's demonstrated workflow (Satori Graphics) cross-checked against widely held practice. Items marked [creator] are his argued judgment, shown with examples but not independently proven; items marked [common] are broadly held in the design field. Treat both as strong defaults to apply with brief-specific reasoning, not laws.
+Attribution note: this skill is a synthesis of one creator's demonstrated workflow (Satori Graphics), distilled by the skill author from the public videos listed in references/source-notes.md. Items marked [creator] are his argued judgment, shown with examples in the videos but not independently proven; items marked [common] are broadly held in the design field. The tags mark the primary lessons, not every line. Treat both as strong defaults to apply with brief-specific reasoning, not laws.
 
 ## 1. Research before any sketching
 
@@ -56,7 +56,7 @@ More concept guidance:
 - **Look for negative space tied to a keyword** [creator, Bolt/Koto case]: the lightning bolt sits as negative space between the L and T of a bold wordmark. A wordmark with an idea inside it beats a wordmark with an icon bolted on. Keep cutout shapes compound/editable in the vector file.
 - **One-sentence rule**: if you cannot explain the concept in one sentence, it is too complicated. Simplify until you can.
 - **Sketch first, software second**: bring sketches into the vector tool as locked guides. Opening the shape tools without a concept produces decoration.
-- **Iterate by copying forward** [creator]: duplicate the design and change one thing per pass. The second pass beats the first almost every time. Small moves can have outsized effects (a tiny scale-down plus slight rotation fixed a whole composition).
+- **Iterate by copying forward** [creator]: duplicate the design and change one thing per pass. The first copy-forward pass usually beats the original; treat that as a working habit, not a guarantee. Small moves can have outsized effects (a tiny scale-down plus slight rotation fixed a whole composition).
 - **Know when to stop** [creator]: more time does not mean more design. When a concept has run its course, stop - his 10-minute result arguably beat his 1-hour result in the same brief. Treat this as one demonstrated example, not a universal law about time budgets.
 
 ## 3. Shape, type and color decisions
@@ -66,7 +66,7 @@ More concept guidance:
 - Squares/rectangles and straight edges: strength, reliability, stability, balance.
 - Triangles: dynamic, power, stability (context-dependent).
 - Angled/slanted lines: motion, forward drive (Adidas).
-- Man-made subjects favor straight, geometric construction; natural or living subjects favor curves and organic grids (circular grid behind a kangaroo mark).
+- Man-made subjects favor straight, geometric construction; natural or living subjects favor curves and organic grids [creator] (circular grid behind a kangaroo mark).
 
 **Category choice** (pick deliberately, not by habit):
 - Lettermark/monogram: long or unwieldy names (NASA). Hard to make iconic.
@@ -97,7 +97,7 @@ More concept guidance:
 - No effect crutches: gradients, bevels, drop shadows and filters on a weak form read as clip art. Form, psychology and composition do the talking.
 - Uniform micro-whitespace: define a unit (1X) and hold it across the whole mark.
 - Consistent angles: shared angle values across elements create invisible order.
-- Grids are finishing tools, not starting points. Circular grids for organic marks, straight/45-degree grids for geometric ones. Grid-snap builds clean shapes.
+- Grids serve best as finishing tools more than universal starting points [creator's rule of thumb]: circular grids for organic marks, straight/45-degree grids for geometric ones. A construction grid can still scaffold a complex geometric mark, and grid-snap builds clean shapes - but judge the result optically.
 - **Optical beats mathematical alignment** [creator, demonstrated]: a logotype flush to the grid can still read unbalanced because letterforms carry different visual weight (a hard straight edge next to a letter with open space). Nudge until the eye agrees. Practical corollary: Illustrator's Align uses the text bounding box, not the glyph edges - outlining the text changes the alignment result. Use tools plus eye; grids for shapes, judgment for type.
 - **Stroke-built marks** [creator mechanics]: start with a crude pen stroke, do not neaten early; round caps and corners for smoothness; width tool for a subtle taper; smooth tool; gradient *along* the stroke if color is wanted; negative space that gradually widens to direct the eye; obsess over anchor points only at the end.
 - Anchor point discipline: before calling a mark finished, inspect the skeleton in outline view. Delete redundant points; no stray points on straight segments; each curve does one job. Extra points create tiny tension shifts that make a logo feel "off" without anyone knowing why, and they scale worse.
@@ -105,14 +105,14 @@ More concept guidance:
 - **Proof the file elsewhere** [creator]: export PNG/SVG and view it in another app or screen (he opens the SVG in a browser). Alignment and balance problems invisible in the design tool show up elsewhere.
 - Save a custom swatch group per client for cross-session consistency [creator].
 - **Design in black and white first** [creator]: decide the form without color bias; color ideas from research wait until the shape works.
-- Execution quality: vector only (a raster logo is never acceptable - vectors scale to any size), even spacing, consistent stroke weights (unless intentionally organic), clean exports, sane file names.
+- Execution quality: ship an editable vector master (vectors scale to any size; raster exports are valid delivery formats derived from the master, not substitutes for it), even spacing, consistent stroke weights (unless intentionally organic), clean exports, sane file names.
 - Never use stock or template graphics in a logo [creator caution: originality plus legal exposure; the legal claim is his warning, not verified law].
 
 ## 5. Test every candidate
 
 Run these on any mark before presenting or shipping:
 
-1. **Small-size test**: shrink to favicon size. Unreadable mess -> redesign or design a simplified small-size version. Full wordmark, icon, and stripped symbol versions are a system, not indecision (Instagram; Airbnb's wordmark vs symbol favicon; the Premier League's four formats). A responsive logo adapts to sizes and platforms.
+1. **Small-size test**: shrink to favicon size. If the full wordmark falls apart at that size, do not force it - use or design a simplified small-size symbol instead. Full wordmark, icon, and stripped symbol versions are a system, not indecision (Instagram; Airbnb's wordmark vs symbol favicon; the Premier League's four formats). A responsive logo adapts to sizes and platforms.
 2. **Blur test**: apply a blur filter. Still recognizable -> strong silhouette (a pixelated Apple mark passes; a detail-heavy monogram falls apart).
 3. **3-second recall** [creator]: show for three seconds, hide, ask the person to describe or draw it from memory. Add-on: collect the adjectives they use and check them against the brief.
 4. **Lineup test**: show briefly, then ask them to find it in a lineup of similar marks. If several people pick the same wrong logo, compare those two shapes - you found a real problem.
@@ -162,5 +162,5 @@ Logos live in feeds, dark mode, and motion, not on white artboards.
 
 ## Reference files
 
-- `references/source-notes.md` - distilled teaching with source and timestamp provenance for every principle above, plus coverage notes and which claims are creator-attributed.
+- `references/source-notes.md` - distilled teaching with source and timestamp provenance for the primary lessons above, plus coverage notes and which claims are creator-attributed.
 - `references/process-case-study.md` - a full client project walk-through (keywords -> name -> concepts -> final), useful as a worked example.
