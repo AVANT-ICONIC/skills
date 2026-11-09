@@ -204,7 +204,7 @@ export function validateMechanismGraph(graph){
    second.type!=='revolute'||second.a!=='coupler'||second.b!=='rocker'||
    rocker.type!=='revolute'||rocker.a!=='ground'||rocker.b!=='rocker'||
    input.anchorA.some(n=>n!==0)||input.anchorB.some(n=>n!==0)||
-   first.anchorB.some(n=>n!==0)||second.anchorB.some(n=>n!==0)||
+   first.anchorB.some(n=>n!==0)||
    rocker.anchorB.some(n=>n!==0)||
    first.anchorA[1]!==0||second.anchorA[1]!==0||
    second.anchorB[1]!==0||rocker.anchorA[1]!==0||
