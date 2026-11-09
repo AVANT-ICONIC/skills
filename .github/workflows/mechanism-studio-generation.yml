@@ -4,6 +4,7 @@ on:
     paths:
       - 'mechanism-studio/scripts/compile-request.mjs'
       - 'mechanism-studio/scripts/mechanism-graph.mjs'
+      - 'mechanism-studio/scripts/fourbar-solver.mjs'
       - 'mechanism-studio/scripts/audit-model.mjs'
       - 'mechanism-studio/scripts/verify-generated.mjs'
       - 'mechanism-studio/scripts/audio.mjs'
@@ -13,6 +14,7 @@ on:
       - 'mechanism-studio/tests/**'
       - 'mechanism-studio/requests/**'
       - 'mechanism-studio/examples/slider-crank/**'
+      - 'mechanism-studio/examples/four-bar/**'
       - 'mechanism-studio/examples/geneva-indexer/**'
       - '.github/workflows/mechanism-studio-generation.yml'
   workflow_dispatch:
@@ -37,6 +39,7 @@ jobs:
           node --test mechanism-studio/tests/*.test.mjs
           node --test mechanism-studio/examples/slider-crank/model.test.mjs
           node --test mechanism-studio/examples/geneva-indexer/model.test.mjs
+          node --test mechanism-studio/tests/fourbar-solver.test.mjs
       - name: Compile two distinct mechanism families from checked source briefs
         run: |
           set -euo pipefail
@@ -46,11 +49,14 @@ jobs:
           node mechanism-studio/scripts/compile-request.mjs \
             --request mechanism-studio/requests/geneva-four-slot-study.json \
             --out "$RUNNER_TEMP/generated/geneva-four-slot-study-001"
+          node mechanism-studio/scripts/compile-request.mjs \
+            --request mechanism-studio/requests/four-bar-study.json \
+            --out "$RUNNER_TEMP/generated/four-bar-crank-rocker-study-003"
       - name: Prove trusted template identity and independent kinematic invariants
         shell: bash
         run: |
           set -euo pipefail
-          for id in slider-crank-study-002 geneva-four-slot-study-001; do
+          for id in slider-crank-study-002 geneva-four-slot-study-001 four-bar-crank-rocker-study-003; do
             node mechanism-studio/scripts/audit-model.mjs \
               "$RUNNER_TEMP/generated/$id" "$RUNNER_TEMP/generated/$id/audit.json"
             test -s "$RUNNER_TEMP/generated/$id/audit.json"
@@ -80,9 +86,11 @@ jobs:
           export TEARDOWN_OUT="$GITHUB_WORKSPACE/.artifacts/generated"
           node sims/build.mjs \
             "$RUNNER_TEMP/generated/slider-crank-study-002" \
-            "$RUNNER_TEMP/generated/geneva-four-slot-study-001"
+            "$RUNNER_TEMP/generated/geneva-four-slot-study-001" \
+            "$RUNNER_TEMP/generated/four-bar-crank-rocker-study-003"
           test -s "$TEARDOWN_OUT/dist/slider-crank-study-002.html"
           test -s "$TEARDOWN_OUT/dist/geneva-four-slot-study-001.html"
+          test -s "$TEARDOWN_OUT/dist/four-bar-crank-rocker-study-003.html"
       - name: Real Chromium viewer and production-profile film checks
         shell: bash
         run: |
@@ -104,6 +112,25 @@ jobs:
             "$GITHUB_WORKSPACE/.artifacts/generated" \
             "$GITHUB_WORKSPACE/.artifacts/generated-study-package"
           node mechanism-studio/scripts/verify.mjs "$GITHUB_WORKSPACE/.artifacts/generated-study-package"
+      - name: Package branch-selectable four-bar preview and evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          node mechanism-studio/scripts/package-generated.mjs \
+            "$RUNNER_TEMP/teardown" \
+            "$RUNNER_TEMP/generated/four-bar-crank-rocker-study-003" \
+            "$GITHUB_WORKSPACE/.artifacts/generated/evidence/four-bar-crank-rocker-study-003" \
+            "$GITHUB_WORKSPACE/.artifacts/generated" \
+            "$GITHUB_WORKSPACE/.artifacts/four-bar-study-package"
+          node mechanism-studio/scripts/verify.mjs "$GITHUB_WORKSPACE/.artifacts/four-bar-study-package"
+      - name: Preserve four-bar interactive viewer and 720p cinematic evidence
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mechanism-studio-fourbar-cinematic-package
+          path: .artifacts/four-bar-study-package/
+          if-no-files-found: error
+          retention-days: 7
       - name: Publish verified generated-study CI package
         if: success()
         uses: actions/upload-artifact@v4
