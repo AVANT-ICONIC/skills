@@ -41,9 +41,9 @@ export function createFourBarStage(canvas){
   const light=new THREE.DirectionalLight(color,power);light.position.set(x,y,z);scene.add(light);
  }
  const assembly=new THREE.Group();assembly.scale.setScalar(.83);assembly.position.set(0,-14,0);scene.add(assembly);
- const board=new THREE.Mesh(new THREE.BoxGeometry(D+125,245,6),materials.background);
- board.position.set(D/2,22,-16);assembly.add(board);
- const inset=new THREE.Mesh(new THREE.BoxGeometry(D+117,236,1),materials.inset);
+ const board=new THREE.Mesh(new THREE.BoxGeometry(D+75,50,6),materials.background);
+ board.position.set(D/2,-8,-16);assembly.add(board);
+ const inset=new THREE.Mesh(new THREE.BoxGeometry(D+67,44,1),materials.inset);
  inset.position.set(D/2,22,-12);assembly.add(inset);
  const outline=new THREE.LineSegments(new THREE.EdgesGeometry(board.geometry),
   new THREE.LineBasicMaterial({color:0x416f82,transparent:true,opacity:.57}));
@@ -86,7 +86,7 @@ export function createFourBarStage(canvas){
   const cx=filmCamera?.orbitX??orbitX;
   const cy=filmCamera?.orbitY??(view==='top'?0:orbitY);
   const scale=filmCamera?.zoom??zoom;
-  const distance=326*scale,target=new THREE.Vector3(D/2+17,15,-3);
+  const distance=326*scale,target=new THREE.Vector3(D/2+17,0,-3);
   cam.position.set(target.x+Math.sin(cx)*distance,target.y+Math.sin(cy)*distance,
    target.z+Math.cos(cx)*Math.cos(cy)*distance);
   cam.lookAt(target);renderer.render(scene,cam);
