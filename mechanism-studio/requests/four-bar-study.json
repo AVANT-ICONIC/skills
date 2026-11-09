@@ -1,0 +1,63 @@
+{
+  "schema": "avant.mechanism-request/1",
+  "id": "four-bar-crank-rocker-study-003",
+  "mechanism": "four-bar",
+  "description": "Original four-bar crank-rocker demonstrator with open/crossed circle-intersection solutions and explicit singularity diagnostics.",
+  "classification": "reference-grounded",
+  "assemblyBranch": "open",
+  "references": [
+    {
+      "id": "illinois-fourbar",
+      "type": "technical-reference",
+      "title": "University of Illinois Dynamics Reference: Four-Bar Linkages",
+      "url": "https://dynref.engr.illinois.edu/aml.html",
+      "redistribution": "link-only"
+    },
+    {
+      "id": "fourbar-analysis",
+      "type": "technical-reference",
+      "title": "Four Bar Linkage Chapter: Position Analysis and Loop Closure",
+      "url": "https://www.cs.vu.nl/~eliens/assets/document/ch/chmechanism.pdf",
+      "redistribution": "link-only"
+    }
+  ],
+  "parameters": {
+    "groundLengthMm": {
+      "value": 120,
+      "unit": "mm",
+      "provenance": "assumed",
+      "note": "Illustrative fixed-pivot spacing selected for a strict full-turn crank-rocker."
+    },
+    "inputLengthMm": {
+      "value": 35,
+      "unit": "mm",
+      "provenance": "assumed",
+      "note": "Illustrative shortest link length to produce a stable full-revolution input."
+    },
+    "couplerLengthMm": {
+      "value": 110,
+      "unit": "mm",
+      "provenance": "assumed",
+      "note": "Illustrative rigid coupler span; chosen with ample pin-closure clearance."
+    },
+    "outputLengthMm": {
+      "value": 90,
+      "unit": "mm",
+      "provenance": "assumed",
+      "note": "Illustrative rocker length; not a measured manufacturing component."
+    },
+    "inputRpm": {
+      "value": 12,
+      "unit": "rpm",
+      "provenance": "assumed",
+      "note": "Slow instructional rotation, not representative of a physical drive load."
+    }
+  },
+  "video": {
+    "fps": 24,
+    "durationSeconds": 8,
+    "width": 1280,
+    "height": 720,
+    "direction": "cinematic"
+  }
+}
