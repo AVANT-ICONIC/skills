@@ -3,16 +3,17 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import {join,dirname} from 'node:path';
-import {makeMechanismGraph,makeSliderGraph,makeGenevaGraph,
+import {makeMechanismGraph,makeSliderGraph,makeGenevaGraph,makeFourBarGraph,
   validateMechanismGraph,solvePlanarGraph,makeGraphModule,graphDigestInput} from '../scripts/mechanism-graph.mjs';
 import {evaluateSliderCrank} from '../examples/slider-crank/model.mjs';
 const here=dirname(fileURLToPath(import.meta.url));
 const slider=JSON.parse(readFileSync(join(here,'../requests/slider-crank-study.json'),'utf8'));
 const geneva=JSON.parse(readFileSync(join(here,'../requests/geneva-four-slot-study.json'),'utf8'));
+const fourbar=JSON.parse(readFileSync(join(here,'../requests/four-bar-study.json'),'utf8'));
 const close=(a,b,tol=1e-8)=>assert.ok(Number.isFinite(a)&&Math.abs(a-b)<=tol,String(a)+' != '+String(b));
 
-test('two source-backed briefs produce finite declarative graph topology',()=>{
- for(const req of [slider,geneva]){
+test('three source-backed briefs produce finite declarative graph topology',()=>{
+ for(const req of [slider,geneva,fourbar]){
   const g=makeMechanismGraph(req);
   const report=validateMechanismGraph(g);
   assert.equal(report.mechanism,req.mechanism);
@@ -80,4 +81,30 @@ test('Geneva graph honestly declares deferred solver and idealized physical lock
  assert.throws(()=>solvePlanarGraph(g,.4),/GRAPH_SOLVER_NOT_IMPLEMENTED/);
  const edit=structuredClone(g);edit.constraints.find(x=>x.id==='ideal-dwell').lockingCamModeled=true;
  assert.throws(()=>validateMechanismGraph(edit),/GRAPH_GENEVA_CONSTRAINT_INVALID/);
+});
+
+test('four-bar graph closes in two branches with actual rocker poses',()=>{
+ const g=makeMechanismGraph(fourbar);
+ assert.equal(g.solver,'planar-four-bar-circle-intersection/1');
+ assert.equal(g.joints.length,4);
+ assert.equal(g.bodies.length,4);
+ for(let i=0;i<=360;i++){
+  const turns=i/360,a=solvePlanarGraph(g,turns,{branch:'open'}),b=solvePlanarGraph(g,turns,{branch:'crossed'});
+  assert.equal(a.status,'closed');assert.equal(b.status,'closed');
+  for(const r of Object.values(a.residuals))close(r,0);
+  for(const r of Object.values(b.residuals))close(r,0);
+  assert.notDeepEqual(a.outputPin,b.outputPin);
+  assert.equal(a.graphId,fourbar.id);
+  assert.equal(a.state.branch,'open');
+  assert.equal(b.state.branch,'crossed');
+ }
+});
+test('four-bar graph rejects tampered body/joint lengths and unsupported branch',()=>{
+ const g=makeMechanismGraph(fourbar);
+ const edit=fn=>{const c=structuredClone(g);fn(c);return c;};
+ assert.throws(()=>validateMechanismGraph(edit(g=>g.joints[1].anchorA[0]+=3)),/GRAPH_FOUR_BAR_CONSTRAINT_INVALID/);
+ assert.throws(()=>validateMechanismGraph(edit(g=>g.assemblyBranch='unknown')),/GRAPH_FOUR_BAR_SOLVER_OR_BRANCH_INVALID/);
+ assert.throws(()=>validateMechanismGraph(edit(g=>g.joints[3].a='ghost')),/GRAPH_DANGLING_JOINT/);
+ assert.throws(()=>validateMechanismGraph(edit(g=>g.constraints[2].noToggle=false)),/GRAPH_FOUR_BAR_CONSTRAINT_INVALID/);
+ assert.throws(()=>makeFourBarGraph({...g.parameters,groundLengthMm:400}),/GRAPH_FOUR_BAR_CONTINUOUS_ROTATION_UNSUPPORTED/);
 });
