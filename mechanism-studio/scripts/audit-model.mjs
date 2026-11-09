@@ -10,6 +10,7 @@ import {join,resolve,dirname} from 'node:path';
 import {pathToFileURL,fileURLToPath} from 'node:url';
 import {validateRequest,makeMachineConfig} from './compile-request.mjs';
 import {makeMechanismGraph,graphDigestInput,makeGraphModule,solvePlanarGraph} from './mechanism-graph.mjs';
+import {solveFourBarGeometry,classifyFourBar} from './fourbar-solver.mjs';
 
 const ROOT=resolve(dirname(fileURLToPath(import.meta.url)),'..');
 const SHA=b=>createHash('sha256').update(b).digest('hex');
@@ -92,6 +93,50 @@ function genevaProof(model,referenceId){
      tolerance:1e-8,status:'PASS'}
   ];
 }
+function fourBarProof(model,graph,referenceId){
+ const p=graph.parameters;
+ const eps=1e-8;
+ let maxClosure=0,maxPoseDiff=0,maxSignedError=0,minHeight=Infinity;
+ const branches=['open','crossed'];
+ const snapshots=[];
+ for(const branch of branches)for(let i=0;i<=1440;i++){
+  const t=i/1440;
+  const graphPose=solvePlanarGraph(graph,t,{branch});
+  const actual=model.evaluateFourBar(t,{branch});
+  if(graphPose.status!=='closed'||actual.status!=='closed')
+   throw Error('AUDIT_FOUR_BAR_POSE_NOT_CLOSED: '+branch+' '+i);
+  const a=graphPose.inputPin,b=graphPose.outputPin,o={x:p.groundLengthMm,y:0};
+  const length=(u,v)=>Math.hypot(u.x-v.x,u.y-v.y);
+  const closure=Math.max(
+   Math.abs(length({x:0,y:0},a)-p.inputLengthMm),
+   Math.abs(length(a,b)-p.couplerLengthMm),
+   Math.abs(length(o,b)-p.outputLengthMm));
+  maxClosure=Math.max(maxClosure,closure);
+  maxPoseDiff=Math.max(maxPoseDiff,Math.abs(actual.outputPin.x-b.x),Math.abs(actual.outputPin.y-b.y));
+  const cross=(o.x-a.x)*(b.y-a.y)-(o.y-a.y)*(b.x-a.x);
+  const sign=branch==='open'?1:-1;
+  maxSignedError=Math.max(maxSignedError,Math.max(0,-sign*cross));
+  minHeight=Math.min(minHeight,graphPose.intersectionHeightMm);
+  if(i===0)snapshots.push({branch,x:b.x,y:b.y});
+ }
+ if(maxClosure>eps||maxPoseDiff>eps||maxSignedError>eps||!(minHeight>eps)||
+    Math.hypot(snapshots[0].x-snapshots[1].x,snapshots[0].y-snapshots[1].y)<eps)
+   throw Error('AUDIT_FOUR_BAR_GEOMETRY_FAILED');
+ if(!classifyFourBar(p).noToggleThroughoutFullTurn)
+   throw Error('AUDIT_FOUR_BAR_NOT_CONTINUOUS');
+ return [
+  {id:'four-bar-loop-closure',referenceIds:[referenceId],
+    observation:'worst independent link closure residual across 2882 poses',unit:'mm',
+    measured:maxClosure,tolerance:eps,status:'PASS'},
+  {id:'four-bar-render-pose',referenceIds:[referenceId],
+    observation:'max difference between delivered model and graph output',unit:'mm',
+    measured:maxPoseDiff,tolerance:eps,status:'PASS'},
+  {id:'four-bar-dual-branch',referenceIds:[referenceId],
+    observation:'signed circle-intersection branch violation',unit:'mm2',
+    measured:maxSignedError,tolerance:eps,status:'PASS'}
+ ];
+}
+
 export async function auditGenerated(generated){
   const directory=resolve(generated);
   const request=validateRequest(JSON.parse(safeRead(join(directory,'request.json'))));
@@ -101,13 +146,14 @@ export async function auditGenerated(generated){
     JSON.stringify(register.references)!==JSON.stringify(request.references)||
     JSON.stringify(register.parameters)!==JSON.stringify(request.parameters))
     throw Error('AUDIT_SOURCE_REGISTER_MISMATCH');
-  const recipe=join(ROOT,'examples',request.mechanism==='geneva-4'?'geneva-indexer':'slider-crank');
+  const recipe=join(ROOT,'examples',request.mechanism==='geneva-4'?'geneva-indexer':request.mechanism);
   const fingerprints={};
   for(const name of ['main.js','model.mjs','stage.js']){
     fingerprints[name]=requireExact(directory,join(recipe,name),name);
   }
   fingerprints['film-direction.mjs']=requireExact(directory,join(ROOT,'scripts/film-direction.mjs'),'film-direction.mjs');
   fingerprints['mechanism-graph.mjs']=requireExact(directory,join(ROOT,'scripts/mechanism-graph.mjs'),'mechanism-graph.mjs');
+  fingerprints['fourbar-solver.mjs']=requireExact(directory,join(ROOT,'scripts/fourbar-solver.mjs'),'fourbar-solver.mjs');
   const graph=makeMechanismGraph(request);
   const expectedGraph=Buffer.from(graphDigestInput(graph));
   const graphSource=safeRead(join(directory,'mechanism-graph.json'));
@@ -118,7 +164,7 @@ export async function auditGenerated(generated){
   if(SHA(compiledGraph)!==SHA(graphModule))throw Error('AUDIT_GRAPH_MODULE_MISMATCH');
   fingerprints['machine-graph.mjs']=SHA(graphModule);
   const sharedStyle=safeRead(join(ROOT,'examples/geneva-indexer/style.css'));
-  const expectedStyle=request.mechanism==='slider-crank'
+  const expectedStyle=request.mechanism!=='geneva-4'
     ?Buffer.concat([sharedStyle,Buffer.from('\n'),safeRead(join(recipe,'style.css'))])
     :sharedStyle;
   const actualStyle=safeRead(join(directory,'style.css'));
@@ -129,11 +175,12 @@ export async function auditGenerated(generated){
   if(SHA(expected)!==SHA(actual))throw Error('AUDIT_MACHINE_CONFIG_MISMATCH');
   fingerprints['machine-config.mjs']=SHA(actual);
   const model=await import(pathToFileURL(join(directory,'model.mjs')).href);
-  const config=request.mechanism==='slider-crank'?
-    {...Object.fromEntries(Object.entries(request.parameters).map(([k,v])=>[k,v.value])),video:request.video}
-    :undefined;
+  const config=request.mechanism==='geneva-4'?undefined:
+    {...Object.fromEntries(Object.entries(request.parameters).map(([k,v])=>[k,v.value])),
+      ...(request.mechanism==='four-bar'?{assemblyBranch:request.assemblyBranch}:{}),video:request.video};
   const evidence=request.mechanism==='slider-crank'
     ?sliderProof(model,config,request.references[0].id)
+    :request.mechanism==='four-bar'?fourBarProof(model,graph,request.references[0].id)
     :genevaProof(model,request.references[0].id);
   if(request.mechanism==='slider-crank'){
     for(let i=0;i<=360;i++){
@@ -141,7 +188,7 @@ export async function auditGenerated(generated){
       const delivered=model.evaluateSliderCrank(i/360,config);
       near(actual.pistonX,delivered.pistonX,1e-9,'slider.graph-vs-render-pose');
     }
-  }else{
+  }else if(request.mechanism==='geneva-4'){
     const p=model.GENEVA;
     for(const name of ['slots','crankRadiusMm','centerDistanceMm','pinRadiusMm'])
       near(graph.parameters[name],p[name],1e-10,'geneva.graph-default-'+name);
@@ -153,7 +200,7 @@ export async function auditGenerated(generated){
     certifiedPhysics:false,files:fingerprints,
     mechanismGraph:{schema:graph.schema,sha256:SHA(graphSource),solver:graph.solver,
       bodies:graph.bodies.length,joints:graph.joints.length,
-      runtimeDriven:request.mechanism==='slider-crank',
+      runtimeDriven:request.mechanism!=='geneva-4',
       limitations:request.mechanism==='geneva-4'?['Graph describes Geneva topology; existing independently verified solver remains authoritative']:[]},
     references:request.references.map(x=>({id:x.id,url:x.url,redistribution:x.redistribution,
       contentChecked:false})),claims:evidence,
