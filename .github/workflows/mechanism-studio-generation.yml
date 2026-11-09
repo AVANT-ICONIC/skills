@@ -33,14 +33,13 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Verify source-grounded request validation and both mathematical models
+      - name: Verify source-grounded request validation and three mathematical models
         run: |
           set -euo pipefail
           node --test mechanism-studio/tests/*.test.mjs
           node --test mechanism-studio/examples/slider-crank/model.test.mjs
           node --test mechanism-studio/examples/geneva-indexer/model.test.mjs
-          node --test mechanism-studio/tests/fourbar-solver.test.mjs
-      - name: Compile two distinct mechanism families from checked source briefs
+      - name: Compile three distinct mechanism families from checked source briefs
         run: |
           set -euo pipefail
           node mechanism-studio/scripts/compile-request.mjs \
@@ -78,7 +77,7 @@ jobs:
           npx playwright install chromium
           sudo apt-get update -qq
           sudo apt-get install -y -qq ffmpeg
-      - name: Build both sourced machines without modifying Teardown
+      - name: Build three sourced machines without modifying Teardown
         shell: bash
         working-directory: ${{ runner.temp }}/teardown
         run: |
@@ -96,7 +95,7 @@ jobs:
         run: |
           set -euo pipefail
           export MECHANISM_BUILD_OUT="$GITHUB_WORKSPACE/.artifacts/generated"
-          for id in slider-crank-study-002 geneva-four-slot-study-001; do
+          for id in slider-crank-study-002 geneva-four-slot-study-001 four-bar-crank-rocker-study-003; do
             node mechanism-studio/scripts/verify-generated.mjs \
               "$RUNNER_TEMP/teardown" "$RUNNER_TEMP/generated/$id" \
               "$GITHUB_WORKSPACE/.artifacts/generated/evidence/$id"
