@@ -58,6 +58,12 @@ The manifest records timebase, entrypoints, upstream immutable revision, source 
 The implementation plan lives in [PR #17](https://github.com/AVANT-ICONIC/skills/pull/17). Downstream consumer design is tracked separately in [Motion OS #6](https://github.com/AVANT-ICONIC/motion-os/pull/6) and [ICONICUT #2](https://github.com/AVANT-ICONIC/iconicut/pull/2). The bounded source-brief generator and full-duration Full HD film are implemented and CI-tested; remaining MVP gates include arbitrary reference interpretation (including real-image analysis), independent engineering/source verification, hardware/mobile GPU performance, complete licensing review, and host-level sandbox isolation.
 
 
+## Four-bar crank-rocker study
+
+The new [four-bar linkage](examples/four-bar/README.md) extends the mechanism graph to an actual **RRRR closed loop**, with two separately selectable circle-intersection assembly branches, finite rigid-link closure residuals, and explicit unreachable/singularity diagnostics. Its sample viewer includes branch switching, pause/step, RPM, camera and cutaway controls, plus a source-linked 720p24 cinematic preview profile.
+
+[Derivation, limitations and provenance](docs/four-bar-branch-analysis.md). The original Geneva and slider-crank behavior remains unchanged. All outputs are previews with `releaseReady=false`; CI and visual evidence are required before release claims.
+
 ## Graph-driven motion
 
 [Mechanism Graph v1](docs/declarative-machine-graph.md) is the first portable, explicit **body–joint–constraint contract**. It supports reviewed planar bodies, revolute and prismatic joints, and a closed-form positive-root slider-crank solver. The graph computes crank, rod and piston body poses from actual joint anchors, and the existing 3D scene renders those states. The companion Geneva representation intentionally declares an **unimplemented graph solver**, retaining the independently verified original motion code.
