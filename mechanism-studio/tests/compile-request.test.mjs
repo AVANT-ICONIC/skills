@@ -10,9 +10,10 @@ import {compileRequest,validateRequest} from '../scripts/compile-request.mjs';
 const BASE=resolve(fileURLToPath(new URL('../requests/',import.meta.url)));
 const slider=JSON.parse(readFileSync(join(BASE,'slider-crank-study.json'),'utf8'));
 const geneva=JSON.parse(readFileSync(join(BASE,'geneva-four-slot-study.json'),'utf8'));
+const fourbar=JSON.parse(readFileSync(join(BASE,'four-bar-study.json'),'utf8'));
 const clone=o=>JSON.parse(JSON.stringify(o));
-test('both reviewed recipe briefs parse and preserve source provenance',()=>{
- for(const data of [slider,geneva]){
+test('three reviewed recipe briefs parse and preserve source provenance',()=>{
+ for(const data of [slider,geneva,fourbar]){
   const valid=validateRequest(data);
   assert.equal(valid.classification,'reference-grounded');
   assert.ok(valid.references.length>0);
@@ -53,8 +54,8 @@ test('compiler generates two isolated reproducible folders with real config',()=
    const out=join(d,data.id);
    const receipt=compileRequest({request:data,out});
    assert.equal(receipt.releaseReady,false);
-   assert.equal(receipt.files,12);
-   for(const name of ['main.js','stage.js','model.mjs','style.css','machine-config.mjs','film-direction.mjs','mechanism-graph.mjs','machine-graph.mjs','mechanism-graph.json','request.json','source-register.json','README.md']){
+   assert.equal(receipt.files,13);
+   for(const name of ['main.js','stage.js','model.mjs','style.css','machine-config.mjs','film-direction.mjs','mechanism-graph.mjs','fourbar-solver.mjs','machine-graph.mjs','mechanism-graph.json','request.json','source-register.json','README.md']){
     assert.ok(existsSync(join(out,name)),name);
    }
    const config=readFileSync(join(out,'machine-config.mjs'),'utf8');
@@ -91,5 +92,33 @@ test('non-default generated slider dimensions change actual model geometry',asyn
   assert.ok(Math.abs(tdc.pistonX-104)<1e-9);
   assert.equal(tdc.rpm,18);
   assert.equal(imported.CONFIG,undefined,'numeric config stays private to model import');
+ }finally{rmSync(d,{recursive:true,force:true});}
+});
+
+test('four-bar source brief rejects unassemblable 360-degree cycles and fake branch names',()=>{
+ const bad=structuredClone(fourbar);bad.assemblyBranch='flip';
+ assert.throws(()=>validateRequest(bad),/FOUR_BAR_BRANCH_REQUIRED/);
+ const impossible=structuredClone(fourbar);
+ impossible.parameters.outputLengthMm.value=30;
+ impossible.parameters.couplerLengthMm.value=35;
+ assert.throws(()=>validateRequest(impossible),/FOUR_BAR_FULL_CYCLE_UNSAFE/);
+ const missing=structuredClone(fourbar);delete missing.assemblyBranch;
+ assert.throws(()=>validateRequest(missing),/FOUR_BAR_BRANCH_REQUIRED/);
+ const invalid=structuredClone(slider);invalid.assemblyBranch='open';
+ assert.throws(()=>validateRequest(invalid),/BRANCH_ONLY_FOR_FOUR_BAR/);
+});
+test('compiled four-bar branch changes real geometry but not source modules',async()=>{
+ const d=mkdtempSync(join(tmpdir(),'mechanism-fourbar-'));
+ try{
+  const open=structuredClone(fourbar),crossed=structuredClone(fourbar);
+  crossed.id='fourbar-crossed-check';crossed.assemblyBranch='crossed';
+  const first=join(d,open.id),second=join(d,crossed.id);
+  compileRequest({request:open,out:first});compileRequest({request:crossed,out:second});
+  const a=await import(pathToFileURL(join(first,'model.mjs')).href);
+  const b=await import(pathToFileURL(join(second,'model.mjs')).href);
+  const p=a.evaluateFourBar(.2),q=b.evaluateFourBar(.2);
+  assert.equal(p.status,'closed');assert.equal(q.status,'closed');
+  assert.notDeepEqual(p.outputPin,q.outputPin);
+  assert.equal(p.branch,'open');assert.equal(q.branch,'crossed');
  }finally{rmSync(d,{recursive:true,force:true});}
 });
