@@ -85,6 +85,14 @@ SEO + AI SEO audits technical eligibility, search intent, content quality, infor
 
 See [`seo-aiseo/SKILL.md`](./seo-aiseo/SKILL.md).
 
+### `ui-design`
+
+**Task-based interface judgment with concrete decisions and counterexamples.**
+
+UI Design covers information grouping, relative hierarchy, data-shaped layouts, filters and consequences, reliable states, mobile recomposition and product-specific visual personality. Sixteen attributed video cases explain when a technique helps, when it can fail and what to inspect. It complements existing geometry, colour and implementation guidance rather than duplicating their responsibilities; no style formula or usability guarantee is implied.
+
+See [`ui-design/SKILL.md`](./ui-design/SKILL.md).
+
 ### `visual-output`
 
 **Portable visual presentation companion for agent responses.**
