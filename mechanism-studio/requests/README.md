@@ -8,6 +8,7 @@ The reviewed recipe compiler converts a **source-backed, strictly typed JSON bri
 | --- | --- | --- |
 | `geneva-4` | Fixed demonstrator geometry | Independent four-slot intermittent-drive kinematics with idealized dwell (locking cam absent) |
 | `slider-crank` | crankRadiusMm, rodLengthMm, inputRpm | Analytic in-line crank-slider geometry, piston position, rod angle and derivative speed |
+| `four-bar` | groundLengthMm, inputLengthMm, couplerLengthMm, outputLengthMm, inputRpm; required open/crossed branch | RRRR circle-intersection graph, two mathematical assembly branches, singular/unreachable diagnostics |
 
 Only reviewed, checked-in recipe modules are copied. Unknown machine types or unexpected fields fail explicitly. New mechanism families require their own model, geometry, tests, provenance and acceptance evidence.
 

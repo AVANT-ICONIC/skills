@@ -49,7 +49,10 @@ export function solveFourBarGeometry(config, inputTurns, {branch = 'open', rpm =
     anchorOutput: o4, inputPin: p2, classification: classifyFourBar(config),
     certifiedPhysics: false};
   if (e <= tolerance) {
-    // Coincident circle centers admit infinitely many solutions when b === c.
+    // Equal radii: infinitely many solutions. Unequal radii: no intersection.
+    if (Math.abs(b - c) > tolerance)
+      return {...common, status: 'unreachable', reason: 'COINCIDENT_CIRCLES_DIFFERENT_RADII',
+        outputPin: null, poses: null, residuals: null, angularSpeedRatio: null};
     return {...common, status: 'ambiguous', reason: 'COINCIDENT_CIRCLE_CENTERS',
       outputPin: null, poses: null, residuals: null, angularSpeedRatio: null};
   }

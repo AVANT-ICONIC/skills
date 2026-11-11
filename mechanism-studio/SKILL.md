@@ -78,7 +78,7 @@ The compiler emits `mechanism-graph.json`, `machine-graph.mjs` and an unchanged 
 
 ## Independent model-claim audit
 
-Before running any generated JavaScript in the renderer, use the [model-claim traceability contract](docs/model-claim-traceability.md). The auditor validates immutable reviewed module hashes, recomputes the numeric configuration from the brief, and tests independent geometric invariants for either supported machine family.
+Before running any generated JavaScript in the renderer, use the [model-claim traceability contract](docs/model-claim-traceability.md). The auditor validates immutable reviewed module hashes, recomputes the numeric configuration from the brief, and tests independent geometric invariants for each supported machine family.
 
 ~~~bash
 node mechanism-studio/scripts/audit-model.mjs /tmp/slider-crank-study-002 /tmp/slider-crank-study-002/audit.json
@@ -101,4 +101,4 @@ After preparing the immutable Teardown revision in an isolated environment, buil
 
 A successful, inspected generated run can be packaged by `scripts/package-generated.mjs` and verified using the **same canonical** `scripts/verify.mjs`. It includes interactive HTML, final MP4, poster, decoded-frame contact sheet, request/source register, model source, full runtime receipts, notices and per-file SHA-256 hashes.
 
-**Honest limitations:** two reviewed mechanism families only; remote references not fetched or automatically validated; physical forces/locking/certification not supplied; hardware GPU/mobile and host-level sandbox not evaluated. Film quality gates test the real decoded output, but no guarantee for arbitrary machines.
+**Honest limitations:** three reviewed mechanism families only; remote references not fetched or automatically validated; physical forces/locking/certification not supplied; hardware GPU/mobile and host-level sandbox not evaluated. Film quality gates test the real decoded output, but no guarantee for arbitrary machines.

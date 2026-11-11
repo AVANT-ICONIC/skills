@@ -1,6 +1,6 @@
 # Mechanism Graph v1
 
-**Status:** Experimental, reviewed machine graph. First graph-driven solver: inline slider-crank. The four-slot Geneva drive emits a topology graph but still uses its separately audited analytic solver. Neither is a force solver, arbitrary CAD tool or third-party source verifier.
+**Status:** Experimental, reviewed machine graph. Graph-driven solvers: inline slider-crank and signed dual-branch four-bar. The four-slot Geneva drive emits a topology graph but still uses its separately audited analytic solver. Neither is a force solver, arbitrary CAD tool or third-party source verifier.
 
 ## Purpose
 
@@ -39,6 +39,14 @@ For slider-crank, four bodies and four joints are constructed: stationary frame 
 The approved `inline-slider-crank-positive-root/1` solver derives crank pin, connecting rod angle, piston translation, velocity and per-constraint numerical residuals from those anchors. Its body poses drive **the existing** Three.js assembly and chart.
 
 The Geneva graph records two revolute supports, the intermittent drive-pin/slot relationship, exact quarter-turn index and ideal dwell. The graph explicitly declares solver `geneva-four-slot-ideal-deferred/1`; its graph solver returns `GRAPH_SOLVER_NOT_IMPLEMENTED`. The existing independently audited Geneva mathematical model remains the production source of motion. Physical locking cam, friction, forces and clearance under load remain excluded.
+
+## Four-bar graph extension
+
+The reviewed `four-bar` request adds a separate **RRRR four-revolute closed-loop topology**. The canonical `fourbar-solver.mjs` evaluates the two signed circle intersections (open and crossed) from actual crank, coupler, rocker and ground dimensions, with no frame-history dependency. It rejects full-turn previews that cannot remain closed throughout a revolution. Outside approved full-turn profiles, the diagnostic solver still distinguishes unreachable, singular and ambiguous poses.
+
+The four-bar's actual 3D body poses, readouts and cinematic film use the graph-driven solver. The mathematical proof samples both branches for 2,882 positions, with independent rod-length closure and pose consistency checks. Output branch selection does not simulate physically switching a linkage between assembled states.
+
+For the derivation and provenance, see [the four-bar study](four-bar-branch-analysis.md). External technical sources remain reference links, not automatically downloaded proofs.
 
 ## Generated files and trust
 

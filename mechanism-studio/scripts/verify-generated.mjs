@@ -181,6 +181,21 @@ try{
           exploded:shot.exploded,xray:shot.xray,motionValue:motion,sha256:hash(png)});
         hashes.push(hash(png));
       }
+      if(request.mechanism==='four-bar'){
+        // The cinematic caption is reserved inside the left editorial column.
+        const bounds=await page.evaluate(()=>{
+          const rect=id=>{
+            const p=document.querySelector(id).getBoundingClientRect();
+            return {left:p.left,right:p.right,top:p.top,bottom:p.bottom};
+          };
+          return {caption:rect('#film-director'),intro:rect('.titlegroup'),
+            controls:rect('.controls'),telemetry:rect('.telemetry')};
+        });
+        assert.ok(bounds.caption.left>=20&&bounds.caption.right<=340,'FOUR_BAR_CAPTION_OUTSIDE_EDITORIAL_COLUMN');
+        assert.ok(bounds.caption.top>=bounds.intro.bottom,'FOUR_BAR_CAPTION_TITLE_OVERLAP');
+        assert.ok(bounds.caption.bottom<bounds.controls.top-10,'FOUR_BAR_CAPTION_CONTROL_OVERLAP');
+        assert.ok(bounds.caption.right<bounds.telemetry.left,'FOUR_BAR_CAPTION_TELEMETRY_OVERLAP');
+      }
       assert.equal(new Set(hashes).size,6,'CINEMA_SHOTS_NOT_DISTINCT');
       assert.ok(new Set(strokes.map(x=>x.toFixed(3))).size>=4,'CINEMA_MECHANISM_FROZEN');
       if(request.mechanism==='slider-crank')assert.ok(Math.abs(strokes[0])<1e-8,'CINEMA_START_NOT_TOP_DEAD_CENTER');

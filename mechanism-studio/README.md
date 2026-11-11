@@ -2,7 +2,7 @@
 
 A **public, portable** Agent Skill for source-grounded, model-driven mechanical explainers.
 
-Current executable functionality: package vetted Teardown V8/Cessna upstream examples, render the independent Geneva four-slot reference, and **compile structured source-backed briefs for two reviewed mechanism families: Geneva and slider-crank**. The slider-crank has a tested **1080p30 eight-second H.264/AAC film** with original synthesized mechanical foley, a live interactive HTML viewer, and a versioned hash-verified evidence package. It remains bounded and does not generate arbitrary mechanisms from images or natural-language descriptions.
+Current executable functionality: package vetted Teardown V8/Cessna upstream examples, render the independent Geneva four-slot reference, and **compile structured source-backed briefs for three reviewed mechanism families: Geneva, slider-crank and four-bar**. The slider-crank has a tested **1080p30 eight-second H.264/AAC film** with original synthesized mechanical foley, a live interactive HTML viewer, and a versioned hash-verified evidence package. It remains bounded and does not generate arbitrary mechanisms from images or natural-language descriptions.
 
 ## Setup and prerequisites
 
@@ -72,11 +72,11 @@ The compiler outputs inspectable graph JSON, an executable but data-only graph m
 
 ## Model-claim evidence gate
 
-A source URL is not proof. Before running compiled mechanism code, [`scripts/audit-model.mjs`](scripts/audit-model.mjs) hash-checks reviewed templates and numeric config, then verifies analytic closure, geometry and motion invariants for both families. Source documents remain explicitly **NOT_EVALUATED**, and assumed dimensions are not relabeled as measurements.
+A source URL is not proof. Before running compiled mechanism code, [`scripts/audit-model.mjs`](scripts/audit-model.mjs) hash-checks reviewed templates and numeric config, then verifies analytic closure, geometry and motion invariants for all reviewed families. Source documents remain explicitly **NOT_EVALUATED**, and assumed dimensions are not relabeled as measurements.
 
 See [model-claim traceability](docs/model-claim-traceability.md). Portable generated packages now include `evidence/model-audit.json`, with **12** individually hashed assets including the machine graph, and reject missing/forged claim receipts.
 
-## Two reviewed families and Full HD film
+## Three reviewed families and Full HD film
 
 Refer to [the structured request guide](requests/README.md) and the included machine briefs. Inputs require linked technical references and explicitly labeled dimension assumptions. Unknown types are rejected. The compiler only emits reviewed source templates and numeric configuration; it **does not fetch linked sources or execute untrusted user scripts**.
 

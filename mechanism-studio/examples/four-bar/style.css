@@ -14,8 +14,8 @@
 .branch-controls button{pointer-events:auto;border:1px solid #34566a;background:#0d2532;
  padding:7px 16px;color:#9ab8c6;font-size:10px;letter-spacing:1.2px;cursor:pointer}
 .branch-controls button.selected{border-color:#f8ab77;color:#f6e0ce;background:#55392e}
-#film-director{display:none;position:absolute;left:39%;top:14%;
- width:26%;color:#d7edf5;pointer-events:none;text-align:left;
+#film-director{display:none;position:absolute;left:42px;top:290px;
+ width:264px;color:#d7edf5;pointer-events:none;text-align:left;
  border-left:2px solid rgba(255,170,110,.8);padding:11px 0 11px 17px;
  background:linear-gradient(90deg,rgba(7,21,33,.56),transparent);letter-spacing:1px}
 #film-director[data-enabled="true"]{display:flex;flex-direction:column;gap:7px}
@@ -27,12 +27,12 @@
  #fourbar-ui .titlegroup h1{font-size:70px}
  #fourbar-ui .telemetry{right:56px;top:135px;width:400px}
  #fourbar-ui .controls{left:340px;right:500px;max-width:none;bottom:65px}
- #film-director{left:40%;top:13%}
+ #film-director{left:58px;top:380px;width:300px}
 }
 @media(max-width:700px){
  #fourbar-ui .controls{bottom:32px;left:16px;right:16px}
  #fourbar-ui .telemetry{bottom:194px}
  .branch-controls{margin:0 0 6px;font-size:8px}
  .branch-controls button{padding:6px 10px}
- #film-director{top:19%;left:38%;width:56%;padding:8px}
+ #film-director{top:165px;left:20px;width:190px;padding:8px}
 }

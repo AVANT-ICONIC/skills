@@ -52,3 +52,22 @@ test('reject malformed angles, branch names and lengths',()=>{
  assert.throws(()=>solveFourBarGeometry(good,0,{branch:'banana'}),/BRANCH_UNSUPPORTED/);
  assert.throws(()=>solveFourBarGeometry({...good,outputLengthMm:-1},0),/INPUT_INVALID/);
 });
+
+test('coincident circle centers with unequal radii are unreachable, not ambiguous',()=>{
+ const c={groundLengthMm:50,inputLengthMm:50,couplerLengthMm:80,outputLengthMm:70,inputRpm:12};
+ const s=solveFourBarGeometry(c,0);
+ assert.equal(s.status,'unreachable');
+ assert.equal(s.reason,'COINCIDENT_CIRCLES_DIFFERENT_RADII');
+ assert.equal(s.poses,null);
+});
+test('analytic rocker angular-speed ratio matches a central finite difference in both branches',()=>{
+ for(const branch of ['open','crossed'])for(const turns of [.1,.25,.4,.65,.8]){
+  const h=1e-6;
+  const mid=solveFourBarGeometry(good,turns,{branch});
+  const hi=solveFourBarGeometry(good,turns+h,{branch});
+  const lo=solveFourBarGeometry(good,turns-h,{branch});
+  const delta=Math.atan2(Math.sin(hi.outputAngleRad-lo.outputAngleRad),
+   Math.cos(hi.outputAngleRad-lo.outputAngleRad));
+  near(mid.angularSpeedRatio,delta/(4*Math.PI*h),1e-6);
+ }
+});
