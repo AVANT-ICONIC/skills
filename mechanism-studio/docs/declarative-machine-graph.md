@@ -1,6 +1,6 @@
 # Mechanism Graph v1
 
-**Status:** Experimental, reviewed machine graph. First graph-driven solver: inline slider-crank. The four-slot Geneva drive emits a topology graph but still uses its separately audited analytic solver. Neither is a force solver, arbitrary CAD tool or third-party source verifier.
+**Status:** Experimental, reviewed machine graph. Graph-driven solvers: inline slider-crank and signed dual-branch four-bar. The four-slot Geneva drive emits a topology graph but still uses its separately audited analytic solver. Neither is a force solver, arbitrary CAD tool or third-party source verifier.
 
 ## Purpose
 
@@ -40,6 +40,14 @@ The approved `inline-slider-crank-positive-root/1` solver derives crank pin, con
 
 The Geneva graph records two revolute supports, the intermittent drive-pin/slot relationship, exact quarter-turn index and ideal dwell. The graph explicitly declares solver `geneva-four-slot-ideal-deferred/1`; its graph solver returns `GRAPH_SOLVER_NOT_IMPLEMENTED`. The existing independently audited Geneva mathematical model remains the production source of motion. Physical locking cam, friction, forces and clearance under load remain excluded.
 
+## Four-bar graph extension
+
+The reviewed `four-bar` request adds a separate **RRRR four-revolute closed-loop topology**. The canonical `fourbar-solver.mjs` evaluates the two signed circle intersections (open and crossed) from actual crank, coupler, rocker and ground dimensions, with no frame-history dependency. It rejects full-turn previews that cannot remain closed throughout a revolution. Outside approved full-turn profiles, the diagnostic solver still distinguishes unreachable, singular and ambiguous poses.
+
+The four-bar's actual 3D body poses, readouts and cinematic film use the graph-driven solver. The mathematical proof samples both branches for 2,882 positions, with independent rod-length closure and pose consistency checks. Output branch selection does not simulate physically switching a linkage between assembled states.
+
+For the derivation and provenance, see [the four-bar study](four-bar-branch-analysis.md). External technical sources remain reference links, not automatically downloaded proofs.
+
 ## Generated files and trust
 
 The brief compiler writes three additional assets:
@@ -61,10 +69,10 @@ node --test mechanism-studio/tests/audit-model.test.mjs
 node --test mechanism-studio/examples/slider-crank/model.test.mjs
 ~~~
 
-After tests, use the existing source-backed GitHub CI for immutable Teardown builds, Chromium controls, deterministic 1080p30 film, decoded-image review and full package verification. A passing mathematical test does not substitute for rendering.
+After tests, use the existing source-backed GitHub CI for immutable Teardown builds, Chromium controls, deterministic 1080p30 slider-crank or 720p24 four-bar film, decoded-image review and full package verification. A passing mathematical test does not substitute for rendering.
 
 ## Next extension
 
-Only after verified geometry and runtime contracts, consider supporting another **topology**, such as a single-input four-bar linkage, through additional allowed joints and numerical constraint groups. Do not add a purported universal constraint solver without proving assembled body poses, branch selection, singularity handling and failure behavior. A third hardcoded model disguised as a new graph type would not advance the architecture.
+The newly verified four-bar demonstrates a second **graph-driven solver topology**, including two explicit assembly branches and singularity diagnostics. The next extension is no longer another nominal recipe: investigate a shared closed-loop constraint evaluator with explicit branch enumeration, tolerance propagation and independently tested failure states. Do not call it general until it solves an unseen topology without introducing a new hardcoded solver or silently changing assembly branches.
 
-References are unchanged from the reviewed slider-crank and Geneva source registers, which **have not been independently fetched by this compiler**.
+Geneva, slider-crank and four-bar source URLs remain reference registers only. They **have not been independently fetched or semantically verified by this compiler**.

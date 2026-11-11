@@ -3,12 +3,19 @@ on:
   pull_request:
     paths:
       - '.github/benchmarks/mechanism-studio/**'
-      - 'mechanism-studio/**'
+      - 'mechanism-studio/upstream.lock.json'
+      - 'mechanism-studio/scripts/package-example.mjs'
+      - 'mechanism-studio/scripts/verify.mjs'
+      - 'mechanism-studio/tests/package-example.test.mjs'
       - '.github/workflows/mechanism-studio-stage0.yml'
   workflow_dispatch:
 
 permissions:
   contents: read
+
+concurrency:
+  group: mechanism-studio-stage0-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   benchmark:

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** Offline-browser and production-profile evidence for two reviewed recipes. */
+/** Offline-browser and production-profile evidence for reviewed mechanism recipes. */
 import {createRequire} from 'node:module';
 import {createHash} from 'node:crypto';
 import {spawnSync} from 'node:child_process';
@@ -58,13 +58,14 @@ try{
    assert.equal(meta.fps,request.video.fps);assert.equal(meta.duration,request.video.durationSeconds);
    return meta;
   });
-  if(request.mechanism==='slider-crank')await check('director-supported-and-live-isolated',async()=>{
-    const director=await page.evaluate(()=>window.MECHANISM?.director?.active);
+  if(['slider-crank','four-bar'].includes(request.mechanism))await check('director-supported-and-live-isolated',async()=>{
+    const director=await page.evaluate(kind=>kind==='four-bar'?window.FOURBAR?.director?.active:window.MECHANISM?.director?.active,request.mechanism);
     assert.equal(director,request.video.direction==='cinematic');
-    await page.evaluate(()=>window.MECHANISM.director.setEnabled(false));
+    await page.evaluate(kind=>kind==='four-bar'?window.FOURBAR.director.setEnabled(false):window.MECHANISM.director.setEnabled(false),request.mechanism);
     return {filmDirectionRequested:request.video.direction||'technical',directorOriginallyActive:director,liveControlsIsolated:true};
   });
-  const getSnapshot=()=>page.evaluate(kind=>kind==='slider-crank'?window.MECHANISM.snapshot:window.GENEVA.snapshot,request.mechanism);
+  const getSnapshot=()=>page.evaluate(kind=>kind==='slider-crank'?window.MECHANISM.snapshot:
+   kind==='four-bar'?window.FOURBAR.snapshot:window.GENEVA.snapshot,request.mechanism);
   const snapshots={};const shotHashes={};
   for(const t of [0,2,4,6]){
    await check('seek-frame-'+t,async()=>{
@@ -82,6 +83,15 @@ try{
     assert.ok(Math.abs(snapshots[0].strokeMm)<1e-8);
     assert.ok(Math.abs(snapshots[2].strokeMm-2*r)<1e-8);
     assert.ok(Math.abs(snapshots[4].strokeMm)<1e-8);
+   }else if(request.mechanism==='four-bar'){
+    for(const t of [0,2,4,6]){
+      const s=snapshots[t];
+      assert.equal(s.status,'closed');
+      assert.ok(Number.isFinite(s.outputAngleRad));
+      assert.ok(Math.max(...Object.values(s.residuals))<1e-8);
+      assert.equal(s.branch,'open');
+    }
+    assert.notEqual(snapshots[0].outputAngleRad,snapshots[2].outputAngleRad);
    }else{
     assert.equal(snapshots[0].dwell,true);
     assert.ok(Math.abs(snapshots[2].outputAngleDeg)<90.000001);
@@ -110,6 +120,20 @@ try{
     await page.locator('#'+id).click();
     assert.equal(await page.locator('#'+id).evaluate(el=>el.classList.contains('selected')),true);
    }
+   if(request.mechanism==='four-bar'){
+      // Branch toggle must change the real output pin, not only a badge.
+      await page.locator('#branch-crossed').click();
+      await page.evaluate(()=>window.SIM.render(2));
+      const crossed=await getSnapshot();
+      assert.equal(crossed.branch,'crossed');
+      assert.equal(crossed.status,'closed');
+      assert.notDeepEqual(crossed.outputPin,next.outputPin);
+      assert.equal(await page.locator('#branch-crossed').getAttribute('aria-pressed'),'true');
+      await page.locator('#branch-open').click();
+      await page.evaluate(()=>window.SIM.render(2));
+      const restored=await getSnapshot();
+      assert.equal(restored.branch,'open');
+   }
    return {stepTurns:1/24,views:['top-view','xray','explode']};
   });
   if(request.mechanism==='slider-crank'&&request.video.width>=1920){
@@ -136,28 +160,45 @@ try{
     return layout;
    });
   }
-  if(request.mechanism==='slider-crank'&&request.video.direction==='cinematic'){
+  if(['slider-crank','four-bar'].includes(request.mechanism)&&request.video.direction==='cinematic'){
     await check('actual-cinematic-camera-storyboard',async()=>{
       const frames=[0,1.7,3.3,5.1,6.6,7.7],shots=[],hashes=[],strokes=[];
-      await page.evaluate(()=>window.MECHANISM.director.setEnabled(true));
+      await page.evaluate(kind=>kind==='four-bar'?window.FOURBAR.director.setEnabled(true):window.MECHANISM.director.setEnabled(true),request.mechanism);
       for(const [i,t] of frames.entries()){
         await page.evaluate(t=>window.SIM.render(t),t);
-        const shot=await page.evaluate(()=>window.MECHANISM.director.snapshot);
-        const mechanics=await page.evaluate(()=>window.MECHANISM.snapshot);
-        assert.ok(Number.isFinite(mechanics.strokeMm),'CINEMA_MECHANISM_NONFINITE');
-        strokes.push(mechanics.strokeMm);
+        const shot=await page.evaluate(kind=>kind==='four-bar'?window.FOURBAR.director.snapshot:window.MECHANISM.director.snapshot,request.mechanism);
+        const mechanics=await getSnapshot();
+        const motion=request.mechanism==='four-bar'?mechanics.outputAngleRad:mechanics.strokeMm;
+        assert.ok(Number.isFinite(motion),'CINEMA_MECHANISM_NONFINITE');
+        if(request.mechanism==='four-bar')assert.equal(mechanics.status,'closed');
+        strokes.push(motion);
         assert.ok(shot&&shot.frame>=0&&shot.frame<request.video.fps*request.video.durationSeconds);
         assert.equal(shot.shotNumber,i+1,'SHOT_ORDER');
         assert.equal(shot.totalFrames,request.video.fps*request.video.durationSeconds);
         const png=await page.screenshot({path:join(out,'cinematic-'+i+'.png'),timeout:90000,animations:'disabled'});
         assert.ok(png.length>18000,'CINEMA_FRAME_EMPTY');
         shots.push({t,id:shot.shotId,shotNumber:shot.shotNumber,camera:shot.camera,
-          exploded:shot.exploded,xray:shot.xray,strokeMm:mechanics.strokeMm,sha256:hash(png)});
+          exploded:shot.exploded,xray:shot.xray,motionValue:motion,sha256:hash(png)});
         hashes.push(hash(png));
+      }
+      if(request.mechanism==='four-bar'){
+        // The cinematic caption is reserved inside the left editorial column.
+        const bounds=await page.evaluate(()=>{
+          const rect=id=>{
+            const p=document.querySelector(id).getBoundingClientRect();
+            return {left:p.left,right:p.right,top:p.top,bottom:p.bottom};
+          };
+          return {caption:rect('#film-director'),intro:rect('.titlegroup'),
+            controls:rect('.controls'),telemetry:rect('.telemetry')};
+        });
+        assert.ok(bounds.caption.left>=20&&bounds.caption.right<=340,'FOUR_BAR_CAPTION_OUTSIDE_EDITORIAL_COLUMN');
+        assert.ok(bounds.caption.top>=bounds.intro.bottom,'FOUR_BAR_CAPTION_TITLE_OVERLAP');
+        assert.ok(bounds.caption.bottom<bounds.controls.top-10,'FOUR_BAR_CAPTION_CONTROL_OVERLAP');
+        assert.ok(bounds.caption.right<bounds.telemetry.left,'FOUR_BAR_CAPTION_TELEMETRY_OVERLAP');
       }
       assert.equal(new Set(hashes).size,6,'CINEMA_SHOTS_NOT_DISTINCT');
       assert.ok(new Set(strokes.map(x=>x.toFixed(3))).size>=4,'CINEMA_MECHANISM_FROZEN');
-      assert.ok(Math.abs(strokes[0])<1e-8,'CINEMA_START_NOT_TOP_DEAD_CENTER');
+      if(request.mechanism==='slider-crank')assert.ok(Math.abs(strokes[0])<1e-8,'CINEMA_START_NOT_TOP_DEAD_CENTER');
       await page.evaluate(()=>window.SIM.render(1.7));
       const replay=await page.screenshot({timeout:90000,animations:'disabled'});
       assert.equal(hash(replay),hashes[1],'CINEMA_NONDETERMINISTIC');
@@ -168,7 +209,7 @@ try{
   await context.close();
  }finally{await browser.close();}
  // Real high-quality playback profile: frame-addressed source, H264 720p24.
- if(request.mechanism==='slider-crank'){
+ if(['slider-crank','four-bar'].includes(request.mechanism)){
   await check('full-film-capture',()=>{
    const film=join(out,'film-video-only.mp4');
    const v=request.video;

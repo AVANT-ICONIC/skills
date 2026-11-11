@@ -64,6 +64,12 @@ Reference -> numerical/kinematic checks -> isolated generated machine folder -> 
 Read [runtime and package details](README.md) and the pending technical design in specification PR #17. When prerequisites or evidence are absent, fail explicitly rather than manufacturing success.
 
 
+## Four-bar crank-rocker: third machine (experimental)
+
+A third reviewed family now uses **four revolute joints**, the signed circle-intersection solution and a branch-selectable 3D scene. See [four-bar geometry and singularity analysis](docs/four-bar-branch-analysis.md) and [the reviewed example](examples/four-bar/README.md). Its closed-form graph solver returns `closed`, `unreachable`, `singular` or `ambiguous` instead of inventing a valid pose. The film compiler permits only full-revolution, non-toggle sample dimensions. The live viewer can choose either mathematical branch; this is **not** simulated physical reassembly.
+
+The same source, pose, auditor, Chromium and H.264/AAC pipeline is used for all three families. The four-bar sample targets **1280×720 at 24 fps for eight seconds**; the full Chromium/render/film pipeline has passed for the four-bar preview, but certified mechanical physics, actual hardware GPU and OS-level sandbox isolation remain unverified. Every package stays releaseReady=false.
+
 ## Declarative machine graph (experimental)
 
 [Mechanism Graph v1](docs/declarative-machine-graph.md) now expresses parts, revolute/prismatic joints, input motion and constraints as inspectable millimetre-based data. The slider-crank's **actual body poses** are solved from this approved graph and drive the existing interactive viewer and deterministic Full HD film. The Geneva graph describes reviewed topology but **does not yet replace** its established ideal solver.
@@ -72,7 +78,7 @@ The compiler emits `mechanism-graph.json`, `machine-graph.mjs` and an unchanged 
 
 ## Independent model-claim audit
 
-Before running any generated JavaScript in the renderer, use the [model-claim traceability contract](docs/model-claim-traceability.md). The auditor validates immutable reviewed module hashes, recomputes the numeric configuration from the brief, and tests independent geometric invariants for either supported machine family.
+Before running any generated JavaScript in the renderer, use the [model-claim traceability contract](docs/model-claim-traceability.md). The auditor validates immutable reviewed module hashes, recomputes the numeric configuration from the brief, and tests independent geometric invariants for each supported machine family.
 
 ~~~bash
 node mechanism-studio/scripts/audit-model.mjs /tmp/slider-crank-study-002 /tmp/slider-crank-study-002/audit.json
@@ -95,4 +101,4 @@ After preparing the immutable Teardown revision in an isolated environment, buil
 
 A successful, inspected generated run can be packaged by `scripts/package-generated.mjs` and verified using the **same canonical** `scripts/verify.mjs`. It includes interactive HTML, final MP4, poster, decoded-frame contact sheet, request/source register, model source, full runtime receipts, notices and per-file SHA-256 hashes.
 
-**Honest limitations:** two reviewed mechanism families only; remote references not fetched or automatically validated; physical forces/locking/certification not supplied; hardware GPU/mobile and host-level sandbox not evaluated. Film quality gates test the real decoded output, but no guarantee for arbitrary machines.
+**Honest limitations:** three reviewed mechanism families only; remote references not fetched or automatically validated; physical forces/locking/certification not supplied; hardware GPU/mobile and host-level sandbox not evaluated. Film quality gates test the real decoded output, but no guarantee for arbitrary machines.

@@ -2,7 +2,7 @@
 /**
  * Deterministic source-grounded request compiler. Copies only reviewed,
  * checked-in recipe modules; never evaluates user-provided code or downloads URLs.
- * Supported families are deliberately finite: geneva-4 and slider-crank.
+ * Supported families are deliberately finite: Geneva, slider-crank, four-bar.
  */
 import {copyFileSync,existsSync,mkdirSync,readFileSync,renameSync,rmSync,writeFileSync} from 'node:fs';
 import {dirname,join,resolve,sep,basename} from 'node:path';
@@ -14,6 +14,10 @@ const ROOT=resolve(dirname(fileURLToPath(import.meta.url)),'..');
 const ID=/^[a-z][a-z0-9-]{2,63}$/;
 const PARAMS={
   'geneva-4':{},
+  'four-bar':{
+    groundLengthMm:{min:40,max:250},inputLengthMm:{min:10,max:90},
+    couplerLengthMm:{min:30,max:220},outputLengthMm:{min:30,max:190},inputRpm:{min:3,max:60}
+  },
   'slider-crank':{
     crankRadiusMm:{min:10,max:60},
     rodLengthMm:{min:25,max:300},
@@ -21,7 +25,7 @@ const PARAMS={
   }
 };
 const ALLOWED_STATUS=new Set(['measured','sourced','derived','assumed','illustrative']);
-const ALLOWED_FIELDS=new Set(['schema','id','mechanism','description','classification','references','parameters','video']);
+const ALLOWED_FIELDS=new Set(['schema','id','mechanism','description','classification','references','parameters','video','assemblyBranch']);
 const toObject=(x,name)=>{
   if(!x||typeof x!=='object'||Array.isArray(x))throw Error('BAD_'+name);
   return x;
@@ -67,6 +71,14 @@ export function validateRequest(input){
   const raw=toObject(x.parameters,'PARAMETERS');
   if(Object.keys(raw).sort().join(',')!==Object.keys(template).sort().join(','))throw Error('PARAMETER_SET_UNSUPPORTED');
   const params=Object.fromEntries(Object.entries(template).map(([name,limits])=>[name,param(raw[name],name,limits,ids)]));
+  if(x.mechanism==='four-bar'){
+    if(!['open','crossed'].includes(x.assemblyBranch))throw Error('FOUR_BAR_BRANCH_REQUIRED');
+    const {groundLengthMm:d,inputLengthMm:a,couplerLengthMm:b,outputLengthMm:c}=Object.fromEntries(
+      Object.entries(params).map(([k,v])=>[k,v.value]));
+    const lo=Math.abs(d-a),hi=d+a;
+    if(!(lo>Math.abs(b-c)+1e-7&&hi<b+c-1e-7))
+      throw Error('FOUR_BAR_FULL_CYCLE_UNSAFE');
+  }else if(x.assemblyBranch!==undefined)throw Error('BRANCH_ONLY_FOR_FOUR_BAR');
   if(x.mechanism==='slider-crank'){
     const r=params.crankRadiusMm.value,l=params.rodLengthMm.value;
     if(l<2.2*r||l>5*r)throw Error('ROD_RATIO_UNSAFE');
@@ -78,6 +90,7 @@ export function validateRequest(input){
     ![[1280,720],[1920,1080]].some(([w,h])=>video.width===w&&video.height===h))throw Error('VIDEO_PROFILE_UNSUPPORTED');
   const normalized={
     schema:x.schema,id:x.id,mechanism:x.mechanism,
+    ...(x.mechanism==='four-bar'?{assemblyBranch:x.assemblyBranch}:{}),
     description:x.description.trim(),classification:x.classification,
     references:refs,parameters:params,
     video:{fps:video.fps,durationSeconds:video.durationSeconds,width:video.width,height:video.height,direction}
@@ -86,10 +99,11 @@ export function validateRequest(input){
 }
 /** Canonical serialization shared by compiler and audited model input. */
 export function makeMachineConfig(normalized){
-  const values=normalized.mechanism==='slider-crank'
-    ?{...Object.fromEntries(Object.entries(normalized.parameters).map(([k,v])=>[k,v.value])),video:normalized.video}
+  const values=['slider-crank','four-bar'].includes(normalized.mechanism)
+    ?{...Object.fromEntries(Object.entries(normalized.parameters).map(([k,v])=>[k,v.value])),
+       ...(normalized.mechanism==='four-bar'?{assemblyBranch:normalized.assemblyBranch}:{}),video:normalized.video}
     :{video:normalized.video};
-  const prefix=normalized.mechanism==='slider-crank'
+  const prefix=['slider-crank','four-bar'].includes(normalized.mechanism)
     ?'/* Verified typed configuration. No dynamically sourced code. */'
     :'/* Verified film profile, no executable user source. */';
   return prefix+'\nexport const CONFIG=Object.freeze('+JSON.stringify(values,null,2)+');\n';
@@ -97,7 +111,8 @@ export function makeMachineConfig(normalized){
 export function compileRequest({request,out}){
   const normalized=validateRequest(request);
   const dest=validatePathLocation(ROOT,out);
-  const inputDirectory=join(ROOT,'examples',normalized.mechanism==='geneva-4'?'geneva-indexer':'slider-crank');
+  const inputDirectory=join(ROOT,'examples',
+    normalized.mechanism==='geneva-4'?'geneva-indexer':normalized.mechanism);
   const paths=['main.js','model.mjs','stage.js'];
   const generated=dest+'.stage-'+process.pid;
   if(existsSync(generated))throw Error('STAGING_ALREADY_EXISTS');
@@ -107,11 +122,12 @@ export function compileRequest({request,out}){
     // One canonical director is copied, not a second independent recipe engine.
     copyFileSync(join(ROOT,'scripts/film-direction.mjs'),join(generated,'film-direction.mjs'));
     copyFileSync(join(ROOT,'scripts/mechanism-graph.mjs'),join(generated,'mechanism-graph.mjs'));
+    copyFileSync(join(ROOT,'scripts/fourbar-solver.mjs'),join(generated,'fourbar-solver.mjs'));
     const graph=makeMechanismGraph(normalized);
     writeFileSync(join(generated,'machine-graph.mjs'),makeGraphModule(graph));
     writeFileSync(join(generated,'mechanism-graph.json'),graphDigestInput(graph));
     const baseCSS=readFileSync(join(ROOT,'examples/geneva-indexer/style.css'),'utf8');
-    const css=normalized.mechanism==='slider-crank'
+    const css=normalized.mechanism!=='geneva-4'
       ?baseCSS+'\n'+readFileSync(join(inputDirectory,'style.css'),'utf8')
       :baseCSS;
     writeFileSync(join(generated,'style.css'),css);
@@ -130,7 +146,7 @@ export function compileRequest({request,out}){
       'This illustrative mechanism is not engineering-certified. Run actual model/browser/video gates separately.\n');
     renameSync(generated,dest);
     return {directory:dest,id:normalized.id,mechanism:normalized.mechanism,
-      files:12,
+      files:13,
       film:normalized.video,sourceCount:normalized.references.length,
       buildVerified:false,renderVerified:false,releaseReady:false};
   }catch(e){rmSync(generated,{recursive:true,force:true});throw e;}

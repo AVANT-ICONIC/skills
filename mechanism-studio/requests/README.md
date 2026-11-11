@@ -8,6 +8,7 @@ The reviewed recipe compiler converts a **source-backed, strictly typed JSON bri
 | --- | --- | --- |
 | `geneva-4` | Fixed demonstrator geometry | Independent four-slot intermittent-drive kinematics with idealized dwell (locking cam absent) |
 | `slider-crank` | crankRadiusMm, rodLengthMm, inputRpm | Analytic in-line crank-slider geometry, piston position, rod angle and derivative speed |
+| `four-bar` | groundLengthMm, inputLengthMm, couplerLengthMm, outputLengthMm, inputRpm; required open/crossed branch | RRRR circle-intersection graph, two mathematical assembly branches, singular/unreachable diagnostics |
 
 Only reviewed, checked-in recipe modules are copied. Unknown machine types or unexpected fields fail explicitly. New mechanism families require their own model, geometry, tests, provenance and acceptance evidence.
 
@@ -39,6 +40,12 @@ It is NOT yet signed, certified, safe to run with untrusted templates, or produc
 ## Graph representation
 
 The validated compiler also produces `mechanism-graph.json` and `machine-graph.mjs`. These are derived from the typed brief and reviewed body/joint schema rather than copied from customer JavaScript. For the slider-crank, the model's actual pose and velocity now come from a canonical joint-constraint evaluator. See [the graph-v1 contract](../docs/declarative-machine-graph.md). The Geneva graph remains descriptive until its graph solver is validated.
+
+## Four-bar branch-aware request
+
+A third request, [four-bar-study.json](four-bar-study.json), provides five illustrative quantities in millimetres/RPM, plus a required `assemblyBranch` of `open` or `crossed`. Both branches are calculated from the same circle-intersection geometry with no history-dependent switching. The film compiler **rejects** links that cannot remain assembled through a full driver turn or that approach a toggle; the diagnostic solver reports unreachable/singular states separately.
+
+The corresponding 3D scene, model and mathematical tests are in [examples/four-bar](../examples/four-bar/README.md). This is a bounded, reviewed linkage family, not arbitrary CAD and not a claim that physical links can switch between branches in place.
 
 ## Video profiles and QA
 

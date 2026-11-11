@@ -4,6 +4,7 @@
  * represented, but retains its separately verified kinematics until a graph
  * solver is proven. This is not an arbitrary CAD or force solver.
  */
+import {FOUR_BAR_SOLVER,solveFourBarGeometry,classifyFourBar} from './fourbar-solver.mjs';
 const TAU=Math.PI*2;
 const finite=x=>typeof x==='number'&&Number.isFinite(x);
 const item=(id,role)=>({id,role});
@@ -15,6 +16,7 @@ const clone=o=>JSON.parse(JSON.stringify(o));
 export const GRAPH_SCHEMA='avant.mechanism-graph/1';
 export const SLIDER_SOLVER='inline-slider-crank-positive-root/1';
 export const GENEVA_SOLVER='geneva-four-slot-ideal-deferred/1';
+export {FOUR_BAR_SOLVER};
 
 export function makeSliderGraph({id='slider-crank-preview',crankRadiusMm:r,rodLengthMm:l,inputRpm:rpm,sourceIds=[]}){
  if(!finite(r)||!finite(l)||!finite(rpm)||r<=0||l<=r||rpm<=0)
@@ -64,11 +66,57 @@ export function makeGenevaGraph({id='geneva-four-slot-study',sourceIds=[]}={}){
  validateMechanismGraph(graph);
  return graph;
 }
+
+/** Four pin-jointed rigid links. Ground and input pivot are collinear in XY. */
+export function makeFourBarGraph({
+ id='four-bar-crank-rocker',groundLengthMm:d,inputLengthMm:a,
+ couplerLengthMm:b,outputLengthMm:c,inputRpm:rpm,assemblyBranch='open',sourceIds=[]
+}){
+ const params={groundLengthMm:d,inputLengthMm:a,couplerLengthMm:b,outputLengthMm:c,inputRpm:rpm};
+ if(![d,a,b,c,rpm].every(n=>finite(n)&&n>0)||rpm>120||
+  !['open','crossed'].includes(assemblyBranch))
+   throw new TypeError('GRAPH_FOUR_BAR_PARAMETERS_INVALID');
+ // The current interactive film requires an uninterrupted 360-degree driver.
+ // Individual singular/unreachable poses remain available via diagnostic solver.
+ if(!classifyFourBar(params).noToggleThroughoutFullTurn)
+   throw new Error('GRAPH_FOUR_BAR_CONTINUOUS_ROTATION_UNSUPPORTED');
+ const graph={
+  schema:GRAPH_SCHEMA,id,mechanism:'four-bar',plane:'xy',unit:'mm',
+  certifiedPhysics:false,solver:FOUR_BAR_SOLVER,assemblyBranch,
+  bodies:[item('ground','fixed'),item('input','rotor'),item('coupler','rigid-link'),item('rocker','rocking-output')],
+  joints:[
+   REV('input-bearing','ground','input',pair(0,0),pair(0,0)),
+   REV('coupler-input','input','coupler',pair(a,0),pair(0,0)),
+   REV('coupler-rocker','coupler','rocker',pair(b,0),pair(c,0)),
+   REV('rocker-bearing','ground','rocker',pair(d,0),pair(0,0))
+  ],
+  drive:{joint:'input-bearing',kind:'uniform-rotation',rpm},
+  constraints:[
+   {id:'loop-closure',kind:'four-revolute-closure',toleranceMm:1e-8},
+   {id:'branch',kind:'intersection-branch',value:assemblyBranch},
+   {id:'full-turn',kind:'continuous-driver',noToggle:true}
+  ],
+  parameters:params,
+  provenance:{sourceIds:[...sourceIds],externalDocumentsVerified:false,dimensionalCertification:false}
+ };
+ validateMechanismGraph(graph);
+ return graph;
+}
+
 export function makeMechanismGraph(request){
  if(!request||typeof request!=='object'||typeof request.id!=='string'||!Array.isArray(request.references))
   throw new TypeError('GRAPH_REQUEST_INVALID');
  const sourceIds=request.references.map(x=>x.id);
  if(request.mechanism==='geneva-4')return makeGenevaGraph({id:request.id,sourceIds});
+ if(request.mechanism==='four-bar'){
+  const p=request.parameters;
+  if(!p||!['groundLengthMm','inputLengthMm','couplerLengthMm','outputLengthMm','inputRpm'].every(k=>finite(p[k]?.value)))
+   throw new TypeError('GRAPH_PARAMETERS_INVALID');
+  return makeFourBarGraph({id:request.id,
+   groundLengthMm:p.groundLengthMm.value,inputLengthMm:p.inputLengthMm.value,
+   couplerLengthMm:p.couplerLengthMm.value,outputLengthMm:p.outputLengthMm.value,
+   inputRpm:p.inputRpm.value,assemblyBranch:request.assemblyBranch,sourceIds});
+ }
  if(request.mechanism==='slider-crank'){
   const p=request.parameters;
   if(!p||!['crankRadiusMm','rodLengthMm','inputRpm'].every(k=>finite(p[k]?.value)))
@@ -144,6 +192,38 @@ export function validateMechanismGraph(graph){
     stroke?.kind!=='travel'||stroke.body!=='piston'||stroke.totalMm!==2*p.crankRadiusMm||
     graph.drive.joint!=='main-bearing')
     throw new Error('GRAPH_SLIDER_NUMERIC_CONFLICT');
+ }else if(graph.mechanism==='four-bar'){
+  if(graph.solver!==FOUR_BAR_SOLVER||!['open','crossed'].includes(graph.assemblyBranch))
+   throw new Error('GRAPH_FOUR_BAR_SOLVER_OR_BRANCH_INVALID');
+  expectIDs(partIds,['ground','input','coupler','rocker'],'GRAPH_FOUR_BAR_TOPOLOGY');
+  expectIDs(ids,['input-bearing','coupler-input','coupler-rocker','rocker-bearing'],'GRAPH_FOUR_BAR_TOPOLOGY');
+  const get=id=>graph.joints.find(j=>j.id===id);
+  const input=get('input-bearing'),first=get('coupler-input'),second=get('coupler-rocker'),rocker=get('rocker-bearing');
+  if(input.type!=='revolute'||input.a!=='ground'||input.b!=='input'||
+   first.type!=='revolute'||first.a!=='input'||first.b!=='coupler'||
+   second.type!=='revolute'||second.a!=='coupler'||second.b!=='rocker'||
+   rocker.type!=='revolute'||rocker.a!=='ground'||rocker.b!=='rocker'||
+   input.anchorA.some(n=>n!==0)||input.anchorB.some(n=>n!==0)||
+   first.anchorB.some(n=>n!==0)||
+   rocker.anchorB.some(n=>n!==0)||
+   first.anchorA[1]!==0||second.anchorA[1]!==0||
+   second.anchorB[1]!==0||rocker.anchorA[1]!==0||
+   first.anchorA[0]<=0||second.anchorA[0]<=0||
+   second.anchorB[0]<=0||rocker.anchorA[0]<=0||
+   graph.drive.joint!=='input-bearing')
+   throw new Error('GRAPH_FOUR_BAR_TOPOLOGY_INVALID');
+  const p=graph.parameters;
+  if(!p||p.groundLengthMm!==rocker.anchorA[0]||p.inputLengthMm!==first.anchorA[0]||
+   p.couplerLengthMm!==second.anchorA[0]||p.outputLengthMm!==second.anchorB[0]||
+   p.inputRpm!==graph.drive.rpm||graph.constraints.length!==3||
+   graph.constraints.find(x=>x.id==='loop-closure')?.kind!=='four-revolute-closure'||
+   graph.constraints.find(x=>x.id==='loop-closure')?.toleranceMm!==1e-8||
+   graph.constraints.find(x=>x.id==='branch')?.kind!=='intersection-branch'||
+   graph.constraints.find(x=>x.id==='branch')?.value!==graph.assemblyBranch||
+   graph.constraints.find(x=>x.id==='full-turn')?.kind!=='continuous-driver'||
+   graph.constraints.find(x=>x.id==='full-turn')?.noToggle!==true||
+   !classifyFourBar(p).noToggleThroughoutFullTurn)
+   throw new Error('GRAPH_FOUR_BAR_CONSTRAINT_INVALID');
  }else if(graph.mechanism==='geneva-4'){
   if(graph.solver!==GENEVA_SOLVER)throw new Error('GRAPH_SOLVER_UNSUPPORTED');
   expectIDs(partIds,['ground','driver','wheel'],'GRAPH_GENEVA_TOPOLOGY');
@@ -156,9 +236,24 @@ export function validateMechanismGraph(graph){
  }else throw new Error('GRAPH_MECHANISM_UNSUPPORTED');
  return {schema:graph.schema,mechanism:graph.mechanism,bodies:graph.bodies.length,joints:graph.joints.length,solver:graph.solver};
 }
-export function solvePlanarGraph(graph,turns,{rpm}={}){
+export function solvePlanarGraph(graph,turns,{rpm,branch}={}){
  if(!finite(turns))throw new TypeError('GRAPH_TIME_INVALID');
  validateMechanismGraph(graph);
+ if(graph.solver===FOUR_BAR_SOLVER){
+  const p=graph.parameters;
+  const chosen=branch??graph.assemblyBranch;
+  const solved=solveFourBarGeometry(p,turns,{branch:chosen,rpm:rpm??graph.drive.rpm});
+  return {...solved,graphId:graph.id,physicsCertification:false,
+    state:solved.status==='closed'?{
+      turns,inputAngleRad:solved.inputAngleRad,phaseDeg:((turns*360)%360+360)%360,
+      outputAngleRad:solved.outputAngleRad,couplerAngleRad:solved.couplerAngleRad,
+      transmissionAngleDeg:solved.transmissionAngleDeg,
+      angularSpeedRatio:solved.angularSpeedRatio,
+      inputPin:solved.inputPin,outputPin:solved.outputPin,
+      branch:chosen,assemblyStatus:solved.status,
+      rpm:rpm??graph.drive.rpm
+    }:null};
+ }
  if(graph.solver!==SLIDER_SOLVER)throw new Error('GRAPH_SOLVER_NOT_IMPLEMENTED');
  const r=graph.joints.find(x=>x.id==='big-end').anchorA[0];
  const l=graph.joints.find(x=>x.id==='wrist-pin').anchorA[0];
