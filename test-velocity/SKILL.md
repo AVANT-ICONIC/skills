@@ -1,12 +1,26 @@
 ---
 name: test-velocity
-description: Engineer trustworthy, exceptionally fast software test feedback from project inception through large-suite optimization. Use when designing test architecture, writing nontrivial tests, diagnosing slow suites, tuning test selection, caching, CI and parallelism, or coordinating tests across coding agents. Do not use for trivial edits or to replace required integration, security, browser, hardware, or release verification with mocks.
+description: Fast, trustworthy tests, line by line. Use whenever you write or change a test, design test architecture, diagnose a slow suite or test runner, or tune selection, caching, CI and parallelism across agents. It never replaces required integration, security, browser, hardware or release gates with mocks.
 compatibility: "Portable Agent Skills Markdown. Uses installed project tooling; no required paid service or prescribed language."
 ---
 
 # Test Velocity
 
-Maximize **time to a trustworthy verdict**, not speed at any cost. A fast suite that misses regressions is a failed optimization.
+Maximize **time to a trustworthy verdict**, not speed at any cost. A fast suite that misses regressions is a failed optimization. A slow test is a **defect**: it taxes every future run, every agent and every CI slot, so treat it like a bug in the code under test.
+
+## Budgets
+
+Every test has a **budget**. Use the repository's own numbers when it defines them; otherwise these defaults apply:
+
+| Unit | Budget (CPU, user+sys) |
+|---|---|
+| one test case | ≤ 10 ms |
+| one test file, startup included | ≤ 200 ms; over 1 s is a defect to fix before merge |
+| process spawns per test file | 0, or a written reason per spawn |
+| real waiting (sleep, timeout, poll) | 0 ms |
+| whole local suite | ≤ 10 s |
+
+A test that needs more carries its reason in a comment beside the costly line, and belongs to a tier (integration, end-to-end) that runs on its own schedule.
 
 ## Modes and activation
 
@@ -38,7 +52,11 @@ Read AGENTS.md and repo-specific docs, test scripts, workflows, coverage rules, 
 
 For **Blueprint**, classify architectural risks and write a test plan before code. For **Rescue**, first collect a baseline without changing test behavior. For **Author**, establish what a correct failure would look like before implementing tests.
 
-### 2. Profile the wall clock, not just test function runtime
+### 2. Profile the right clock
+
+Measure **CPU time and spawn count** per test file first: they are properties of the code, identical on an idle laptop and a machine at load 700. Wall time is the developer's outcome but a noisy instrument; under load it measures the neighbours, so take wall readings only on a quiet machine and report the load beside them.
+
+The **harness is code under test too**. Profile the runner, its watchers, reporters, admission/slot logic and CI wrappers the same way. A runner or watcher that polls by spawning `ps`, `git` or a shell every few hundred milliseconds can cost more than every test it runs.
 
 Distinguish:
 - dependency resolution and build/compile;
@@ -65,6 +83,25 @@ Design tiers:
 
 Favor high-value test oracles, boundary cases and invariant coverage over massive case counts. Where safe, run thousands of input cases in one process rather than repeating expensive global setup. Property/fuzz tests must record seeds and reproduce counterexamples.
 
+### 3a. Author mode: write on the cost ladder
+
+Each line of a test sits on a rung of the **cost ladder**. Write every line on the lowest rung that still proves the requirement:
+
+| Rung | Typical cost | Cheaper rung that keeps the proof |
+|---|---|---|
+| real network, browser, device | 100 ms – s | recorded payload into the parser; one real gate in its own tier |
+| real wait: sleep, timeout, retry, poll | its full duration | injected clock or fake timers; advance time explicitly |
+| **process spawn** (child runtime, `git`, shell, `ps`) | 5 – 50 ms each, far more under load; on macOS each exec also pays a code-signature check | call the function in-process; inject the spawner and assert the argv it received; build any repo fixture once per file, or feed the parser the text `git` would print |
+| server start, port bind | ms plus flake risk | call the handler with a request object; one server per file when the socket is the subject |
+| temp dirs, file writes | 0.1 – 1 ms each, more with file watchers | in-memory seam for the file API; one temp root per file |
+| module import, runtime cold start | 10 – 100 ms | one process runs every case in the file |
+| large fixture parse | grows with size | the minimal fixture that triggers the case; parse once per file |
+| pure function on in-memory data | µs | where the test belongs |
+
+Typical costs are orders of magnitude for planning; your measurements replace them. When the subject *is* the boundary (spawn semantics, signals, sockets, real git behaviour), keep the real call and give it a reason comment; that is a real-boundary test (invariant 4), and it lives in a tier sized for it.
+
+**Done** for a written test means: the new test goes **red** against the defect it guards (or a deliberate mutation), and its CPU time, spawn count and real waits are read and inside the budget, or carry a reason per costly line.
+
 ### 4. Optimize in descending order of impact
 
 1. Eliminate unnecessary work (duplicate test execution, excessive setup, actual waiting).
@@ -79,7 +116,7 @@ Always compare one controlled intervention against the previous baseline. If a '
 
 ### 5. Make the verification matrix explicit
 
-Define project-specific gates, not universal invented time limits:
+Define project-specific gates, starting from the budgets above, and enforce them with a guard that fails the build when a file exceeds its budget:
 - edit loop: affected tests + cheap invariant checks;
 - pull request: affected suites, contract/integration coverage for changed boundaries, static analysis and mandatory security/regression gates;
 - merge/release: repo-defined comprehensive verification (full uncached where required);
@@ -89,7 +126,7 @@ Cross-cutting changes (toolchain, shared configuration, schemas, core contracts)
 
 ### 6. Fleet mode
 
-Represent each test execution with its exact source revision, command, environment and immutable inputs. De-duplicate identical authorized work across agents, schedule CPU and memory budgets, shard by measured duration, and isolate side-effectful workers. Cache artifacts/results only with provenance and trustworthy keys. If an agent's result is stale or inputs differ, rerun. Keep centrally enforced full-verification gates separate from fast exploratory verdicts.
+Represent each test execution with its exact source revision, command, environment and immutable inputs. De-duplicate identical authorized work across agents, schedule CPU, memory and spawn-rate budgets per machine, shard by measured CPU time, and isolate side-effectful workers. When many agents share one machine, the machine-wide spawn rate is the first reading: one agent's polling loop or several concurrent suites can starve every verdict. Cache artifacts/results only with provenance and trustworthy keys. If an agent's result is stale or inputs differ, rerun. Keep centrally enforced full-verification gates separate from fast exploratory verdicts.
 
 ### 7. Verify the optimization
 
@@ -106,7 +143,7 @@ A local test run cannot certify coverage of unsupported platforms or external pr
 
 Deliver one concise **Test Velocity Plan / Evidence Record**:
 - repo, ref, mode, risk and execution environment;
-- observed commands and baseline timing split (or explicitly 'not measured');
+- observed commands and baseline timing split (or explicitly 'not measured'), with CPU time and spawn count per file for the heaviest files;
 - bottlenecks ordered by measured contribution;
 - selected architectural changes and rejected alternatives;
 - test tiers and exact required verification gates;
