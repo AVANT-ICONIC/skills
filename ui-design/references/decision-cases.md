@@ -134,7 +134,7 @@ Practical test: trace every reassuring claim to product behavior or a current so
 
 ## 11. Filters help people negotiate trade-offs
 
-Source: uxpeak, The INSANE Gap Between Average and World-Class UI/UX Design. 
+Source: uxpeak, The INSANE Gap Between Average and World-Class UI/UX Design.
 https://youtu.be/U7jTCgIWS4w
 
 The food-list example separates browsing appetite from fast comparison. A large photo can help one task, while a compact list helps another. Important filters should not disappear simply to fit more results above the fold. Text outside a photo survives unpredictable uploads better than text whose readability depends on every image.
