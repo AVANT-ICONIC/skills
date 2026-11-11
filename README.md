@@ -69,6 +69,14 @@ Geometric Design covers monochrome symbol construction, nested layout regions, s
 
 See [`geometric-design/SKILL.md`](./geometric-design/SKILL.md).
 
+### `logo-design-judgment`
+
+**Source-grounded logo design judgment, distilled from demonstrated practice.**
+
+Logo Design Judgment distills a named creator's long-form teaching (Satori Graphics) into transferable decision rules: brief-to-concept reasoning, the recognition and reproduction gates a mark must pass, geometry and optical correction, type and mark consistency, and presentation craft. Primary lessons are tagged as the creator's argued judgment and untagged passages are the author's synthesis, with per-video provenance and selected timestamps; key visual lessons were grounded in actually inspected frames during distillation. Coverage is stated honestly: 17 of 20 unique source videos, with the untranscribed gaps disclosed in the reference notes.
+
+See [`logo-design-judgment/SKILL.md`](./logo-design-judgment/SKILL.md).
+
 ### `openspec-workflow`
 
 **Native OpenSpec change routing from intent to verified implementation.**
@@ -152,6 +160,7 @@ skills/
 ├── gauntlet-loop/      # Artifact QA; references and optional executable checks
 ├── geometric-design/   # Geometry audits and tokens; offline Node tools
 ├── intent-mode/        # Intent reconstruction
+├── logo-design-judgment/  # Logo design judgment; references
 ├── openspec-workflow/  # Native OpenSpec lifecycle routing
 ├── seo-aiseo/          # Search audits; references
 ├── test-velocity/      # Test architecture, measurement and stack recipes
@@ -271,7 +280,7 @@ The repository follows the open Agent Skills convention: each skill is a folder 
 
 ## Status
 
-The collection currently includes twelve skills: `anti-sloprush`, `architecture-guard`, `futurequake`, `game-studio`, `gauntlet-loop`, `geometric-design`, `intent-mode`, `openspec-workflow`, `seo-aiseo`, `test-velocity`, `video-watch`, and `visual-output`.
+The collection currently includes thirteen skills: `anti-sloprush`, `architecture-guard`, `futurequake`, `game-studio`, `gauntlet-loop`, `geometric-design`, `intent-mode`, `logo-design-judgment`, `openspec-workflow`, `seo-aiseo`, `test-velocity`, `video-watch`, and `visual-output`.
 
 ## Development
 
