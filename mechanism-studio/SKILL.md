@@ -68,7 +68,7 @@ Read [runtime and package details](README.md) and the pending technical design i
 
 A third reviewed family now uses **four revolute joints**, the signed circle-intersection solution and a branch-selectable 3D scene. See [four-bar geometry and singularity analysis](docs/four-bar-branch-analysis.md) and [the reviewed example](examples/four-bar/README.md). Its closed-form graph solver returns `closed`, `unreachable`, `singular` or `ambiguous` instead of inventing a valid pose. The film compiler permits only full-revolution, non-toggle sample dimensions. The live viewer can choose either mathematical branch; this is **not** simulated physical reassembly.
 
-The same source, pose, auditor, Chromium and H.264/AAC pipeline is used for all three families. The four-bar sample targets **1280×720 at 24 fps for eight seconds**; full cinema QA still needs real run evidence before calling this release-ready.
+The same source, pose, auditor, Chromium and H.264/AAC pipeline is used for all three families. The four-bar sample targets **1280×720 at 24 fps for eight seconds**; the full Chromium/render/film pipeline has passed for the four-bar preview, but certified mechanical physics, actual hardware GPU and OS-level sandbox isolation remain unverified. Every package stays releaseReady=false.
 
 ## Declarative machine graph (experimental)
 

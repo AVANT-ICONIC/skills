@@ -69,10 +69,10 @@ node --test mechanism-studio/tests/audit-model.test.mjs
 node --test mechanism-studio/examples/slider-crank/model.test.mjs
 ~~~
 
-After tests, use the existing source-backed GitHub CI for immutable Teardown builds, Chromium controls, deterministic 1080p30 film, decoded-image review and full package verification. A passing mathematical test does not substitute for rendering.
+After tests, use the existing source-backed GitHub CI for immutable Teardown builds, Chromium controls, deterministic 1080p30 slider-crank or 720p24 four-bar film, decoded-image review and full package verification. A passing mathematical test does not substitute for rendering.
 
 ## Next extension
 
-Only after verified geometry and runtime contracts, consider supporting another **topology**, such as a single-input four-bar linkage, through additional allowed joints and numerical constraint groups. Do not add a purported universal constraint solver without proving assembled body poses, branch selection, singularity handling and failure behavior. A third hardcoded model disguised as a new graph type would not advance the architecture.
+The newly verified four-bar demonstrates a second **graph-driven solver topology**, including two explicit assembly branches and singularity diagnostics. The next extension is no longer another nominal recipe: investigate a shared closed-loop constraint evaluator with explicit branch enumeration, tolerance propagation and independently tested failure states. Do not call it general until it solves an unseen topology without introducing a new hardcoded solver or silently changing assembly branches.
 
-References are unchanged from the reviewed slider-crank and Geneva source registers, which **have not been independently fetched by this compiler**.
+Geneva, slider-crank and four-bar source URLs remain reference registers only. They **have not been independently fetched or semantically verified by this compiler**.
