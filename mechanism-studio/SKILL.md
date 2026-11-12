@@ -64,6 +64,10 @@ Reference -> numerical/kinematic checks -> isolated generated machine folder -> 
 Read [runtime and package details](README.md) and the pending technical design in specification PR #17. When prerequisites or evidence are absent, fail explicitly rather than manufacturing success.
 
 
+## Rigid-body pose consistency (audit-only)
+
+The [generic SE(2) rigid-body solver](docs/rigid-pose-core-v1.md) evaluates reviewed revolute joints, fixed-reference prismatic guides, whole-body translations and orientations, and explicitly seeded assembly branches. It independently checks 3D viewer model poses but **does not replace** the production render solver. A release-preview package requires the measured rigid-pose proof for graph-driven machines. Geneva's intermittent joint remains out of scope. No global branch completeness, collision, force, arbitrary external script or hardware certification is implied.
+
 ## Generic planar constraints (audit-only prototype)
 
 Use [Planar Constraint Core v1](docs/planar-constraint-core-v1.md) to solve bounded point-distance/axis-guide networks with reproducible seeds and explicit singular/underdetermined/unreachable outcomes. It has been checked against slider-crank and two four-bar branches, plus an unseen five-bar geometry. The source-backed numerical audit uses it as an **independent oracle** for the two graph-driven production solvers, without changing cinematic runtime behavior.

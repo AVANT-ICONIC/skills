@@ -12,6 +12,7 @@ import {validateRequest,makeMachineConfig} from './compile-request.mjs';
 import {makeMechanismGraph,graphDigestInput,makeGraphModule,solvePlanarGraph} from './mechanism-graph.mjs';
 import {solveFourBarGeometry,classifyFourBar} from './fourbar-solver.mjs';
 import {runIndependentConstraintProof} from './planar-constraint-adapters.mjs';
+import {proofRigidGraph} from './rigid-pose-adapters.mjs';
 
 const ROOT=resolve(dirname(fileURLToPath(import.meta.url)),'..');
 const SHA=b=>createHash('sha256').update(b).digest('hex');
@@ -159,6 +160,8 @@ export async function auditGenerated(generated){
   // customer templates. Their hashes remain visible in the evidence receipt.
   fingerprints['planar-constraint-core.mjs']=SHA(safeRead(join(ROOT,'scripts/planar-constraint-core.mjs')));
   fingerprints['planar-constraint-adapters.mjs']=SHA(safeRead(join(ROOT,'scripts/planar-constraint-adapters.mjs')));
+  fingerprints['rigid-pose-core.mjs']=SHA(safeRead(join(ROOT,'scripts/rigid-pose-core.mjs')));
+  fingerprints['rigid-pose-adapters.mjs']=SHA(safeRead(join(ROOT,'scripts/rigid-pose-adapters.mjs')));
   const graph=makeMechanismGraph(request);
   const expectedGraph=Buffer.from(graphDigestInput(graph));
   const graphSource=safeRead(join(directory,'mechanism-graph.json'));
@@ -208,6 +211,26 @@ export async function auditGenerated(generated){
       tolerance:genericProof.toleranceMm,status:'PASS'
     });
   }
+  // Second independent oracle: solve actual SE(2) body poses from revolute
+  // and prismatic joints, not only anonymous point-distance constraints.
+  // Production rendering still uses its original reviewed graph solver.
+  const rigidProof=request.mechanism==='geneva-4'?null:proofRigidGraph(
+    graph,(turns,branch)=>request.mechanism==='four-bar'
+      ?model.evaluateFourBar(turns,{branch})
+      :model.evaluateSliderCrank(turns,config),
+    {samples:32,toleranceMm:1e-5}
+  );
+  if(rigidProof){
+    if(rigidProof.status!=='PASS'||rigidProof.maxPoseErrorMm>rigidProof.toleranceMm)
+      throw Error('RIGID_BODY_POSE_PROOF_REQUIRED');
+    evidence.push({
+      id:'independent-rigid-pose-joint-agreement',
+      referenceIds:[request.references[0].id],
+      observation:'independent SE2 revolute/prismatic body closure across '+rigidProof.samples+' poses',
+      unit:'mm',measured:rigidProof.maxPoseErrorMm,
+      tolerance:rigidProof.toleranceMm,status:'PASS'
+    });
+  }
   if(request.mechanism==='slider-crank'){
     for(let i=0;i<=360;i++){
       const actual=solvePlanarGraph(graph,i/360).state;
@@ -227,6 +250,10 @@ export async function auditGenerated(generated){
     mechanismGraph:{schema:graph.schema,sha256:SHA(graphSource),solver:graph.solver,
       bodies:graph.bodies.length,joints:graph.joints.length,
       runtimeDriven:request.mechanism!=='geneva-4',
+      rigidBodyPoseProof:rigidProof||{
+        schema:'avant.independent-rigid-pose-proof/1',status:'NOT_EVALUATED',
+        reason:'Intermittent Geneva pin-slot constraints are outside rigid pose v1'
+      },
       independentConstraintProof:genericProof||{
         schema:'avant.independent-constraint-proof/1',status:'NOT_EVALUATED',
         reason:'Intermittent Geneva pin-slot topology is outside the v1 constraint core'

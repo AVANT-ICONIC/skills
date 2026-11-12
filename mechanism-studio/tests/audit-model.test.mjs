@@ -29,9 +29,16 @@ test('three distinct trusted mechanism families pass independent sampled kinemat
   assert.equal(result.files['model.mjs'].length,64);
   if(request.mechanism==='geneva-4'){
     assert.equal(result.mechanismGraph.independentConstraintProof.status,'NOT_EVALUATED');
+    assert.equal(result.mechanismGraph.rigidBodyPoseProof.status,'NOT_EVALUATED');
   }else{
     const proof=result.mechanismGraph.independentConstraintProof;
     assert.equal(proof.status,'PASS');
+    const rigid=result.mechanismGraph.rigidBodyPoseProof;
+    assert.equal(rigid.status,'PASS');
+    assert.equal(rigid.certifiedPhysics,false);
+    assert.ok(rigid.samples>=33);
+    assert.ok(rigid.maxPoseErrorMm<=rigid.toleranceMm);
+    assert.ok(result.claims.some(c=>c.id==='independent-rigid-pose-joint-agreement'&&c.status==='PASS'));
     assert.equal(proof.physicalCertification,false);
     assert.ok(proof.samples>=73);
     assert.ok(proof.maxPoseErrorMm<=proof.toleranceMm);

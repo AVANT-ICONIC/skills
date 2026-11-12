@@ -64,6 +64,10 @@ The new [four-bar linkage](examples/four-bar/README.md) extends the mechanism gr
 
 [Derivation, limitations and provenance](docs/four-bar-branch-analysis.md). The original Geneva and slider-crank behavior remains unchanged. All outputs are previews with `releaseReady=false`; CI and visual evidence are required before release claims.
 
+## Independent rigid-body joint solver
+
+[Planar rigid-pose core v1](docs/rigid-pose-core-v1.md) verifies entire SE(2) body poses, not just point distances. It solves revolute pins and fixed-reference prismatic guides with a single numerical engine, tests both four-bar assembly branches and slider-crank motion, and rejects missing cross-solver proof receipts during packaging. The original analytic models still drive live 3D and films. **Experimental audit-only**; not guaranteed all-branch or physical dynamics.
+
 ## Independent point-constraint solver
 
 The [numerical constraint core](docs/planar-constraint-core-v1.md) evaluates small 2D networks of fixed/free points with length and axis-guide constraints, using damped least squares and explicit initial branch seeds. Local tests include three mechanical topologies and a two-unknown-joint network. It is used to **independently audit** the existing graph-driven slider-crank and four-bar models before packaging, not to replace their production runtime. It deliberately does not claim global branch enumeration or physical certification.
