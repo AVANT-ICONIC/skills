@@ -27,6 +27,16 @@ test('three distinct trusted mechanism families pass independent sampled kinemat
   assert.ok(result.claims.every(c=>c.status==='PASS'&&c.referenceIds?.length));
   assert.equal(result.references.length,request.references.length);
   assert.equal(result.files['model.mjs'].length,64);
+  if(request.mechanism==='geneva-4'){
+    assert.equal(result.mechanismGraph.independentConstraintProof.status,'NOT_EVALUATED');
+  }else{
+    const proof=result.mechanismGraph.independentConstraintProof;
+    assert.equal(proof.status,'PASS');
+    assert.equal(proof.physicalCertification,false);
+    assert.ok(proof.samples>=73);
+    assert.ok(proof.maxPoseErrorMm<=proof.toleranceMm);
+    assert.ok(result.claims.some(c=>c.id==='generic-planar-constraint-pose-agreement'&&c.status==='PASS'));
+  }
  }
 }));
 test('modified kinematic model is rejected before any dynamic module import',temp(async dir=>{

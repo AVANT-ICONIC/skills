@@ -11,6 +11,7 @@ import {pathToFileURL,fileURLToPath} from 'node:url';
 import {validateRequest,makeMachineConfig} from './compile-request.mjs';
 import {makeMechanismGraph,graphDigestInput,makeGraphModule,solvePlanarGraph} from './mechanism-graph.mjs';
 import {solveFourBarGeometry,classifyFourBar} from './fourbar-solver.mjs';
+import {runIndependentConstraintProof} from './planar-constraint-adapters.mjs';
 
 const ROOT=resolve(dirname(fileURLToPath(import.meta.url)),'..');
 const SHA=b=>createHash('sha256').update(b).digest('hex');
@@ -154,6 +155,10 @@ export async function auditGenerated(generated){
   fingerprints['film-direction.mjs']=requireExact(directory,join(ROOT,'scripts/film-direction.mjs'),'film-direction.mjs');
   fingerprints['mechanism-graph.mjs']=requireExact(directory,join(ROOT,'scripts/mechanism-graph.mjs'),'mechanism-graph.mjs');
   fingerprints['fourbar-solver.mjs']=requireExact(directory,join(ROOT,'scripts/fourbar-solver.mjs'),'fourbar-solver.mjs');
+  // These two canonical modules are audit-only, never bundled as executable
+  // customer templates. Their hashes remain visible in the evidence receipt.
+  fingerprints['planar-constraint-core.mjs']=SHA(safeRead(join(ROOT,'scripts/planar-constraint-core.mjs')));
+  fingerprints['planar-constraint-adapters.mjs']=SHA(safeRead(join(ROOT,'scripts/planar-constraint-adapters.mjs')));
   const graph=makeMechanismGraph(request);
   const expectedGraph=Buffer.from(graphDigestInput(graph));
   const graphSource=safeRead(join(directory,'mechanism-graph.json'));
@@ -182,6 +187,27 @@ export async function auditGenerated(generated){
     ?sliderProof(model,config,request.references[0].id)
     :request.mechanism==='four-bar'?fourBarProof(model,graph,request.references[0].id)
     :genevaProof(model,request.references[0].id);
+  // Cross-check two different production solvers against the *same* generic
+  // point/distance/axis evaluator. This does not replace production rendering.
+  // Geneva is explicitly excluded: intermittent pin-slot topology is not in v1.
+  const genericProof=request.mechanism==='geneva-4'?null:runIndependentConstraintProof(
+    graph,(turns,branch)=>request.mechanism==='four-bar'
+      ?model.evaluateFourBar(turns,{branch})
+      :model.evaluateSliderCrank(turns,config),
+    {samples:72,toleranceMm:1e-6}
+  );
+  if(genericProof){
+    if(genericProof.status!=='PASS'||genericProof.maxPoseErrorMm>genericProof.toleranceMm)
+      throw Error('INDEPENDENT_CONSTRAINT_PROOF_REQUIRED');
+    evidence.push({
+      id:'generic-planar-constraint-pose-agreement',
+      referenceIds:[request.references[0].id],
+      observation:'independent bounded point/distance/axis constraint roots across '+
+        genericProof.samples+' absolute-time poses',
+      unit:'mm',measured:genericProof.maxPoseErrorMm,
+      tolerance:genericProof.toleranceMm,status:'PASS'
+    });
+  }
   if(request.mechanism==='slider-crank'){
     for(let i=0;i<=360;i++){
       const actual=solvePlanarGraph(graph,i/360).state;
@@ -201,6 +227,10 @@ export async function auditGenerated(generated){
     mechanismGraph:{schema:graph.schema,sha256:SHA(graphSource),solver:graph.solver,
       bodies:graph.bodies.length,joints:graph.joints.length,
       runtimeDriven:request.mechanism!=='geneva-4',
+      independentConstraintProof:genericProof||{
+        schema:'avant.independent-constraint-proof/1',status:'NOT_EVALUATED',
+        reason:'Intermittent Geneva pin-slot topology is outside the v1 constraint core'
+      },
       limitations:request.mechanism==='geneva-4'?['Graph describes Geneva topology; existing independently verified solver remains authoritative']:[]},
     references:request.references.map(x=>({id:x.id,url:x.url,redistribution:x.redistribution,
       contentChecked:false})),claims:evidence,

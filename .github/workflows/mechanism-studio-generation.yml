@@ -4,6 +4,8 @@ on:
     paths:
       - 'mechanism-studio/scripts/compile-request.mjs'
       - 'mechanism-studio/scripts/mechanism-graph.mjs'
+      - 'mechanism-studio/scripts/planar-constraint-core.mjs'
+      - 'mechanism-studio/scripts/planar-constraint-adapters.mjs'
       - 'mechanism-studio/scripts/fourbar-solver.mjs'
       - 'mechanism-studio/scripts/audit-model.mjs'
       - 'mechanism-studio/scripts/verify-generated.mjs'

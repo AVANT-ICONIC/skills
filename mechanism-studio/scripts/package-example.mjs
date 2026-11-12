@@ -132,6 +132,20 @@ export function verifyPackage(folder){
         c.referenceIds.some(id=>!request.references.some(r=>r.id===id))||
         !Number.isFinite(c.measured)||!Number.isFinite(c.tolerance)))
       throw Error('MODEL_AUDIT_MISMATCH');
+    if(m.model?.graphDriven===true){
+      const core=modelAudit.mechanismGraph?.independentConstraintProof;
+      const claim=modelAudit.claims.find(c=>c.id==='generic-planar-constraint-pose-agreement');
+      if(core?.schema!=='avant.independent-constraint-proof/1'||core.status!=='PASS'||
+         !Number.isInteger(core.samples)||core.samples<16||
+         !Number.isFinite(core.maxPoseErrorMm)||core.maxPoseErrorMm<0||
+         !Number.isFinite(core.toleranceMm)||core.toleranceMm<=0||
+         core.maxPoseErrorMm>core.toleranceMm||
+         core.physicalCertification!==false||
+         !claim||claim.status!=='PASS'||claim.unit!=='mm'||
+         claim.measured!==core.maxPoseErrorMm||
+         claim.tolerance!==core.toleranceMm)
+        throw Error('INDEPENDENT_CONSTRAINT_PROOF_MISSING');
+    }
     if(request.video?.fps!==m.timebase?.fpsNumerator||
       request.video?.durationSeconds*request.video?.fps!==m.timebase?.frameCount||
       request.video?.width!==m.timebase?.width||
