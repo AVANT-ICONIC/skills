@@ -116,11 +116,16 @@ test('source-grounded film packages verify integrity, embedded brief and timebas
         independentConstraintProof:{
           schema:'avant.independent-constraint-proof/1',status:'PASS',
           samples:73,maxPoseErrorMm:0,toleranceMm:1e-6,physicalCertification:false
+        },
+        rigidBodyPoseProof:{
+          schema:'avant.independent-rigid-pose-proof/1',status:'PASS',samples:33,
+          maxPoseErrorMm:0,toleranceMm:1e-5,certifiedPhysics:false,
+          globalAssemblyEnumeration:false
         }},
       references:[{id:'reference',url:'https://example.org/slider',contentChecked:false}],
-      claims:['rod','stroke','formula','generic-planar-constraint-pose-agreement'].map(id=>({
+      claims:['rod','stroke','formula','generic-planar-constraint-pose-agreement','independent-rigid-pose-joint-agreement'].map(id=>({
          id,status:'PASS',referenceIds:['reference'],unit:'mm',
-         measured:0,tolerance:id==='generic-planar-constraint-pose-agreement'?1e-6:1e-8
+         measured:0,tolerance:id==='generic-planar-constraint-pose-agreement'?1e-6:id==='independent-rigid-pose-joint-agreement'?1e-5:1e-8
        }))})
   };
   const assets=names.map(name=>{
@@ -149,6 +154,15 @@ test('source-grounded film packages verify integrity, embedded brief and timebas
   const prior={bytes:item.bytes,sha256:item.sha256};
   item.bytes=forgedBytes.length;item.sha256=h(forgedBytes);
   save();assert.throws(()=>verifyPackage(dir),/INDEPENDENT_CONSTRAINT_PROOF_MISSING/);
+  writeFileSync(auditFile,originalAudit);
+  Object.assign(item,prior);
+  save();assert.equal(verifyPackage(dir).files,12);
+  const data=JSON.parse(readFileSync(auditFile,'utf8'));
+  delete data.mechanismGraph.rigidBodyPoseProof;
+  const bytes=Buffer.from(JSON.stringify(data));
+  writeFileSync(auditFile,bytes);
+  item.bytes=bytes.length;item.sha256=h(bytes);
+  save();assert.throws(()=>verifyPackage(dir),/INDEPENDENT_RIGID_POSE_PROOF_MISSING/);
   writeFileSync(auditFile,originalAudit);
   Object.assign(item,prior);
   save();assert.equal(verifyPackage(dir).files,12);

@@ -79,6 +79,10 @@ The original analytic slider-crank/four-bar graph solvers **remain authoritative
 
 This is **local numerical constraint solving, not global root enumeration**. Near singularities and badly seeded systems can remain `unresolved`. Exact collision dynamics, force transmission, external source-document attestation and physical fabrication remain out of scope.
 
+## Rigid-body pose audit (experimental)
+
+[Planar rigid-pose core v1](rigid-pose-core-v1.md) introduces a common SE(2) pose solver whose unknowns are rigid-body `(x,y,theta)` rather than independent anonymous points. Revolute and fixed-reference prismatic relationships are computed from local joint anchors. Both slider-crank and four-bar are cross-checked against this independent pose solver, including the two four-bar assembly branches. The film runtime is unchanged. Full all-branches enumeration, moving-guide joints and collision dynamics remain outside the supported contract.
+
 ## Next extension
 
 The newly verified four-bar demonstrates a second **graph-driven solver topology**, including two explicit assembly branches and singularity diagnostics. The next extension is no longer another nominal recipe: investigate a shared closed-loop constraint evaluator with explicit branch enumeration, tolerance propagation and independently tested failure states. Do not call it general until it solves an unseen topology without introducing a new hardcoded solver or silently changing assembly branches.

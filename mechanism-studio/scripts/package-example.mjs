@@ -145,6 +145,18 @@ export function verifyPackage(folder){
          claim.measured!==core.maxPoseErrorMm||
          claim.tolerance!==core.toleranceMm)
         throw Error('INDEPENDENT_CONSTRAINT_PROOF_MISSING');
+      const rigid=modelAudit.mechanismGraph?.rigidBodyPoseProof;
+      const rigidClaim=modelAudit.claims.find(c=>c.id==='independent-rigid-pose-joint-agreement');
+      if(rigid?.schema!=='avant.independent-rigid-pose-proof/1'||rigid.status!=='PASS'||
+         !Number.isInteger(rigid.samples)||rigid.samples<16||
+         !Number.isFinite(rigid.maxPoseErrorMm)||rigid.maxPoseErrorMm<0||
+         !Number.isFinite(rigid.toleranceMm)||rigid.toleranceMm<=0||
+         rigid.maxPoseErrorMm>rigid.toleranceMm||
+         rigid.certifiedPhysics!==false||rigid.globalAssemblyEnumeration!==false||
+         !rigidClaim||rigidClaim.status!=='PASS'||rigidClaim.unit!=='mm'||
+         rigidClaim.measured!==rigid.maxPoseErrorMm||
+         rigidClaim.tolerance!==rigid.toleranceMm)
+        throw Error('INDEPENDENT_RIGID_POSE_PROOF_MISSING');
     }
     if(request.video?.fps!==m.timebase?.fpsNumerator||
       request.video?.durationSeconds*request.video?.fps!==m.timebase?.frameCount||
