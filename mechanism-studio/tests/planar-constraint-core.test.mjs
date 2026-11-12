@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {CONSTRAINT_SCHEMA,validateConstraintProblem,solvePlanarConstraints} from './planar-constraint-core.mjs';
+import {CONSTRAINT_SCHEMA,validateConstraintProblem,solvePlanarConstraints} from '../scripts/planar-constraint-core.mjs';
 const close=(a,b,tol=1e-6)=>assert.ok(Math.abs(a-b)<tol,`${a} != ${b}`);
 const F=(id,x,y)=>({id,fixed:[x,y]});
 const V=(id,x,y)=>({id,seed:[x,y]});

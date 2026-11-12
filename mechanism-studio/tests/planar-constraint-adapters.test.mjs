@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {runIndependentConstraintProof} from './planar-constraint-adapters.mjs';
+import {runIndependentConstraintProof} from '../scripts/planar-constraint-adapters.mjs';
 const pi=Math.PI;
 const sliderGraph={mechanism:'slider-crank',joints:[
  {id:'big-end',anchorA:[32,0]},{id:'wrist-pin',anchorA:[105,0]}]};
