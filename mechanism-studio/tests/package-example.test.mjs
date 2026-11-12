@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {mkdtempSync,mkdirSync,rmSync,symlinkSync,writeFileSync,unlinkSync} from 'node:fs';
+import {mkdtempSync,mkdirSync,rmSync,symlinkSync,writeFileSync,readFileSync,unlinkSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import path from 'node:path';
 import {createHash} from 'node:crypto';
@@ -112,9 +112,16 @@ test('source-grounded film packages verify integrity, embedded brief and timebas
       mechanism:'slider-crank',status:'PASS',scientificSourceVerification:'NOT_EVALUATED',
       sourceDocumentsRetrieved:false,certifiedPhysics:false,
       mechanismGraph:{schema:'avant.mechanism-graph/1',
-        sha256:h(Buffer.from(graphText)),solver:'inline-slider-crank-positive-root/1',runtimeDriven:true},
+        sha256:h(Buffer.from(graphText)),solver:'inline-slider-crank-positive-root/1',runtimeDriven:true,
+        independentConstraintProof:{
+          schema:'avant.independent-constraint-proof/1',status:'PASS',
+          samples:73,maxPoseErrorMm:0,toleranceMm:1e-6,physicalCertification:false
+        }},
       references:[{id:'reference',url:'https://example.org/slider',contentChecked:false}],
-      claims:['rod','stroke','formula'].map(id=>({id,status:'PASS',referenceIds:['reference'],measured:0,tolerance:1e-8}))})
+      claims:['rod','stroke','formula','generic-planar-constraint-pose-agreement'].map(id=>({
+         id,status:'PASS',referenceIds:['reference'],unit:'mm',
+         measured:0,tolerance:id==='generic-planar-constraint-pose-agreement'?1e-6:1e-8
+       }))})
   };
   const assets=names.map(name=>{
    const bytes=Buffer.from(content[name]||'tested:'+name),file=path.join(dir,name);
@@ -129,6 +136,21 @@ test('source-grounded film packages verify integrity, embedded brief and timebas
    timebase:{fpsNumerator:24,fpsDenominator:1,frameCount:192,width:1280,height:720},
    entrypoints:{viewer:names[0],video:names[1],poster:names[2],evidence:names[4]},assets};
   const save=()=>writeFileSync(path.join(dir,'manifest.json'),JSON.stringify(m));
+  save();assert.equal(verifyPackage(dir).files,12);
+  // A forged green report with valid updated file hashes still fails
+  // unless it carries the numerically bounded cross-solver proof.
+  const auditFile=path.join(dir,'evidence/model-audit.json');
+  const originalAudit=readFileSync(auditFile);
+  const forged=JSON.parse(originalAudit);
+  delete forged.mechanismGraph.independentConstraintProof;
+  const forgedBytes=Buffer.from(JSON.stringify(forged));
+  writeFileSync(auditFile,forgedBytes);
+  const item=m.assets.find(a=>a.path==='evidence/model-audit.json');
+  const prior={bytes:item.bytes,sha256:item.sha256};
+  item.bytes=forgedBytes.length;item.sha256=h(forgedBytes);
+  save();assert.throws(()=>verifyPackage(dir),/INDEPENDENT_CONSTRAINT_PROOF_MISSING/);
+  writeFileSync(auditFile,originalAudit);
+  Object.assign(item,prior);
   save();assert.equal(verifyPackage(dir).files,12);
   m.timebase.frameCount=191;save();assert.throws(()=>verifyPackage(dir),/FILM_REQUEST_MISMATCH/);
   m.timebase.frameCount=192;m.model.verifiedEngineering=true;save();

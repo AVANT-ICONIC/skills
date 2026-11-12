@@ -71,6 +71,14 @@ node --test mechanism-studio/examples/slider-crank/model.test.mjs
 
 After tests, use the existing source-backed GitHub CI for immutable Teardown builds, Chromium controls, deterministic 1080p30 slider-crank or 720p24 four-bar film, decoded-image review and full package verification. A passing mathematical test does not substitute for rendering.
 
+## Generic point-constraint audit core (experimental)
+
+[Planar Constraint Core v1](planar-constraint-core-v1.md) adds a **separate bounded numerical solver** for point-distance and axis-guide systems. Its equations are not keyed to mechanism families. Local tests cover slider-crank, two four-bar branches, a five-bar two-input linkage and two simultaneously free points.
+
+The original analytic slider-crank/four-bar graph solvers **remain authoritative for the 3D viewer and film**. The new core independently reproduces their output positions from explicitly seeded point constraints at multiple absolute-time frames. The model audit records a separate measured residual and marks Geneva `NOT_EVALUATED`, because an intermittent pin-slot motion law is outside v1. The portable package refuses to claim independent numeric verification if that receipt is absent or forged.
+
+This is **local numerical constraint solving, not global root enumeration**. Near singularities and badly seeded systems can remain `unresolved`. Exact collision dynamics, force transmission, external source-document attestation and physical fabrication remain out of scope.
+
 ## Next extension
 
 The newly verified four-bar demonstrates a second **graph-driven solver topology**, including two explicit assembly branches and singularity diagnostics. The next extension is no longer another nominal recipe: investigate a shared closed-loop constraint evaluator with explicit branch enumeration, tolerance propagation and independently tested failure states. Do not call it general until it solves an unseen topology without introducing a new hardcoded solver or silently changing assembly branches.

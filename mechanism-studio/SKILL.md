@@ -64,6 +64,12 @@ Reference -> numerical/kinematic checks -> isolated generated machine folder -> 
 Read [runtime and package details](README.md) and the pending technical design in specification PR #17. When prerequisites or evidence are absent, fail explicitly rather than manufacturing success.
 
 
+## Generic planar constraints (audit-only prototype)
+
+Use [Planar Constraint Core v1](docs/planar-constraint-core-v1.md) to solve bounded point-distance/axis-guide networks with reproducible seeds and explicit singular/underdetermined/unreachable outcomes. It has been checked against slider-crank and two four-bar branches, plus an unseen five-bar geometry. The source-backed numerical audit uses it as an **independent oracle** for the two graph-driven production solvers, without changing cinematic runtime behavior.
+
+This is *not* a general all-branches or arbitrary rigid-body solver. The existing Graph v1 camera/viewer continues to use its reviewed analytic solver until a constrained family is fully verified in real render tests.
+
 ## Four-bar crank-rocker: third machine (experimental)
 
 A third reviewed family now uses **four revolute joints**, the signed circle-intersection solution and a branch-selectable 3D scene. See [four-bar geometry and singularity analysis](docs/four-bar-branch-analysis.md) and [the reviewed example](examples/four-bar/README.md). Its closed-form graph solver returns `closed`, `unreachable`, `singular` or `ambiguous` instead of inventing a valid pose. The film compiler permits only full-revolution, non-toggle sample dimensions. The live viewer can choose either mathematical branch; this is **not** simulated physical reassembly.

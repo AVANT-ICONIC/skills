@@ -64,6 +64,10 @@ The new [four-bar linkage](examples/four-bar/README.md) extends the mechanism gr
 
 [Derivation, limitations and provenance](docs/four-bar-branch-analysis.md). The original Geneva and slider-crank behavior remains unchanged. All outputs are previews with `releaseReady=false`; CI and visual evidence are required before release claims.
 
+## Independent point-constraint solver
+
+The [numerical constraint core](docs/planar-constraint-core-v1.md) evaluates small 2D networks of fixed/free points with length and axis-guide constraints, using damped least squares and explicit initial branch seeds. Local tests include three mechanical topologies and a two-unknown-joint network. It is used to **independently audit** the existing graph-driven slider-crank and four-bar models before packaging, not to replace their production runtime. It deliberately does not claim global branch enumeration or physical certification.
+
 ## Graph-driven motion
 
 [Mechanism Graph v1](docs/declarative-machine-graph.md) is the first portable, explicit **body–joint–constraint contract**. It supports reviewed planar bodies, revolute and prismatic joints, and a closed-form positive-root slider-crank solver. The graph computes crank, rod and piston body poses from actual joint anchors, and the existing 3D scene renders those states. The companion Geneva representation intentionally declares an **unimplemented graph solver**, retaining the independently verified original motion code.
