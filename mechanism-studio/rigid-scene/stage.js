@@ -24,9 +24,10 @@ export function createRigidSceneStage(canvas,sceneSpec){
   const l=new THREE.DirectionalLight(color,power);l.position.set(x,y,z);scene.add(l);
  }
  const boardMaterial=new THREE.MeshStandardMaterial({color:0x122b39,roughness:.55,metalness:.57});
- const board=new THREE.Mesh(new THREE.BoxGeometry(sceneSpec.world.extentMm+22,sceneSpec.world.extentMm+24,5),boardMaterial);
+ const boardHeight=sceneSpec.world.boardHeightMm??sceneSpec.world.extentMm+24;
+ const board=new THREE.Mesh(new THREE.BoxGeometry(sceneSpec.world.extentMm+22,boardHeight,5),boardMaterial);
  board.position.set(sceneSpec.world.center[0],sceneSpec.world.center[1],-18);scene.add(board);
- const inset=new THREE.Mesh(new THREE.BoxGeometry(sceneSpec.world.extentMm+15,sceneSpec.world.extentMm+17,1),
+ const inset=new THREE.Mesh(new THREE.BoxGeometry(sceneSpec.world.extentMm+15,boardHeight-7,1),
   new THREE.MeshStandardMaterial({color:0x0d202c,roughness:.66,metalness:.22}));
  inset.position.set(sceneSpec.world.center[0],sceneSpec.world.center[1],-14.5);scene.add(inset);
  const edge=new THREE.LineSegments(new THREE.EdgesGeometry(board.geometry),
@@ -80,7 +81,7 @@ export function createRigidSceneStage(canvas,sceneSpec){
   for(const {joint,pin} of pins){const p=transform(s.poses[joint.a],joint.anchorA);
    pin.position.x=p.x;pin.position.y=p.y;pin.position.z=18;}
   const cX=filmCamera?.orbitX??orbitX,cY=filmCamera?.orbitY??(view==='top'?0:orbitY);
-  const distance=sceneSpec.world.extentMm*2.15*(filmCamera?.zoom??zoom);
+  const distance=sceneSpec.world.extentMm*(sceneSpec.world.cameraDistanceFactor??2.15)*(filmCamera?.zoom??zoom);
   const target=new THREE.Vector3(sceneSpec.world.center[0],sceneSpec.world.center[1]-18,0);
   cam.position.set(target.x+Math.sin(cX)*distance,target.y+Math.sin(cY)*distance,
    target.z+Math.cos(cX)*Math.cos(cY)*distance);

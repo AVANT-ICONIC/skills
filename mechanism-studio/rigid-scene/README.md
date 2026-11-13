@@ -17,3 +17,7 @@ Not universal CAD, not force or collision simulation, not proof of global assemb
 `node --test mechanism-studio/rigid-scene/*.test.mjs` verifies both graphs, 145 phases per branch against an independent analytic kinematic relation, invalid/malicious schema fields, reproducible arbitrary seeking and compile-source identity. The prismatic guide is drawn by the generic joint renderer, not as a new scene-specific 3D file.
 
 See [the compiler consolidation proposal](../docs/rigid-scene-compiler-consolidation.md) before attempting to merge the two currently separate compiler frontends. **No physical loads, collisions, external-source verification, or hardware GPU certification.**
+
+### Optional scene-owned framing
+
+The generic renderer accepts bounded `world.boardHeightMm` and `world.cameraDistanceFactor` fields. Both affect presentation only; they cannot change kinematic equations or branch selection. The slider uses a shallow mounting bed while the five-bar keeps its reviewed defaults. Invalid values are rejected before browser execution.

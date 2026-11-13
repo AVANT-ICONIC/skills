@@ -76,3 +76,11 @@ test('forged/prismatic-invalid guide axes, driver/fixed attachments and non-anch
  const g=clone(slider);g.branchLabels.open='<script>';
  assert.throws(()=>validateScene(g),/SCENE_BRANCH_LABELS_INVALID/);
 });
+
+test('bounded declarative presentation rejects absurd plate and camera values',()=>{
+ const bad=clone(slider);bad.world.boardHeightMm=500;
+ assert.throws(()=>validateScene(bad),/SCENE_WORLD_INVALID/);
+ const strange=clone(slider);strange.world.cameraDistanceFactor=0.02;
+ assert.throws(()=>validateScene(strange),/SCENE_WORLD_INVALID/);
+ assert.doesNotThrow(()=>validateScene(fivebar));
+});

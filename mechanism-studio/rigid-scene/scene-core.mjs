@@ -17,8 +17,10 @@ export function validateScene(data){
  if(![24,30].includes(data.video.fps)||![6,8].includes(data.video.durationSeconds)||
    ![[1280,720],[1920,1080]].some(([w,h])=>data.video.width===w&&data.video.height===h)||
    !['technical','cinematic'].includes(data.video.direction))throw Error('SCENE_VIDEO_PROFILE_INVALID');
- fields(data.world,['center','extentMm'],'world');
- if(!vec(data.world.center,2)||!finite(data.world.extentMm)||data.world.extentMm<90||data.world.extentMm>700)throw Error('SCENE_WORLD_INVALID');
+ fields(data.world,['center','extentMm','boardHeightMm','cameraDistanceFactor'],'world');
+ if(!vec(data.world.center,2)||!finite(data.world.extentMm)||data.world.extentMm<90||data.world.extentMm>700||
+   (data.world.boardHeightMm!==undefined&&(!finite(data.world.boardHeightMm)||data.world.boardHeightMm<70||data.world.boardHeightMm>data.world.extentMm-50))||
+   (data.world.cameraDistanceFactor!==undefined&&(!finite(data.world.cameraDistanceFactor)||data.world.cameraDistanceFactor<1.6||data.world.cameraDistanceFactor>2.4)))throw Error('SCENE_WORLD_INVALID');
  if(!Array.isArray(data.references)||data.references.length<1||data.references.length>8)throw Error('SCENE_REFERENCES_REQUIRED');
  for(const r of data.references){
   fields(r,['id','type','title','url','redistribution','contentChecked'],'reference');

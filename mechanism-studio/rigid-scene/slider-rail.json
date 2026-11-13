@@ -27,7 +27,9 @@
       0,
       0
     ],
-    "extentMm": 310
+    "extentMm": 310,
+    "boardHeightMm": 105,
+    "cameraDistanceFactor": 1.92
   },
   "bodies": [
     {
