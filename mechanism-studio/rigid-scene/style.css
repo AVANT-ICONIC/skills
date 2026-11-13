@@ -14,3 +14,19 @@ header strong{color:#aeced8;font-size:10px}
 .film-caption{display:none;position:absolute;top:370px;left:39px;width:245px;border-left:2px solid #e6a579;padding:9px 0 9px 13px;background:linear-gradient(90deg,#071e2bb3,transparent)}.film-caption[data-on=true]{display:flex;flex-direction:column;gap:5px}.film-caption span{font-size:9px;letter-spacing:1.5px;color:#75a5b4}.film-caption strong{font-size:13px;letter-spacing:1px;color:#f8dec8}.film-caption small{font-size:9px;color:#82aab9}
 .footer{position:absolute;left:38px;bottom:17px;font-size:8px;letter-spacing:1px;color:#5c7c8d}
 @media(max-width:850px){.title{top:98px;left:16px;width:190px}.title h1{font-size:28px}.telemetry{right:14px;top:90px;width:210px;padding:12px}.telemetry .metric strong{font-size:24px}.telemetry .pair strong{font-size:14px}.controls{left:15px;right:15px;bottom:20px;padding:10px;max-width:none}.film-caption{top:280px;left:16px;width:160px}.footer{display:none}}
+
+/* Prevent inherited host 'section' layout from splitting editorial copy into columns. */
+#ui .title{display:block !important;top:132px;left:37px;width:237px}
+#ui .title > .eyebrow,#ui .title > h1,#ui .title > p{
+ display:block !important;position:static !important;float:none !important;
+ width:auto !important;max-width:237px;flex:none !important
+}
+#ui .title .eyebrow{font-size:10px;line-height:1.4;letter-spacing:1.5px}
+#ui .title h1{font-size:44px;line-height:1.03;margin:16px 0 12px;letter-spacing:-2.5px}
+#ui .title p{font-size:11px;line-height:1.65;max-width:218px}
+#ui .film-caption{top:421px;left:37px;width:229px}
+@media(max-width:850px){
+ #ui .title{left:16px;top:101px;width:190px}
+ #ui .title h1{font-size:29px}
+ #ui .film-caption{top:305px;left:16px;width:185px}
+}

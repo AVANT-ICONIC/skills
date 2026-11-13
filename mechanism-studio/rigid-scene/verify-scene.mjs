@@ -59,9 +59,15 @@ try{
   await gate('editorial-no-panel-overlap',async()=>{
    const v=await page.evaluate(()=>{
     const bbox=id=>{const r=document.querySelector(id).getBoundingClientRect();return{left:r.left,right:r.right,top:r.top,bottom:r.bottom}};
-    return{title:bbox('.title'),panel:bbox('.telemetry'),controls:bbox('.controls'),caption:bbox('.film-caption')};});
+    return{title:bbox('.title'),eyebrow:bbox('.title .eyebrow'),heading:bbox('.title h1'),description:bbox('.title p'),panel:bbox('.telemetry'),controls:bbox('.controls'),caption:bbox('.film-caption')};});
    assert.ok(v.title.right<v.panel.left);assert.ok(v.controls.right<v.panel.left);
    assert.ok(v.caption.left<v.controls.left&&v.caption.bottom<v.controls.top);
+   // Full child positioning matters: a parent box can pass while its content spills sideways.
+   assert.ok(Math.abs(v.eyebrow.left-v.title.left)<3,'INTRO_EYEBROW_WRAPPED_IN_COLUMN');
+   assert.ok(Math.abs(v.heading.left-v.title.left)<3,'INTRO_HEADING_IN_SECOND_COLUMN');
+   assert.ok(Math.abs(v.description.left-v.title.left)<3,'INTRO_COPY_IN_THIRD_COLUMN');
+   assert.ok(v.heading.top>=v.eyebrow.bottom-2&&v.description.top>=v.heading.bottom-2,'INTRO_NOT_VERTICALLY_STACKED');
+   assert.ok(v.caption.top>=v.description.bottom+8,'FILM_CAPTION_OVERLAPS_DESCRIPTION');
    assert.ok(v.panel.bottom<=scene.video.height);return v;
   });
   await gate('offline-and-errors',()=>{assert.deepEqual(errors,[]);assert.deepEqual(remote,[]);return{pageErrors:errors,remoteRequests:remote};});
