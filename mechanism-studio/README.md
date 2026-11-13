@@ -4,6 +4,12 @@ A **public, portable** Agent Skill for source-grounded, model-driven mechanical 
 
 Current executable functionality: package vetted Teardown V8/Cessna upstream examples, render the independent Geneva four-slot reference, and **compile structured source-backed briefs for three reviewed mechanism families: Geneva, slider-crank and four-bar**. The slider-crank has a tested **1080p30 eight-second H.264/AAC film** with original synthesized mechanical foley, a live interactive HTML viewer, and a versioned hash-verified evidence package. It remains bounded and does not generate arbitrary mechanisms from images or natural-language descriptions.
 
+## Compiler convergence, phase 1 (nonbreaking)
+
+[Compiler consolidation phase 1](docs/compiler-consolidation-phase1.md) provides one source-link validator, atomic output staging, byte-level parity receipts and the **canonical schema-dispatch command** `node mechanism-studio/scripts/compile-study.mjs --input INPUT_JSON --out NEW_DIR`. The legacy `compile-request.mjs --request ... --out ...` and `rigid-scene/compile-scene.mjs INPUT OUTPUT` commands still work exactly as before.
+
+All five existing fixtures (three reviewed recipes, two generic rigid scenes) are required to compile to **byte-identical file trees** relative to frozen PR #32. CI compares the old, current and canonical frontends **before** the video build. The two preview manifests are deliberately not merged and `releaseReady=false` remains mandatory. This is compiler ownership consolidation, **not** a new physics or rendering feature.
+
 ## Setup and prerequisites
 
 - Node.js 22+, Git, FFmpeg/FFprobe, and supported Chromium/WebGL for upstream generation.

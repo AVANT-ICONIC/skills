@@ -3,6 +3,10 @@ on:
   pull_request:
     paths:
       - 'mechanism-studio/scripts/compile-request.mjs'
+      - 'mechanism-studio/scripts/source-validation.mjs'
+      - 'mechanism-studio/scripts/compiler-io.mjs'
+      - 'mechanism-studio/scripts/compile-study.mjs'
+      - 'mechanism-studio/scripts/portable-receipt.mjs'
       - 'mechanism-studio/scripts/mechanism-graph.mjs'
       - 'mechanism-studio/scripts/planar-constraint-core.mjs'
       - 'mechanism-studio/scripts/rigid-pose-core.mjs'

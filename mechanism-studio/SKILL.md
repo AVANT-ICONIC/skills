@@ -26,6 +26,12 @@ Use for moving mechanical explainers, cutaways, interactive machines, simulation
 6. All generated studies and compatibility outputs are **review previews** with mandatory releaseReady=false. Hardware GPU, certified mechanics and OS-level isolation remain unverified. No automatic deployment or publication.
 7. Motion OS, ICONICUT, Blender, a Claude-specific command and paid providers are never mandatory for the standalone skill.
 
+## Compiler consolidation: first nonbreaking phase
+
+The canonical source-compilation frontend is [`scripts/compile-study.mjs`](scripts/compile-study.mjs). It selects exactly one reviewed backend from `avant.mechanism-request/1` or `avant.rigid-scene/1`, while retaining both legacy CLIs, output layouts, package schema versions, reviewed templates and film behavior. Shared source validation records *links*, never independently validated technical contents. Atomic staging rejects overwrites and self-source writes.
+
+See the [phase-1 compatibility contract](docs/compiler-consolidation-phase1.md). The five-fixture golden-output parity gate runs against frozen PR #32; do not claim a compiler migration passed without the exact CI receipt. Future template/manifest cutovers need separate acceptance and rollback. This milestone does not change any physical certification or execution-sandbox limit.
+
 ## Existing implementation: package a vetted example
 
 The upstream has separate live runLive() and film window.SIM.render(t) paths. The Stage 0 CI benchmark under .github/benchmarks/mechanism-studio/ builds both V8 and Cessna pages, probes seek/interaction and creates short FFmpeg videos from the pinned tree.
