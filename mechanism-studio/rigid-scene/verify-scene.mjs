@@ -57,6 +57,7 @@ try{
    return{repeatedPixelsIdentical:true,differentBranches:true};
   });
   await gate('editorial-no-panel-overlap',async()=>{
+   await page.evaluate(()=>{window.RIGID_SCENE.director.setEnabled(true);window.SIM.render(2);});
    const v=await page.evaluate(()=>{
     const bbox=id=>{const r=document.querySelector(id).getBoundingClientRect();return{left:r.left,right:r.right,top:r.top,bottom:r.bottom}};
     return{title:bbox('.title'),eyebrow:bbox('.title .eyebrow'),heading:bbox('.title h1'),description:bbox('.title p'),panel:bbox('.telemetry'),controls:bbox('.controls'),caption:bbox('.film-caption')};});

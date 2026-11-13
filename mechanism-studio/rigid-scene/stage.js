@@ -24,9 +24,9 @@ export function createRigidSceneStage(canvas,sceneSpec){
   const l=new THREE.DirectionalLight(color,power);l.position.set(x,y,z);scene.add(l);
  }
  const boardMaterial=new THREE.MeshStandardMaterial({color:0x122b39,roughness:.55,metalness:.57});
- const board=new THREE.Mesh(new THREE.BoxGeometry(sceneSpec.world.extentMm-36,sceneSpec.world.extentMm-34,5),boardMaterial);
+ const board=new THREE.Mesh(new THREE.BoxGeometry(sceneSpec.world.extentMm-36,sceneSpec.world.extentMm-70,5),boardMaterial);
  board.position.set(sceneSpec.world.center[0],sceneSpec.world.center[1],-18);scene.add(board);
- const inset=new THREE.Mesh(new THREE.BoxGeometry(sceneSpec.world.extentMm-43,sceneSpec.world.extentMm-41,1),
+ const inset=new THREE.Mesh(new THREE.BoxGeometry(sceneSpec.world.extentMm-43,sceneSpec.world.extentMm-77,1),
   new THREE.MeshStandardMaterial({color:0x0d202c,roughness:.66,metalness:.22}));
  inset.position.set(sceneSpec.world.center[0],sceneSpec.world.center[1],-14.5);scene.add(inset);
  const edge=new THREE.LineSegments(new THREE.EdgesGeometry(board.geometry),
