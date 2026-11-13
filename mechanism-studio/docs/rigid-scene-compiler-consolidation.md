@@ -1,6 +1,6 @@
 # Mechanism Studio: safe compiler convergence proposal
 
-**Status:** Phase 1 implemented on a stacked draft branch; the remaining renderer/manifest migration is a proposal. No output schema or release behavior was changed. Owners: `mechanism-studio/scripts/compile-request.mjs` (reviewed recipes) and `mechanism-studio/rigid-scene/compile-scene.mjs` (bounded generic SE(2) renderer).
+**Status:** Phases 1 and 2 implemented as separately stacked draft changes; manifest migration remains a proposal. No output schema or release behavior was changed. Owners: `mechanism-studio/scripts/compile-request.mjs` (reviewed recipes) and `mechanism-studio/rigid-scene/compile-scene.mjs` (bounded generic SE(2) renderer).
 
 ## Verified foundation and reason to converge
 
@@ -49,7 +49,8 @@ This establishes a shared render contract across topologies, not an arbitrary CA
 
 1. **Contract unification (nonbreaking, implemented in draft PR):** introduce a small shared `source-validation.mjs`, `compiler-io.mjs` and `portable-receipt.mjs`, with exact parity tests for all five currently compiled mechanisms/scenes. Retain the existing CLI frontends temporarily as shims. No change to filmed output bytes is permitted without an explicit review.
    See [phase-1 compiler compatibility contract](compiler-consolidation-phase1.md): shared HTTPS provenance gate, atomic compilation, canonical schema router and 15-compilation golden parity against frozen PR #32. No legacy output changes are accepted.
-2. **One renderer template:** move the current `rigid-scene` source to a canonical trusted template folder. Compile both data-only five-bar and prismatic slider through it; assert a single byte-identical JS/CSS template digest and separately verified data digests. Preserve analytic Geneva handling.
+2. **One renderer template (phase 2, draft implementation):** move the current `rigid-scene` source to a canonical trusted template folder. Compile both data-only five-bar and prismatic slider through it; assert a single byte-identical JS/CSS template digest and separately verified data digests. Preserve analytic Geneva handling.
+   See [phase-2 canonical template and byte-parity contract](compiler-consolidation-phase2.md). Legacy renderer paths are Git symlinks; source copies and package schemas remain untouched in compiled output.
 3. **Canonical verifier:** join current `avant.mechanism-package/1` and `avant.rigid-scene-package/1` under a new version **only after** proof parity. Include source register, numeric-closure residuals, solver/branch status, requested movie, decoded frame hashes, visual joint-anchor tests, source and rights disclaimers, and `releaseReady=false`.
 4. **Migration matrix:** run all original three family outputs plus both generic scenes on the same pinned Teardown revision, with a single dependency install, real Chromium (offline, no remote requests), deterministic seeking, control QA and decoded H.264/AAC films. Compare artifacts and performance against the last passing runs. Fail closed if a previously supported case regresses.
 5. **Cutover by explicit acceptance:** retain rollback branches and old manifest readers until all five fixtures pass. Then remove duplicate compiler internals in a separate reviewed PR. No silent upcast of an older preview to a release-certified package.

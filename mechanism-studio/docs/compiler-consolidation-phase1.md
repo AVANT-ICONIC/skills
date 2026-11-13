@@ -55,4 +55,4 @@ In the dedicated rigid-scene CI, an ephemeral second checkout of the frozen SHA 
 - No manifest change, video profile change, or `releaseReady` promotion.
 - If even one file differs from the PR #32 golden baseline, keep this PR **draft/unmerged** and repair the shared layer rather than weakening the diff comparator.
 
-**Phase 2** may centralize the renderer template after this golden contract passes. **Phase 3** may migrate receipts and package schemas only with a separate migration reader and explicit reviewed acceptance. Old CLIs remain supported throughout.
+**Phase 2** centralizes the renderer template after this golden contract passes. See [phase-2 implementation and rollback](compiler-consolidation-phase2.md). **Phase 3** may migrate receipts and package schemas only with a separate migration reader and explicit reviewed acceptance. Old CLIs remain supported throughout.

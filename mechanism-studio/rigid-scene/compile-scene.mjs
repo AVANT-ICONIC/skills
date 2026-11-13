@@ -7,9 +7,9 @@ import {validateScene,sceneDigest} from './scene-core.mjs';
 import {validateSceneSources} from '../scripts/source-validation.mjs';
 import {compileToNewDirectory} from '../scripts/compiler-io.mjs';
 import {compileStudy} from '../scripts/compile-study.mjs';
+import {copyTrustedRigidTemplate} from '../scripts/trusted-rigid-template.mjs';
 const ROOT=dirname(fileURLToPath(import.meta.url));
 const SKILL=resolve(ROOT,'..');
-const TEMPLATE=['main.js','model.mjs','stage.js','style.css','scene-core.mjs'];
 const CANON=[['rigid-pose-core.mjs',join(SKILL,'scripts/rigid-pose-core.mjs')],
  ['film-direction.mjs',join(SKILL,'scripts/film-direction.mjs')]];
 export function compileScene({scene,out}){
@@ -19,7 +19,7 @@ export function compileScene({scene,out}){
  return compileToNewDirectory({out,sourceRoot:SKILL,errors:{
   within:'SCENE_OUTPUT_UNSAFE_OR_EXISTS',exists:'SCENE_OUTPUT_UNSAFE_OR_EXISTS',staging:'SCENE_STAGING_EXISTS'
  },build:(temp,dest)=>{
-  for(const name of TEMPLATE)copyFileSync(join(ROOT,name),join(temp,name));
+  const templateFiles=copyTrustedRigidTemplate(temp);
   for(const [name,from] of CANON)copyFileSync(from,join(temp,name));
   writeFileSync(join(temp,'scene-data.mjs'),
    '/* Checked, data-only rigid joint graph. */\nexport const SCENE=Object.freeze('+JSON.stringify(validated,null,2)+');\n');
@@ -28,7 +28,7 @@ export function compileScene({scene,out}){
    sceneId:validated.id,references:validated.references,dimensionsProvenance:validated.dimensionsProvenance,
    sourceDocumentsRetrieved:false,sourceImagesRedistributed:false,certifiedPhysics:false},null,2)+'\n');
   writeFileSync(join(temp,'README.md'),`# ${validated.id}\n\nGenerated from the reusable declarative rigid-joint renderer.\nNo five-bar kinematic formula exists in these files. The scene is data-only and source references have not been retrieved or validated.\n\nNot approved for physical fabrication, loading, collision or safety analysis. releaseReady=false.\n`);
-  return {id:validated.id,path:dest,files:TEMPLATE.length+CANON.length+4,
+  return {id:validated.id,path:dest,files:templateFiles+CANON.length+4,
    graphBodies:validated.bodies.length,graphJoints:validated.joints.length,
    runtime:'generic-se2',sourcesVerified:false,releaseReady:false};
  }});
