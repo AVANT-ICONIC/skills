@@ -10,15 +10,17 @@ const clone=x=>JSON.parse(JSON.stringify(x));
 const world=(pose,anchor)=>[pose[0]+anchor[0]*Math.cos(pose[2])-anchor[1]*Math.sin(pose[2]),pose[1]+anchor[0]*Math.sin(pose[2])+anchor[1]*Math.cos(pose[2])];
 const mark=(poses,m)=>world(poses[m.body],m.anchor);
 export function validateScene(data){
- fields(data,['schema','id','title','subtitle','description','references','dimensionsProvenance','video','world','bodies','joints','markers','branches'],'root');
+ fields(data,['schema','id','title','subtitle','description','references','dimensionsProvenance','video','world','bodies','joints','markers','branches','branchLabels'],'root');
  if(data.schema!=='avant.rigid-scene/1'||!ID.test(data.id)||data.dimensionsProvenance!=='illustrative-not-measured'||
     ![data.title,data.subtitle,data.description].every(s=>typeof s==='string'&&s.length>=8&&s.length<220))throw Error('SCENE_METADATA_INVALID');
  fields(data.video,['fps','durationSeconds','width','height','direction'],'video');
  if(![24,30].includes(data.video.fps)||![6,8].includes(data.video.durationSeconds)||
    ![[1280,720],[1920,1080]].some(([w,h])=>data.video.width===w&&data.video.height===h)||
    !['technical','cinematic'].includes(data.video.direction))throw Error('SCENE_VIDEO_PROFILE_INVALID');
- fields(data.world,['center','extentMm'],'world');
- if(!vec(data.world.center,2)||!finite(data.world.extentMm)||data.world.extentMm<90||data.world.extentMm>700)throw Error('SCENE_WORLD_INVALID');
+ fields(data.world,['center','extentMm','boardHeightMm','cameraDistanceFactor'],'world');
+ if(!vec(data.world.center,2)||!finite(data.world.extentMm)||data.world.extentMm<90||data.world.extentMm>700||
+   (data.world.boardHeightMm!==undefined&&(!finite(data.world.boardHeightMm)||data.world.boardHeightMm<70||data.world.boardHeightMm>data.world.extentMm-50))||
+   (data.world.cameraDistanceFactor!==undefined&&(!finite(data.world.cameraDistanceFactor)||data.world.cameraDistanceFactor<1.6||data.world.cameraDistanceFactor>2.4)))throw Error('SCENE_WORLD_INVALID');
  if(!Array.isArray(data.references)||data.references.length<1||data.references.length>8)throw Error('SCENE_REFERENCES_REQUIRED');
  for(const r of data.references){
   fields(r,['id','type','title','url','redistribution','contentChecked'],'reference');
@@ -51,28 +53,43 @@ export function validateScene(data){
    data.bodies.filter(b=>b.role==='free').length<1)throw Error('SCENE_DRIVE_COUNT_INVALID');
  for(const j of data.joints){
   fields(j,['id','type','a','b','anchorA','anchorB','axisA','angleScaleMm'],'joint');
-  if(!ID.test(j.id)||j.type!=='revolute'||!ids.has(j.a)||!ids.has(j.b)||j.a===j.b||
-    !vec(j.anchorA,2)||!vec(j.anchorB,2)||'axisA' in j||'angleScaleMm' in j)throw Error('SCENE_JOINT_INVALID');
- }
- // A rendered bar must terminate at real local joint anchors; a mathematically
- // closed mechanism must not be visually misrepresented by detached geometry.
- for(const b of data.bodies.filter(b=>b.geometry)){
-  const anchors=data.joints.flatMap(j=>j.a===b.id?[j.anchorA]:j.b===b.id?[j.anchorB]:[]);
-  const coincides=point=>anchors.some(p=>Math.hypot(p[0]-point[0],p[1]-point[1])<=1e-8);
-  if(!coincides(b.geometry.start)||!coincides(b.geometry.end))throw Error('SCENE_GEOMETRY_ANCHOR_MISMATCH');
+  if(!ID.test(j.id)||!ids.has(j.a)||!ids.has(j.b)||j.a===j.b||
+    !vec(j.anchorA,2)||!vec(j.anchorB,2))throw Error('SCENE_JOINT_INVALID');
+  if(j.type==='revolute'){
+    if('axisA' in j||'angleScaleMm' in j)throw Error('SCENE_JOINT_INVALID');
+  }else if(j.type==='prismatic'){
+    if(byId.get(j.a).role!=='fixed'||!vec(j.axisA,2)||
+      Math.abs(Math.hypot(...j.axisA)-1)>1e-10||!finite(j.angleScaleMm)||
+      j.angleScaleMm<1||j.angleScaleMm>1e4)throw Error('SCENE_PRISMATIC_INVALID');
+  }else throw Error('SCENE_JOINT_INVALID');
  }
  fields(data.markers,['point','baseA','baseB'],'markers');
  for(const k of ['point','baseA','baseB']){
   const m=data.markers[k];fields(m,['body','anchor'],'marker');
   if(!ids.has(m.body)||!vec(m.anchor,2))throw Error('SCENE_MARKER_INVALID');
  }
+ if(data.branchLabels!==undefined){
+  fields(data.branchLabels,['open','crossed'],'branchLabels');
+  if(['open','crossed'].some(k=>typeof data.branchLabels[k]!=='string'||!(/^[A-Z][A-Z ]{2,17}$/.test(data.branchLabels[k]))))
+   throw Error('SCENE_BRANCH_LABELS_INVALID');
+ }
  fields(data.branches,['open','crossed'],'branches');
  const free=data.bodies.filter(b=>b.role==='free').map(b=>b.id).sort();
  for(const [name,sgn] of [['open',1],['crossed',-1]]){
-  fields(data.branches[name],['sign','seeds'],'branch');
+  fields(data.branches[name],['sign','seeds','metric','axis'],'branch');
+  const branchData=data.branches[name];
+  if(branchData.metric!==undefined&&!['signed-area','axis-projection'].includes(branchData.metric))throw Error('SCENE_BRANCH_METRIC_INVALID');
+  if(branchData.metric==='axis-projection') {if(!vec(branchData.axis,2)||Math.abs(Math.hypot(...branchData.axis)-1)>1e-10)throw Error('SCENE_BRANCH_AXIS_INVALID');}
+  else if(branchData.axis!==undefined)throw Error('SCENE_BRANCH_AXIS_UNEXPECTED');
   if(data.branches[name].sign!==sgn||!data.branches[name].seeds||
     Object.keys(data.branches[name].seeds).sort().join('|')!==free.join('|')||
     Object.values(data.branches[name].seeds).some(p=>!vec(p,3)))throw Error('SCENE_BRANCH_INVALID');
+ }
+ // A bar may only terminate at an actual joint anchor, regardless of type.
+ for(const body of data.bodies.filter(b=>b.geometry)){
+  const anchors=data.joints.flatMap(j=>j.a===body.id?[j.anchorA]:j.b===body.id?[j.anchorB]:[]);
+  for(const end of [body.geometry.start,body.geometry.end])if(!anchors.some(p=>Math.hypot(p[0]-end[0],p[1]-end[1])<=1e-8))
+   throw Error('SCENE_GEOMETRY_ANCHOR_MISMATCH');
  }
  const test=makePoseProblemUnchecked(data,0,'open');
  const meta=validatePoseSystem(test);
@@ -93,7 +110,10 @@ export function solveSceneAtTime(scene,seconds,{branch='open'}={}){
  const answer=solveRigidPoseConstraints(problem,{toleranceMm:1e-7,maxIterations:120});
  if(answer.status!=='closed')return{status:answer.status,reason:answer.reason,poses:null,branch,seconds,certifiedPhysics:false};
  const tip=mark(answer.poses,data.markers.point),a=mark(answer.poses,data.markers.baseA),b=mark(answer.poses,data.markers.baseB);
- const orientation=(b[0]-a[0])*(tip[1]-a[1])-(b[1]-a[1])*(tip[0]-a[0]);
+ const metric=data.branches[branch].metric??'signed-area';
+ const orientation=metric==='axis-projection'?
+   (tip[0]-a[0])*data.branches[branch].axis[0]+(tip[1]-a[1])*data.branches[branch].axis[1]:
+   (b[0]-a[0])*(tip[1]-a[1])-(b[1]-a[1])*(tip[0]-a[0]);
  if(data.branches[branch].sign*orientation<=1e-6)throw Error('SCENE_BRANCH_CROSSED');
  return {schema:'avant.rigid-scene-pose/1',status:'closed',branch,seconds,poses:answer.poses,
    tip:{x:tip[0],y:tip[1]},orientation,closureErrorMm:answer.maxResidualMm,

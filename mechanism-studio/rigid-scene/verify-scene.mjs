@@ -42,14 +42,51 @@ try{
    const b=await page.screenshot({path:join(out,'shot-'+i+'.png'),timeout:90000,animations:'disabled'});
    assert.ok(b.length>25000);images.push(hash(b));return{tip:s.tip,error:s.closureErrorMm,sha256:hash(b)};
   });
-  await gate('six-unique-physical-poses',()=>{assert.ok(new Set(snapshots.map(s=>s.tip.y.toFixed(4))).size>=4);
-   assert.equal(new Set(images).size,6);return{distinctY:new Set(snapshots.map(s=>s.tip.y.toFixed(4))).size};});
+  await gate('six-unique-physical-poses',()=>{
+   const axis=scene.joints.some(j=>j.type==='prismatic')?'x':'y';
+   const count=new Set(snapshots.map(s=>s.tip[axis].toFixed(4))).size;
+   assert.ok(count>=4,'MECHANISM_POSES_FROZEN_'+axis);
+   assert.equal(new Set(images).size,6);
+   return{varyingAxis:axis,distinctValues:count};
+  });
+  if(scene.joints.some(j=>j.type==='prismatic'))await gate('prismatic-rail-and-closure',async()=>{
+   const guides=scene.joints.filter(j=>j.type==='prismatic');
+   assert.equal(guides.length,1);
+   const g=guides[0];
+   const transform=(pose,anchor)=>[
+     pose[0]+anchor[0]*Math.cos(pose[2])-anchor[1]*Math.sin(pose[2]),
+     pose[1]+anchor[0]*Math.sin(pose[2])+anchor[1]*Math.cos(pose[2])
+   ];
+   for(const snap of snapshots){
+     const a=transform(snap.poses[g.a],g.anchorA);
+     const b=transform(snap.poses[g.b],g.anchorB);
+     const theta=snap.poses[g.a][2],dir=[
+       Math.cos(theta)*g.axisA[0]-Math.sin(theta)*g.axisA[1],
+       Math.sin(theta)*g.axisA[0]+Math.cos(theta)*g.axisA[1]
+     ];
+     const lateral=Math.abs((b[0]-a[0])*(-dir[1])+(b[1]-a[1])*dir[0]);
+     assert.ok(lateral<1e-6,'RAIL_OFF_AXIS');
+     assert.ok(Math.abs(Math.sin(snap.poses[g.b][2]-theta))<1e-6,'RAIL_ROTATION_DRIFT');
+   }
+   const ui=await page.evaluate(()=>({
+      primary:document.querySelector('#tip-y')?.closest('.metric')?.querySelector('label')?.textContent,
+      joints:document.querySelector('.readout')?.textContent
+   }));
+   assert.equal(ui.primary,'SLIDER POSITION / X');
+   assert.ok(ui.joints.includes('3 / 1'),'PRISMATIC_JOINT_COUNT_NOT_RENDERED');
+   return{guides:guides.length,frames:snapshots.length,axisVerified:true,ui};
+  });
   await gate('replay-and-branch-interaction',async()=>{
    await page.evaluate(()=>SIM.render(2));const replay=await page.screenshot({animations:'disabled'});assert.equal(hash(replay),images[2]);
    // Capture-mode film locks branch choice; disable director to exercise live selection.
    await page.evaluate(()=>RIGID_SCENE.director.setEnabled(false));
    await page.locator('#crossed').click();await page.evaluate(()=>SIM.render(2));
    const crossed=await page.evaluate(()=>RIGID_SCENE.snapshot);assert.equal(crossed.branch,'crossed');assert.equal(crossed.status,'closed');
+   if(scene.joints.some(j=>j.type==='prismatic')){
+     const png=await page.screenshot({path:join(out,'crossed-prismatic.png'),animations:'disabled'});
+     assert.notEqual(hash(png),images[2],'PRISMATIC_BRANCH_VISUAL_IDENTICAL');
+     assert.equal(await page.locator('#crossed').textContent(),'REVERSED');
+   }
    assert.ok(Math.hypot(crossed.tip.x-snapshots[2].tip.x,crossed.tip.y-snapshots[2].tip.y)>20);
    await page.locator('#open').click();await page.evaluate(()=>SIM.render(2));
    assert.equal((await page.evaluate(()=>RIGID_SCENE.snapshot)).branch,'open');
