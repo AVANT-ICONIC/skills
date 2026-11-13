@@ -1,0 +1,240 @@
+{
+  "schema": "avant.rigid-scene/1",
+  "id": "single-drive-rail-study-005",
+  "title": "Rotate. Translate.",
+  "subtitle": "Generic rigid-joint study / MM-005",
+  "description": "Original crank-slider built from the same SE(2) rigid-joint renderer with three revolute joints and a prismatic rail. No named slider kinematic formula.",
+  "references": [
+    {
+      "id": "slider-reference",
+      "type": "technical-reference",
+      "title": "University of Illinois Dynamics Reference - slider crank",
+      "url": "https://dynref.engr.illinois.edu/aml.html",
+      "redistribution": "link-only",
+      "contentChecked": false
+    }
+  ],
+  "dimensionsProvenance": "illustrative-not-measured",
+  "video": {
+    "fps": 24,
+    "durationSeconds": 6,
+    "width": 1280,
+    "height": 720,
+    "direction": "cinematic"
+  },
+  "world": {
+    "center": [
+      0,
+      0
+    ],
+    "extentMm": 310
+  },
+  "bodies": [
+    {
+      "id": "ground",
+      "role": "fixed",
+      "pose": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "crank",
+      "role": "driver",
+      "basePose": [
+        0,
+        0,
+        0
+      ],
+      "rpm": 10,
+      "phaseRad": 0,
+      "geometry": {
+        "start": [
+          0,
+          0
+        ],
+        "end": [
+          28,
+          0
+        ],
+        "widthMm": 7,
+        "material": "teal"
+      }
+    },
+    {
+      "id": "rod",
+      "role": "free",
+      "seedPose": [
+        28,
+        0,
+        0.0
+      ],
+      "geometry": {
+        "start": [
+          0,
+          0
+        ],
+        "end": [
+          96,
+          0
+        ],
+        "widthMm": 6,
+        "material": "steel"
+      }
+    },
+    {
+      "id": "carriage",
+      "role": "free",
+      "seedPose": [
+        124,
+        0,
+        0
+      ],
+      "geometry": {
+        "start": [
+          0,
+          0
+        ],
+        "end": [
+          0,
+          28
+        ],
+        "widthMm": 12,
+        "material": "copper"
+      }
+    }
+  ],
+  "joints": [
+    {
+      "id": "crank-bearing",
+      "type": "revolute",
+      "a": "ground",
+      "b": "crank",
+      "anchorA": [
+        0,
+        0
+      ],
+      "anchorB": [
+        0,
+        0
+      ]
+    },
+    {
+      "id": "big-end",
+      "type": "revolute",
+      "a": "crank",
+      "b": "rod",
+      "anchorA": [
+        28,
+        0
+      ],
+      "anchorB": [
+        0,
+        0
+      ]
+    },
+    {
+      "id": "wrist",
+      "type": "revolute",
+      "a": "rod",
+      "b": "carriage",
+      "anchorA": [
+        96,
+        0
+      ],
+      "anchorB": [
+        0,
+        0
+      ]
+    },
+    {
+      "id": "rail",
+      "type": "prismatic",
+      "a": "ground",
+      "b": "carriage",
+      "anchorA": [
+        0,
+        28
+      ],
+      "anchorB": [
+        0,
+        28
+      ],
+      "axisA": [
+        1,
+        0
+      ],
+      "angleScaleMm": 50
+    }
+  ],
+  "markers": {
+    "point": {
+      "body": "carriage",
+      "anchor": [
+        0,
+        0
+      ]
+    },
+    "baseA": {
+      "body": "crank",
+      "anchor": [
+        28,
+        0
+      ]
+    },
+    "baseB": {
+      "body": "ground",
+      "anchor": [
+        0,
+        0
+      ]
+    }
+  },
+  "branches": {
+    "open": {
+      "sign": 1,
+      "metric": "axis-projection",
+      "axis": [
+        1,
+        0
+      ],
+      "seeds": {
+        "rod": [
+          28,
+          0,
+          0
+        ],
+        "carriage": [
+          124,
+          0,
+          0
+        ]
+      }
+    },
+    "crossed": {
+      "sign": -1,
+      "metric": "axis-projection",
+      "axis": [
+        1,
+        0
+      ],
+      "seeds": {
+        "rod": [
+          28,
+          0,
+          3.14159265
+        ],
+        "carriage": [
+          -68,
+          0,
+          0
+        ]
+      }
+    }
+  },
+  "branchLabels": {
+    "open": "EXTENDED",
+    "crossed": "REVERSED"
+  }
+}

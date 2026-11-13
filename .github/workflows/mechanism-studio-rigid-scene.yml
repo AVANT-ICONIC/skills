@@ -27,7 +27,11 @@ jobs:
           node --test mechanism-studio/rigid-scene/*.test.mjs
           node mechanism-studio/rigid-scene/compile-scene.mjs \
             mechanism-studio/rigid-scene/scene.json "$RUNNER_TEMP/generated/dual-drive-linkage-study-004"
-          test -s "$RUNNER_TEMP/generated/dual-drive-linkage-study-004/scene-data.mjs"
+          node mechanism-studio/rigid-scene/compile-scene.mjs \
+            mechanism-studio/rigid-scene/slider-rail.json "$RUNNER_TEMP/generated/single-drive-rail-study-005"
+          for id in dual-drive-linkage-study-004 single-drive-rail-study-005; do
+            test -s "$RUNNER_TEMP/generated/$id/scene-data.mjs"
+          done
       - name: Fetch immutable Teardown and validate lock
         shell: bash
         run: |
@@ -51,33 +55,42 @@ jobs:
         run: |
           set -euo pipefail
           export TEARDOWN_OUT="$GITHUB_WORKSPACE/.artifacts/rigid-build"
-          node sims/build.mjs "$RUNNER_TEMP/generated/dual-drive-linkage-study-004"
-          test -s "$TEARDOWN_OUT/dist/dual-drive-linkage-study-004.html"
+          node sims/build.mjs \
+            "$RUNNER_TEMP/generated/dual-drive-linkage-study-004" \
+            "$RUNNER_TEMP/generated/single-drive-rail-study-005"
+          for id in dual-drive-linkage-study-004 single-drive-rail-study-005; do
+            test -s "$TEARDOWN_OUT/dist/$id.html"
+          done
       - name: Verify actual Chromium, controls, six frames and 720p24 H264/AAC film
         shell: bash
         run: |
           set -euo pipefail
-          node mechanism-studio/rigid-scene/verify-scene.mjs \
-            "$RUNNER_TEMP/teardown" \
-            "$RUNNER_TEMP/generated/dual-drive-linkage-study-004" \
-            "$GITHUB_WORKSPACE/.artifacts/rigid-build" \
-            "$GITHUB_WORKSPACE/.artifacts/rigid-evidence"
+          for id in dual-drive-linkage-study-004 single-drive-rail-study-005; do
+            node mechanism-studio/rigid-scene/verify-scene.mjs \
+              "$RUNNER_TEMP/teardown" \
+              "$RUNNER_TEMP/generated/$id" \
+              "$GITHUB_WORKSPACE/.artifacts/rigid-build" \
+              "$GITHUB_WORKSPACE/.artifacts/rigid-evidence/$id"
+          done
       - name: Create and independently verify portable scene package
         shell: bash
         run: |
           set -euo pipefail
-          node mechanism-studio/rigid-scene/package-scene.mjs \
-            "$RUNNER_TEMP/teardown" \
-            "$RUNNER_TEMP/generated/dual-drive-linkage-study-004" \
-            "$GITHUB_WORKSPACE/.artifacts/rigid-evidence" \
-            "$GITHUB_WORKSPACE/.artifacts/rigid-build" \
-            "$GITHUB_WORKSPACE/.artifacts/rigid-package"
-          node mechanism-studio/rigid-scene/package-scene.mjs --verify "$GITHUB_WORKSPACE/.artifacts/rigid-package"
+          for id in dual-drive-linkage-study-004 single-drive-rail-study-005; do
+            node mechanism-studio/rigid-scene/package-scene.mjs \
+              "$RUNNER_TEMP/teardown" \
+              "$RUNNER_TEMP/generated/$id" \
+              "$GITHUB_WORKSPACE/.artifacts/rigid-evidence/$id" \
+              "$GITHUB_WORKSPACE/.artifacts/rigid-build" \
+              "$GITHUB_WORKSPACE/.artifacts/rigid-package/$id"
+            node mechanism-studio/rigid-scene/package-scene.mjs --verify \
+              "$GITHUB_WORKSPACE/.artifacts/rigid-package/$id"
+          done
       - name: Publish original rigid scene viewer, film and source proof
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: mechanism-studio-generic-rigid-preview
+          name: mechanism-studio-two-topologies-verified
           path: .artifacts/rigid-package/
           if-no-files-found: error
           retention-days: 7
@@ -85,7 +98,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: mechanism-studio-rigid-scene-diagnostics
+          name: mechanism-studio-rigid-scene-two-topology-evidence
           path: .artifacts/rigid-evidence/
           if-no-files-found: warn
           retention-days: 7

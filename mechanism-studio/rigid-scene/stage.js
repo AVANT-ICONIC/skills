@@ -24,9 +24,9 @@ export function createRigidSceneStage(canvas,sceneSpec){
   const l=new THREE.DirectionalLight(color,power);l.position.set(x,y,z);scene.add(l);
  }
  const boardMaterial=new THREE.MeshStandardMaterial({color:0x122b39,roughness:.55,metalness:.57});
- const board=new THREE.Mesh(new THREE.BoxGeometry(sceneSpec.world.extentMm-36,sceneSpec.world.extentMm-70,5),boardMaterial);
+ const board=new THREE.Mesh(new THREE.BoxGeometry(sceneSpec.world.extentMm+22,sceneSpec.world.extentMm+24,5),boardMaterial);
  board.position.set(sceneSpec.world.center[0],sceneSpec.world.center[1],-18);scene.add(board);
- const inset=new THREE.Mesh(new THREE.BoxGeometry(sceneSpec.world.extentMm-43,sceneSpec.world.extentMm-77,1),
+ const inset=new THREE.Mesh(new THREE.BoxGeometry(sceneSpec.world.extentMm+15,sceneSpec.world.extentMm+17,1),
   new THREE.MeshStandardMaterial({color:0x0d202c,roughness:.66,metalness:.22}));
  inset.position.set(sceneSpec.world.center[0],sceneSpec.world.center[1],-14.5);scene.add(inset);
  const edge=new THREE.LineSegments(new THREE.EdgesGeometry(board.geometry),
@@ -34,14 +34,23 @@ export function createRigidSceneStage(canvas,sceneSpec){
  const materials=Object.fromEntries(Object.entries(palette).map(([k,color])=>
   [k,new THREE.MeshStandardMaterial({color,metalness:.7,roughness:.31})]));
  const hubMat=new THREE.MeshStandardMaterial({color:0xf7a874,metalness:.56,roughness:.3});
- const bodyObjects=new Map(),pins=[];
+ const bodyObjects=new Map(),pins=[],guideBars=[];
  const bodies=sceneSpec.bodies.filter(x=>x.geometry);
  for(let i=0;i<bodies.length;i++){
   const b=bodies[i],z=2+(i%3)*4;
   const g=barBody(b.geometry,materials[b.geometry.material],z);scene.add(g);bodyObjects.set(b.id,g);
  }
  for(const joint of sceneSpec.joints){
-  const pin=cylinder(4.3,5,hubMat);pin.position.z=16;scene.add(pin);pins.push({joint,pin});
+  if(joint.type==='prismatic'){
+   const material=new THREE.MeshStandardMaterial({color:0x58889e,metalness:.82,roughness:.29});
+   for(const offset of [-7,7]){
+    const length=sceneSpec.world.extentMm*.9;
+    const mesh=new THREE.Mesh(new THREE.BoxGeometry(length,2.8,2.5),material);
+    mesh.position.z=-2;scene.add(mesh);guideBars.push({joint,offset,mesh});
+   }
+  }else{
+   const pin=cylinder(4.3,5,hubMat);pin.position.z=16;scene.add(pin);pins.push({joint,pin});
+  }
  }
  const cam=new THREE.PerspectiveCamera(32,16/9,.1,1200);
  let orbitX=-.07,orbitY=-.1,zoom=1;
@@ -60,6 +69,13 @@ export function createRigidSceneStage(canvas,sceneSpec){
    group.position.set(pose[0],pose[1],explodeFraction*(3+(i%3)*8));group.rotation.z=pose[2];i++;
    const mat=materials[b.geometry.material];mat.opacity=1-.56*xrayFraction;
    mat.transparent=xrayFraction>0;mat.depthWrite=xrayFraction===0;
+  }
+  for(const {joint,offset,mesh} of guideBars){
+   const pose=s.poses[joint.a],p=transform(pose,joint.anchorA);
+   const angle=Math.atan2(joint.axisA[1],joint.axisA[0])+pose[2];
+   mesh.position.x=p.x-Math.sin(angle)*offset;
+   mesh.position.y=p.y+Math.cos(angle)*offset;
+   mesh.rotation.z=angle;
   }
   for(const {joint,pin} of pins){const p=transform(s.poses[joint.a],joint.anchorA);
    pin.position.x=p.x;pin.position.y=p.y;pin.position.z=18;}

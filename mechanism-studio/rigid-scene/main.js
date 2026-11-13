@@ -10,7 +10,7 @@ runSim({duration:video.durationSeconds,fps:video.fps,theme:'dark',accent:'#dda37
  const stage=createRigidSceneStage(canvas,SCENE),ui=document.createElement('div');ui.id='ui';
  const escape=s=>s.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');
  const words=SCENE.title.split('. '),title=words.length===2?escape(words[0])+'.<br><em>'+escape(words[1])+'</em>':escape(SCENE.title);
- ui.innerHTML=`<header><div class="brand"><i></i><b>AVANT</b><span>/ MECHANISM STUDIO</span></div><strong>SE(2) JOINT GRAPH / 004</strong></header>
+ ui.innerHTML=`<header><div class="brand"><i></i><b>AVANT</b><span>/ MECHANISM STUDIO</span></div><strong>SE(2) JOINT GRAPH / ${SCENE.id.split('-').at(-1)}</strong></header>
  <section class="title"><div class="eyebrow">${SCENE.subtitle.replaceAll('<','&lt;')}</div><h1>${title}</h1><p>Geometry from declarative rigid joints.<br>No mechanism-specific pose equation.</p></section>
  <aside class="telemetry"><div class="head">LIVE CONSTRAINTS <b>GRAPH SOLVER</b></div><div class="metric"><label>END EFFECTOR / Y</label><strong id="tip-y">0.0 <small>mm</small></strong></div>
  <div class="pair"><div><label>END EFFECTOR / X</label><strong id="tip-x">0.0</strong></div><div><label>ASSEMBLY BRANCH</label><strong id="branch-label">OPEN</strong></div></div>
@@ -24,12 +24,21 @@ runSim({duration:video.durationSeconds,fps:video.fps,theme:'dark',accent:'#dda37
  document.getElementById('app').appendChild(ui);
  const $=id=>ui.querySelector('#'+id);
  const motor=Math.abs(SCENE.bodies.find(b=>b.role==='driver').rpm);
+ const guideScene=SCENE.joints.some(j=>j.type==='prismatic');
+ const readableBranch=name=>SCENE.branchLabels?.[name]||name.toUpperCase();
+ const markerAxis=guideScene?'x':'y';
+ const jointCounts={revolute:SCENE.joints.filter(j=>j.type==='revolute').length,prismatic:SCENE.joints.filter(j=>j.type==='prismatic').length};
+ $('tip-y').closest('.metric').querySelector('label').textContent=guideScene?'SLIDER POSITION / X':'END EFFECTOR / Y';
+ $('tip-x').closest('div').querySelector('label').textContent=guideScene?'VERTICAL DEVIATION / Y':'END EFFECTOR / X';
+ ui.querySelector('.readout span').textContent='REVOLUTE / PRISMATIC';
+ ui.querySelector('.readout b').textContent=jointCounts.revolute+' / '+jointCounts.prismatic;
+ for(const name of ['open','crossed'])$(name).textContent=readableBranch(name);
  const control={branch:'open',paused:false,hold:0,offset:0,view:'oblique',xray:false,explode:false};
  const film={active:!!capture&&video.direction==='cinematic',last:null};
  let lastTime=0,lastSeconds=0,last=evaluateAtTime(0,{branch:'open'});
- function paint(s){$('tip-y').innerHTML=s.tip.y.toFixed(1)+' <small>mm</small>';
-  $('tip-x').textContent=s.tip.x.toFixed(1);$('error').textContent=s.closureErrorMm.toExponential(1)+' mm';
-  $('branch-label').textContent=s.branch.toUpperCase();$('status').textContent=s.status.toUpperCase()+' LOOP';}
+ function paint(s){$('tip-y').innerHTML=s.tip[markerAxis].toFixed(1)+' <small>mm</small>';
+  $('tip-x').textContent=s.tip[markerAxis==='y'?'x':'y'].toFixed(1);$('error').textContent=s.closureErrorMm.toExponential(1)+' mm';
+  $('branch-label').textContent=readableBranch(s.branch);$('status').textContent=s.status.toUpperCase()+' LOOP';}
  function setBranch(branch){if(film.active||!['open','crossed'].includes(branch))return false;
   control.branch=branch;for(const id of ['open','crossed'])$(id).classList.toggle('selected',id===branch);return true;}
  for(const b of ['open','crossed'])$(b).addEventListener('click',()=>setBranch(b));
@@ -52,5 +61,5 @@ runSim({duration:video.durationSeconds,fps:video.fps,theme:'dark',accent:'#dda37
   const shot=film.active?evaluateFilmDirection(t,video):null;film.last=shot;
   stage.render(last,shot?{filmCamera:shot.camera,xray:shot.xray,explode:shot.exploded}:control);
   paint(last);$('film').dataset.on=String(!!shot);if(shot){$('caption').textContent=shot.caption;$('frame').textContent=(shot.frame+1)+' / '+shot.totalFrames;}
-  return {stage:'CLOSED',branch:last.branch,tipY:last.tip.y};}};
+  return {stage:'CLOSED',branch:last.branch,tipX:last.tip.x,tipY:last.tip.y};}};
 });

@@ -30,7 +30,9 @@ export function verifyScenePackage(root){
     source.sceneId!==scene.id||source.sourceDocumentsRetrieved!==false||source.certifiedPhysics!==false||
     source.dimensionsProvenance!=='illustrative-not-measured'||
     JSON.stringify(source.references)!==JSON.stringify(scene.references))throw Error('PACKAGE_EVIDENCE_MISMATCH');
- for(const id of ['chromium-boot','replay-and-branch-interaction','six-unique-physical-poses','editorial-no-panel-overlap','offline-and-errors','real-full-film','decode-and-original-audio'])
+ const essential=['chromium-boot','replay-and-branch-interaction','six-unique-physical-poses','editorial-no-panel-overlap','offline-and-errors','real-full-film','decode-and-original-audio'];
+ if(scene.joints.some(j=>j.type==='prismatic'))essential.push('prismatic-rail-and-closure');
+ for(const id of essential
   if(!report.checks.some(c=>c.id===id&&c.status==='PASS'))throw Error('PACKAGE_GATE_MISSING: '+id);
  if(manifest.film.frames!==scene.video.fps*scene.video.durationSeconds||
    manifest.film.width!==scene.video.width||manifest.film.height!==scene.video.height)throw Error('PACKAGE_TIMEBASE_MISMATCH');
@@ -44,10 +46,16 @@ export function packageScene({upstream,generated,evidence,build,out}){
  const report=JSON.parse(readFileSync(regular(join(ev,'report.json')),'utf8'));
  if(report.state!=='PASS'||report.id!==scene.id)throw Error('PACKAGE_UNVERIFIED_RENDER');
  // Source files in the generated folder must be the exact reviewed source from this repository.
- for(const name of ['scene-core.mjs','rigid-pose-core.mjs']){
-  const reference=name==='scene-core.mjs'?join(HERE,name):join(HERE,'../scripts/rigid-pose-core.mjs');
+ for(const name of ['main.js','stage.js','model.mjs','style.css','scene-core.mjs','rigid-pose-core.mjs','film-direction.mjs']){
+  const reference=name==='rigid-pose-core.mjs'||name==='film-direction.mjs'
+   ?join(HERE,'../scripts',name):join(HERE,name);
   if(digest(reference).sha256!==digest(join(src,name)).sha256)throw Error('PACKAGE_UNREVIEWED_SOLVER: '+name);
  }
+ // The compiled data module must be exactly the validated scene, not user-authored code.
+ const expected='/* Checked, data-only rigid joint graph. */\nexport const SCENE=Object.freeze('+
+   JSON.stringify(scene,null,2)+');\n';
+ if(digest(join(src,'scene-data.mjs')).sha256!==hash(Buffer.from(expected)))
+   throw Error('PACKAGE_UNREVIEWED_SCENE_MODULE');
  const staging=dst+'.stage-'+process.pid;
  if(existsSync(staging))throw Error('PACKAGE_STAGING_EXISTS');
  try{
