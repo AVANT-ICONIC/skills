@@ -21,3 +21,7 @@ See [the compiler consolidation proposal](../docs/rigid-scene-compiler-consolida
 ### Optional scene-owned framing
 
 The generic renderer accepts bounded `world.boardHeightMm` and `world.cameraDistanceFactor` fields. Both affect presentation only; they cannot change kinematic equations or branch selection. The slider uses a shallow mounting bed while the five-bar keeps its reviewed defaults. Invalid values are rejected before browser execution.
+
+## Compiler consolidation phase 1
+
+This old two-argument CLI is retained as a compatibility shim. The new [canonical study compiler](../docs/compiler-consolidation-phase1.md) accepts both source-backed machine requests and bounded rigid-body scenes, while preserving the old file bytes, runtime, and `avant.rigid-scene-package/1` manifest. The build still copies the exact reviewed renderer; all reference URLs are link-only and remain `contentChecked=false`.

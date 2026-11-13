@@ -3,6 +3,12 @@ on:
   pull_request:
     paths:
       - 'mechanism-studio/rigid-scene/**'
+      - 'mechanism-studio/compatibility/**'
+      - 'mechanism-studio/scripts/source-validation.mjs'
+      - 'mechanism-studio/scripts/compiler-io.mjs'
+      - 'mechanism-studio/scripts/compile-study.mjs'
+      - 'mechanism-studio/scripts/portable-receipt.mjs'
+      - 'mechanism-studio/scripts/compile-request.mjs'
       - '.github/workflows/mechanism-studio-rigid-scene.yml'
   workflow_dispatch:
 permissions:
@@ -21,6 +27,18 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Checkout exact pre-consolidation PR32 baseline
+        uses: actions/checkout@v4
+        with:
+          ref: e952c699fe0f83ceb9b127a469db7bcb8930d667
+          path: .compat-baseline
+          persist-credentials: false
+      - name: Gate five byte-identical compiler outputs before installing Teardown
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test mechanism-studio/compatibility/phase1.test.mjs
+          node mechanism-studio/compatibility/compiler-parity.mjs --baseline-dir .compat-baseline
       - name: Validate data-only scene, both branches and compiler security
         run: |
           set -euo pipefail

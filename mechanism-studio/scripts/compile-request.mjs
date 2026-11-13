@@ -9,6 +9,9 @@ import {dirname,join,resolve,sep,basename} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {parseArgs} from 'node:util';
 import {makeMechanismGraph,makeGraphModule,graphDigestInput} from './mechanism-graph.mjs';
+import {validateSourceReference} from './source-validation.mjs';
+import {compileToNewDirectory} from './compiler-io.mjs';
+import {compileStudy} from './compile-study.mjs';
 
 const ROOT=resolve(dirname(fileURLToPath(import.meta.url)),'..');
 const ID=/^[a-z][a-z0-9-]{2,63}$/;
@@ -30,22 +33,7 @@ const toObject=(x,name)=>{
   if(!x||typeof x!=='object'||Array.isArray(x))throw Error('BAD_'+name);
   return x;
 };
-function validatePathLocation(base,target){
-  const abs=resolve(target);
-  if(abs===base||abs.startsWith(base+sep))throw Error('OUTPUT_WITHIN_SKILL_SOURCE_REJECTED');
-  if(existsSync(abs))throw Error('OUTPUT_EXISTS');
-  return abs;
-}
-function checkSource(source){
-  const s=toObject(source,'SOURCE');
-  if(typeof s.id!=='string'||!ID.test(s.id))throw Error('SOURCE_ID_INVALID');
-  if(s.type!=='technical-reference')throw Error('SOURCE_TYPE_UNSUPPORTED');
-  const link=new URL(s.url);
-  if(link.protocol!=='https:'||link.username||link.password||!link.hostname||/(?:^|\.)localhost$/i.test(link.hostname))throw Error('SOURCE_URL_UNSAFE');
-  if(s.redistribution!=='link-only')throw Error('SOURCE_REUSE_NOT_APPROVED');
-  if(typeof s.title!=='string'||s.title.length<5||s.title.length>180)throw Error('SOURCE_TITLE_INVALID');
-  return {id:s.id,type:s.type,url:link.href,title:s.title,redistribution:'link-only'};
-}
+const checkSource=source=>validateSourceReference(source,{profile:'reviewed-recipe'});
 function param(raw,name,{min,max},ids){
   const p=toObject(raw,'PARAM_'+name);
   if(!Number.isFinite(p.value)||p.value<min||p.value>max)throw Error('PARAM_RANGE_'+name);
@@ -110,14 +98,13 @@ export function makeMachineConfig(normalized){
 }
 export function compileRequest({request,out}){
   const normalized=validateRequest(request);
-  const dest=validatePathLocation(ROOT,out);
   const inputDirectory=join(ROOT,'examples',
     normalized.mechanism==='geneva-4'?'geneva-indexer':normalized.mechanism);
   const paths=['main.js','model.mjs','stage.js'];
-  const generated=dest+'.stage-'+process.pid;
-  if(existsSync(generated))throw Error('STAGING_ALREADY_EXISTS');
-  try{
-    mkdirSync(generated,{recursive:true});
+  return compileToNewDirectory({out,sourceRoot:ROOT,errors:{
+    within:'OUTPUT_WITHIN_SKILL_SOURCE_REJECTED',
+    exists:'OUTPUT_EXISTS',staging:'STAGING_ALREADY_EXISTS'
+  },build:(generated,dest)=>{
     for(const name of paths)copyFileSync(join(inputDirectory,name),join(generated,name));
     // One canonical director is copied, not a second independent recipe engine.
     copyFileSync(join(ROOT,'scripts/film-direction.mjs'),join(generated,'film-direction.mjs'));
@@ -144,18 +131,17 @@ export function compileRequest({request,out}){
       ' recipe. Input/reference data is in request.json and source-register.json. '+
       'Reference links are evidence metadata only; no download or source interpretation was performed.\n\n'+
       'This illustrative mechanism is not engineering-certified. Run actual model/browser/video gates separately.\n');
-    renameSync(generated,dest);
     return {directory:dest,id:normalized.id,mechanism:normalized.mechanism,
       files:13,
       film:normalized.video,sourceCount:normalized.references.length,
       buildVerified:false,renderVerified:false,releaseReady:false};
-  }catch(e){rmSync(generated,{recursive:true,force:true});throw e;}
+  }});
 }
 if(process.argv[1]&&fileURLToPath(import.meta.url)===resolve(process.argv[1])){
   try{
     const {values}=parseArgs({options:{request:{type:'string'},out:{type:'string'},list:{type:'boolean'}},strict:true});
     if(values.list){console.log(JSON.stringify({mechanisms:Object.keys(PARAMS)}));}
     else if(!values.request||!values.out)throw Error('Usage: node compile-request.mjs --request FILE --out NEW_DIRECTORY');
-    else console.log(JSON.stringify(compileRequest({request:JSON.parse(readFileSync(resolve(values.request),'utf8')),out:values.out}),null,2));
+    else {const study=JSON.parse(readFileSync(resolve(values.request),'utf8'));const run=study?.schema==='avant.mechanism-request/1'?compileStudy({study,out:values.out,handlers:{'reviewed-recipe':compileRequest}}):compileRequest({request:study,out:values.out});console.log(JSON.stringify(run,null,2));}
   }catch(e){console.error(String(e.message||e));process.exitCode=1;}
 }
