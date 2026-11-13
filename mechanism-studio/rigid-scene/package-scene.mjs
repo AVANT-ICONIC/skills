@@ -32,7 +32,7 @@ export function verifyScenePackage(root){
     JSON.stringify(source.references)!==JSON.stringify(scene.references))throw Error('PACKAGE_EVIDENCE_MISMATCH');
  const essential=['chromium-boot','replay-and-branch-interaction','six-unique-physical-poses','editorial-no-panel-overlap','offline-and-errors','real-full-film','decode-and-original-audio'];
  if(scene.joints.some(j=>j.type==='prismatic'))essential.push('prismatic-rail-and-closure');
- for(const id of essential
+ for(const id of essential)
   if(!report.checks.some(c=>c.id===id&&c.status==='PASS'))throw Error('PACKAGE_GATE_MISSING: '+id);
  if(manifest.film.frames!==scene.video.fps*scene.video.durationSeconds||
    manifest.film.width!==scene.video.width||manifest.film.height!==scene.video.height)throw Error('PACKAGE_TIMEBASE_MISMATCH');
