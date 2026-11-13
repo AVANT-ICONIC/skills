@@ -98,3 +98,16 @@ node mechanism-studio/scripts/compile-request.mjs \
 The generated directory is then built by the separately prepared pinned Teardown builder. The [full generation + film workflow](../.github/workflows/mechanism-studio-generation.yml) runs model, security, browser, offline playback, video, original foley and package integrity checks in ephemeral CI.
 
 The Full HD example uses **1920×1080 at 30 fps for eight seconds (240 frames)**, H.264 video plus 48 kHz AAC original designed sound, verified with FFprobe and decoded-frame samples. The reusable generated-study package holds **viewer HTML, final MP4, poster, contact sheet, request, technical source register, model source, real test receipts, notices and hashes**. Its `releaseReady` flag remains false until the separate hardware, sandbox, source-audit and release review gates pass.
+
+## Generic rigid-joint renderer (draft PR #31)
+
+The [declarative rigid scene](rigid-scene/README.md) is a distinct experimental capability: a **two-motor five-bar linkage** generated from five bodies and five revolute joints with **no five-bar-specific position formula**. One bounded SE(2) numerical solver produces body transforms; one generic Three.js renderer draws the body-local bars, pins and mounting plate. The scene is supplied as data-only JSON, and its branch seeds are explicit.
+
+```bash
+node --test mechanism-studio/rigid-scene/*.test.mjs
+node mechanism-studio/rigid-scene/compile-scene.mjs \
+  mechanism-studio/rigid-scene/scene.json \
+  /tmp/dual-drive-linkage-study-004
+```
+
+A separate minimal pinned-Teardown CI job verifies real Chromium controls, six replayable scenes, H.264/AAC film, a hash-verified package, and bar-to-joint drawing consistency. Existing Geneva, slider-crank and four-bar rendering code is unchanged. The generic engine is *not* yet integrated into the existing `avant.mechanism-request/1` recipe compiler. This is an intentionally separate proof of generality, **not universal CAD or verified physical dynamics**. Output remains `releaseReady=false`.

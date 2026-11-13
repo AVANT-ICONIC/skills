@@ -1,0 +1,266 @@
+{
+  "schema": "avant.rigid-scene/1",
+  "id": "dual-drive-linkage-study-004",
+  "title": "Two drives. One point.",
+  "subtitle": "Generic rigid-body study / MM-004",
+  "description": "An original two-actuator five-bar drawing linkage generated from rigid joints, without a named five-bar kinematic solver.",
+  "references": [
+    {
+      "id": "uiuc-mechanisms",
+      "type": "technical-reference",
+      "title": "Planar mechanisms and constraint kinematics, University of Illinois",
+      "url": "https://dynref.engr.illinois.edu/aml.html",
+      "redistribution": "link-only",
+      "contentChecked": false
+    },
+    {
+      "id": "mathworks-fivebar",
+      "type": "technical-reference",
+      "title": "MathWorks five-bar robot forward and inverse kinematics example",
+      "url": "https://www.mathworks.com/help/sm/ug/five-bar-robot.html",
+      "redistribution": "link-only",
+      "contentChecked": false
+    }
+  ],
+  "dimensionsProvenance": "illustrative-not-measured",
+  "video": {
+    "fps": 24,
+    "durationSeconds": 6,
+    "width": 1280,
+    "height": 720,
+    "direction": "cinematic"
+  },
+  "world": {
+    "center": [
+      0,
+      12
+    ],
+    "extentMm": 225
+  },
+  "bodies": [
+    {
+      "id": "ground",
+      "role": "fixed",
+      "pose": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "drivera",
+      "role": "driver",
+      "basePose": [
+        -55,
+        0,
+        0
+      ],
+      "rpm": 10,
+      "phaseRad": 0,
+      "geometry": {
+        "start": [
+          0,
+          0
+        ],
+        "end": [
+          28,
+          0
+        ],
+        "widthMm": 7,
+        "material": "teal"
+      }
+    },
+    {
+      "id": "driverb",
+      "role": "driver",
+      "basePose": [
+        55,
+        0,
+        0
+      ],
+      "rpm": -10,
+      "phaseRad": 0.35,
+      "geometry": {
+        "start": [
+          0,
+          0
+        ],
+        "end": [
+          28,
+          0
+        ],
+        "widthMm": 7,
+        "material": "copper"
+      }
+    },
+    {
+      "id": "linka",
+      "role": "free",
+      "seedPose": [
+        -25,
+        0,
+        0.8
+      ],
+      "geometry": {
+        "start": [
+          0,
+          0
+        ],
+        "end": [
+          96,
+          0
+        ],
+        "widthMm": 6,
+        "material": "steel"
+      }
+    },
+    {
+      "id": "linkb",
+      "role": "free",
+      "seedPose": [
+        25,
+        0,
+        2.34
+      ],
+      "geometry": {
+        "start": [
+          0,
+          0
+        ],
+        "end": [
+          96,
+          0
+        ],
+        "widthMm": 6,
+        "material": "sand"
+      }
+    }
+  ],
+  "joints": [
+    {
+      "id": "bearing-a",
+      "type": "revolute",
+      "a": "ground",
+      "b": "drivera",
+      "anchorA": [
+        -55,
+        0
+      ],
+      "anchorB": [
+        0,
+        0
+      ]
+    },
+    {
+      "id": "bearing-b",
+      "type": "revolute",
+      "a": "ground",
+      "b": "driverb",
+      "anchorA": [
+        55,
+        0
+      ],
+      "anchorB": [
+        0,
+        0
+      ]
+    },
+    {
+      "id": "elbow-a",
+      "type": "revolute",
+      "a": "drivera",
+      "b": "linka",
+      "anchorA": [
+        28,
+        0
+      ],
+      "anchorB": [
+        0,
+        0
+      ]
+    },
+    {
+      "id": "elbow-b",
+      "type": "revolute",
+      "a": "driverb",
+      "b": "linkb",
+      "anchorA": [
+        28,
+        0
+      ],
+      "anchorB": [
+        0,
+        0
+      ]
+    },
+    {
+      "id": "tool-tip",
+      "type": "revolute",
+      "a": "linka",
+      "b": "linkb",
+      "anchorA": [
+        96,
+        0
+      ],
+      "anchorB": [
+        96,
+        0
+      ]
+    }
+  ],
+  "markers": {
+    "point": {
+      "body": "linka",
+      "anchor": [
+        96,
+        0
+      ]
+    },
+    "baseA": {
+      "body": "drivera",
+      "anchor": [
+        28,
+        0
+      ]
+    },
+    "baseB": {
+      "body": "driverb",
+      "anchor": [
+        28,
+        0
+      ]
+    }
+  },
+  "branches": {
+    "open": {
+      "sign": 1,
+      "seeds": {
+        "linka": [
+          -25,
+          0,
+          0.8
+        ],
+        "linkb": [
+          25,
+          0,
+          2.34
+        ]
+      }
+    },
+    "crossed": {
+      "sign": -1,
+      "seeds": {
+        "linka": [
+          -25,
+          0,
+          -0.8
+        ],
+        "linkb": [
+          25,
+          0,
+          -2.34
+        ]
+      }
+    }
+  }
+}
