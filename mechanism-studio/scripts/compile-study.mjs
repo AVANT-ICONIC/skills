@@ -26,11 +26,15 @@ export async function compileStudyFromSource({study,out}){
   :(await import('../rigid-scene/compile-scene.mjs')).compileScene;
  return compileStudy({study,out,handlers:{[route]:handler}});
 }
-if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
- try{
-  const {values}=parseArgs({options:{input:{type:'string'},out:{type:'string'},list:{type:'boolean'}},strict:true});
-  if(values.list)console.log(JSON.stringify(listStudyCompilers()));
-  else if(!values.input||!values.out)throw Error('Usage: node compile-study.mjs --input STUDY_JSON --out NEW_DIRECTORY');
-  else console.log(JSON.stringify(await compileStudyFromSource({study:JSON.parse(readFileSync(resolve(values.input),'utf8')),out:values.out}),null,2));
- }catch(error){console.error(String(error.message||error));process.exitCode=1;}
+async function runCli(){
+ const {values}=parseArgs({options:{input:{type:'string'},out:{type:'string'},list:{type:'boolean'}},strict:true});
+ if(values.list){console.log(JSON.stringify(listStudyCompilers()));return;}
+ if(!values.input||!values.out)throw Error('Usage: node compile-study.mjs --input STUDY_JSON --out NEW_DIRECTORY');
+ const study=JSON.parse(readFileSync(resolve(values.input),'utf8'));
+ const result=await compileStudyFromSource({study,out:values.out});
+ console.log(JSON.stringify(result,null,2));
 }
+// Run only after ESM evaluation finishes; a top-level awaited dynamic import
+// deadlocks when legacy compiler modules import this shared dispatcher.
+if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url))
+ void runCli().catch(error=>{console.error(String(error.message||error));process.exitCode=1;});
