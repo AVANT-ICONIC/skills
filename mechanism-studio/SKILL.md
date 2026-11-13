@@ -74,6 +74,10 @@ Read [runtime and package details](README.md) and the pending technical design i
 
 The [generic SE(2) rigid-body solver](docs/rigid-pose-core-v1.md) evaluates reviewed revolute joints, fixed-reference prismatic guides, whole-body translations and orientations, and explicitly seeded assembly branches. It independently checks 3D viewer model poses but **does not replace** the production render solver. A release-preview package requires the measured rigid-pose proof for graph-driven machines. Geneva's intermittent joint remains out of scope. No global branch completeness, collision, force, arbitrary external script or hardware certification is implied.
 
+## Compiler consolidation, phase 2
+
+The [canonical renderer](templates/rigid-scene/README.md) is now the single checked-in source owner for generic SE(2) viewer modules. Legacy renderer files are Git symlinks, required to resolve exactly to canonical regular files before compilation. Both rigid-scene CLIs and both package formats are preserved. Refer to [the frozen five-fixture compatibility contract](docs/compiler-consolidation-phase2.md) before editing any template, source validator or package verifier.
+
 ## Generic planar constraints (audit-only prototype)
 
 Use [Planar Constraint Core v1](docs/planar-constraint-core-v1.md) to solve bounded point-distance/axis-guide networks with reproducible seeds and explicit singular/underdetermined/unreachable outcomes. It has been checked against slider-crank and two four-bar branches, plus an unseen five-bar geometry. The source-backed numerical audit uses it as an **independent oracle** for the two graph-driven production solvers, without changing cinematic runtime behavior.

@@ -1,0 +1,1 @@
+../../scripts/rigid-pose-core.mjs

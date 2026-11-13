@@ -7,6 +7,7 @@ import {dirname,join,resolve,sep} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import assert from 'node:assert/strict';
 import {validateScene} from './scene-core.mjs';
+import {assertTrustedRigidTemplate} from '../scripts/trusted-rigid-template.mjs';
 const HERE=dirname(fileURLToPath(import.meta.url));
 const PIN=JSON.parse(readFileSync(join(HERE,'../upstream.lock.json'),'utf8'));
 const hash=x=>createHash('sha256').update(x).digest('hex');
@@ -48,7 +49,7 @@ export function packageScene({upstream,generated,evidence,build,out}){
  // Source files in the generated folder must be the exact reviewed source from this repository.
  for(const name of ['main.js','stage.js','model.mjs','style.css','scene-core.mjs','rigid-pose-core.mjs','film-direction.mjs']){
   const reference=name==='rigid-pose-core.mjs'||name==='film-direction.mjs'
-   ?join(HERE,'../scripts',name):join(HERE,name);
+   ?join(HERE,'../scripts',name):join(assertTrustedRigidTemplate().directory,name);
   if(digest(reference).sha256!==digest(join(src,name)).sha256)throw Error('PACKAGE_UNREVIEWED_SOLVER: '+name);
  }
  // The compiled data module must be exactly the validated scene, not user-authored code.

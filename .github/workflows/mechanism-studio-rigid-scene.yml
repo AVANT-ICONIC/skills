@@ -3,6 +3,8 @@ on:
   pull_request:
     paths:
       - 'mechanism-studio/rigid-scene/**'
+      - 'mechanism-studio/templates/rigid-scene/**'
+      - 'mechanism-studio/scripts/trusted-rigid-template.mjs'
       - 'mechanism-studio/compatibility/**'
       - 'mechanism-studio/scripts/source-validation.mjs'
       - 'mechanism-studio/scripts/compiler-io.mjs'
@@ -38,6 +40,7 @@ jobs:
         run: |
           set -euo pipefail
           node --test mechanism-studio/compatibility/phase1.test.mjs
+          node --test mechanism-studio/compatibility/phase2-template.test.mjs
           node mechanism-studio/compatibility/compiler-parity.mjs --baseline-dir .compat-baseline
       - name: Validate data-only scene, both branches and compiler security
         run: |

@@ -1,5 +1,8 @@
 # Data-driven rigid joint scene (experimental)
 
+**Template ownership:** the five renderer files in this directory are backward-compatible **Git symlinks** to [the canonical trusted generic template](../templates/rigid-scene/README.md). The two original CLI entrypoints, generated scene bytes and viewer/package interfaces remain unchanged. [Phase-2 compatibility and rollback](../docs/compiler-consolidation-phase2.md).
+
+
 The example `scene.json` describes a **dual-actuator five-bar linkage** using five rigid bodies, five revolute joints, two prescribed motor motions and two explicit assembly seeds. The generic runtime `scene-core.mjs` feeds this graph into the canonical **SE(2) rigid-pose numerical solver**. Neither the renderer nor the runtime contains a five-bar-specific position formula. The same scene model also supports other bounded rigid-joint configurations, subject to successful numerical closure.
 
 **Run local checks:** `node --test mechanism-studio/rigid-scene/*.test.mjs`.

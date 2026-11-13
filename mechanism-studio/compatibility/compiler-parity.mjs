@@ -8,6 +8,8 @@ import {tmpdir} from 'node:os';
 import {dirname,join,resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {sha256,compareOutputTrees} from '../scripts/portable-receipt.mjs';
+import {assertLegacyRigidPackageContract} from './phase2-golden-package.mjs';
+import {assertTrustedRigidTemplate} from '../scripts/trusted-rigid-template.mjs';
 const CURRENT=resolve(dirname(fileURLToPath(import.meta.url)),'../..');
 const REVIEWED=['geneva-four-slot-study.json','slider-crank-study.json','four-bar-study.json'];
 const RIGID=['scene.json','slider-rail.json'];
@@ -56,13 +58,15 @@ export function compareLegacyCompilers({baselineRoot, currentRoot=CURRENT}){
    'mechanism-studio/rigid-scene/main.js',
    'mechanism-studio/rigid-scene/stage.js',
    'mechanism-studio/rigid-scene/scene-core.mjs',
-   'mechanism-studio/rigid-scene/package-scene.mjs',
    'mechanism-studio/scripts/package-generated.mjs',
    'mechanism-studio/scripts/package-example.mjs',
    'mechanism-studio/scripts/verify-generated.mjs',
    'mechanism-studio/rigid-scene/verify-scene.mjs'])unchangedFile(baseline,current,name);
+  assertTrustedRigidTemplate();
+  const packageReader=assertLegacyRigidPackageContract(baseline,current);
   return{schema:'avant.mechanism-compiler-parity/1',baselineRevision:SNAPSHOT,
     status:'PASS',fixtures:rows,packageSchemasPreserved:true,filmInputsPreserved:true,
+    trustedTemplateOwner:'mechanism-studio/templates/rigid-scene',packageReader,
     releaseReady:false};
  }finally{rmSync(work,{recursive:true,force:true});}
 }
