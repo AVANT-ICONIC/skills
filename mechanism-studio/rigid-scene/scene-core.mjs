@@ -54,6 +54,13 @@ export function validateScene(data){
   if(!ID.test(j.id)||j.type!=='revolute'||!ids.has(j.a)||!ids.has(j.b)||j.a===j.b||
     !vec(j.anchorA,2)||!vec(j.anchorB,2)||'axisA' in j||'angleScaleMm' in j)throw Error('SCENE_JOINT_INVALID');
  }
+ // A rendered bar must terminate at real local joint anchors; a mathematically
+ // closed mechanism must not be visually misrepresented by detached geometry.
+ for(const b of data.bodies.filter(b=>b.geometry)){
+  const anchors=data.joints.flatMap(j=>j.a===b.id?[j.anchorA]:j.b===b.id?[j.anchorB]:[]);
+  const coincides=point=>anchors.some(p=>Math.hypot(p[0]-point[0],p[1]-point[1])<=1e-8);
+  if(!coincides(b.geometry.start)||!coincides(b.geometry.end))throw Error('SCENE_GEOMETRY_ANCHOR_MISMATCH');
+ }
  fields(data.markers,['point','baseA','baseB'],'markers');
  for(const k of ['point','baseA','baseB']){
   const m=data.markers[k];fields(m,['body','anchor'],'marker');

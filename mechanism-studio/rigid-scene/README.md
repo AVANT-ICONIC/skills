@@ -9,3 +9,7 @@ The example `scene.json` describes a **dual-actuator five-bar linkage** using fi
 The pinned Teardown build/capture CI consumes that new folder, checks real Chromium screenshots, live branch switching, replay identity and 720p24 H.264/AAC film, then publishes a hash-verified preview. The independent generic solver and data-only source register are included in the bundle.
 
 Not universal CAD, not force or collision simulation, not proof of global assembly-branch enumeration. Static seed poses require careful design and can fail on other graphs or close to singularities. The example dimensions are illustrative, and linked sources were not independently retrieved. Hardware GPU and OS sandbox remain unverified. All packages retain `releaseReady=false`.
+
+## Visual integrity contract
+
+Each visual bar endpoint is checked against a corresponding local revolute-joint anchor, so the **drawn link cannot depart from its mathematically solved linkage**. The compiler refuses a bar with a detached endpoint. This is static geometric consistency, **not** 3D collision or load validation.

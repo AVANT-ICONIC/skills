@@ -59,3 +59,8 @@ test('reference provenance does not masquerade as externally verified',()=>{
  assert.ok(scene.references.every(x=>x.contentChecked===false));
  const p=clone(scene);p.references[0].contentChecked=true;assert.throws(()=>validateScene(p),/REFERENCE_UNSAFE/);
 });
+
+test('rendered rigid bars cannot diverge from declared local joint anchors',()=>{
+ const forged=clone(scene);forged.bodies.find(b=>b.id==='linka').geometry.end[0]+=6;
+ assert.throws(()=>validateScene(forged),/GEOMETRY_ANCHOR_MISMATCH/);
+});

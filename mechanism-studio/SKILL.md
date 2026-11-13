@@ -112,3 +112,11 @@ After preparing the immutable Teardown revision in an isolated environment, buil
 A successful, inspected generated run can be packaged by `scripts/package-generated.mjs` and verified using the **same canonical** `scripts/verify.mjs`. It includes interactive HTML, final MP4, poster, decoded-frame contact sheet, request/source register, model source, full runtime receipts, notices and per-file SHA-256 hashes.
 
 **Honest limitations:** three reviewed mechanism families only; remote references not fetched or automatically validated; physical forces/locking/certification not supplied; hardware GPU/mobile and host-level sandbox not evaluated. Film quality gates test the real decoded output, but no guarantee for arbitrary machines.
+
+## Data-only generic rigid-scene renderer (experimental)
+
+[Generic rigid-scene workflow](rigid-scene/README.md) now supports declaratively generated scenes rather than one hardcoded viewer per linkage. It uses the **canonical SE(2) rigid-pose solver**, a checked body/joint graph and reusable mesh rendering. The first unseen example is a two-actuator five-bar parallel linkage with explicit open/crossed seeds, offline interactive HTML and a deterministic 720p24 film.
+
+The independent `rigid-scene/compile-scene.mjs` validates all data and references, checks visual bar endpoints coincide with actual joint anchors, and copies only reviewed scene/solver modules. A dedicated CI workflow checks Chromium, film, package integrity and no external requests. The separate original recipe compiler and its existing three mechanisms remain unchanged.
+
+**Hard limits:** no guarantee of branch-complete solution enumeration, no automatic source-document verification, no collision/torque/stress or manufacturing certification, and no real hardware GPU or host sandbox proof. Keep `releaseReady=false` and do not silently promote these preview scenes to production.
