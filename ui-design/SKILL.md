@@ -1,6 +1,6 @@
 ---
 name: ui-design
-description: "Design and critique product interfaces around user decisions, information hierarchy, comparison, filters, feedback, recovery, mobile composition and meaningful visual personality. Use for websites, apps, dashboards and interaction redesigns. Not a replacement for brand strategy, geometry tooling, implementation architecture or release QA."
+description: "Design and critique product interfaces around user decisions, hierarchy, feedback, recovery, responsive composition and visual personality; optionally extend to surface grammar, material/spatial UX, and multi-agent operator interfaces. Use for websites, apps, dashboards, canvases and interaction redesigns. Not an implementation, security or release-QA engine."
 compatibility: "Portable Agent Skills Markdown. No required tools, accounts, paid services or dependencies. Actual rendering and interaction checks require an available browser, device or renderer."
 ---
 
@@ -75,6 +75,16 @@ Work through one representative composition in this order, revisiting earlier ch
 Build and inspect a representative hero or key screen plus one deeper state before spreading the style everywhere. For a visual redesign, show actual composed alternatives when exploration is requested, not a list of adjectives. For a locked reference, preserve its identity instead of manufacturing variety. Do not substitute a three-option ceremony for a clear chosen direction.
 
 Run two separate critiques: **task quality** (understanding, decisions, states, access) and **visual quality** (specificity, balance, type, palette, tonal richness, imagery and rhythm). Neither compensates for the other. State what still feels weak and revise it. If the result misses the brief's visual bar, do not present it as finished merely because the mechanical checks pass.
+
+## Optional advanced interface tracks
+
+Activate only the track that matches the brief. These are targeted design references, not mandatory styles or additional independent skills:
+
+- **Surface grammar and visual nesting:** read [surface grammar](references/surface-grammar.md) for dashboards, deeply nested UI, component systems or dynamically composed layouts. Structural/layout nesting does **not** require visual nesting. Prefer transparent layout primitives, intentional surface roles and a specific reason for each drawn enclosure. Never replace meaningful grouping with arbitrary flatness.
+- **Material and spatial behavior:** read [material and spatial UX](references/material-spatial-ux.md) for glass, ink, metal, paper, board, whiteboard, cinematic, spatial or tactile interfaces. Model attachment, depth, interaction and motion coherently without forcing physical metaphors on every screen.
+- **Agent-native operator experience:** read [agent operator UX](references/agent-operator-ux.md) for multi-agent execution, workflow canvases, computer takeover, evidence-heavy cockpits and human/agent collaboration. Separate plan, runtime observation, verification, approval and deployment, and expose the next responsible actor.
+
+In all three tracks: respect the project's actual component and execution owners; provide configurable, reusable presentation roles rather than prescribing one header, one box or one visual style. A design skill may propose visual state or interaction, but cannot grant filesystem, model, browser or deployment authority. Real rendered and behavioral quality belongs to the existing QA owner.
 
 ## 4. Design the whole state sequence
 
