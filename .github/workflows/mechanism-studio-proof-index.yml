@@ -1,0 +1,65 @@
+name: Mechanism Studio Phase 3b detached proof-index compatibility (Node only)
+
+on:
+  push:
+    branches:
+      - feat/mechanism-studio-proof-index-phase3b-20261116
+    paths:
+      - 'mechanism-studio/scripts/verify-proof-index.mjs'
+      - 'mechanism-studio/compatibility/phase3b-proof-index.test.mjs'
+      - '.github/workflows/mechanism-studio-proof-index.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mechanism-proof-index-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  node_compat:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - name: Checkout implementation branch (preserve symlinks and full ancestry)
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Checkout immutable pre-consolidation golden baseline
+        uses: actions/checkout@v4
+        with:
+          ref: e952c699fe0f83ceb9b127a469db7bcb8930d667
+          path: .compat-baseline
+          persist-credentials: false
+      - name: Confirm all legacy compiler, renderer and package verifiers unchanged
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --exit-code c086c57441b4de30adf7107ed1970c57f0775af3 HEAD -- \
+            mechanism-studio/scripts/verify-portable.mjs \
+            mechanism-studio/scripts/package-example.mjs \
+            mechanism-studio/rigid-scene/package-scene.mjs \
+            mechanism-studio/scripts/verify.mjs \
+            mechanism-studio/rigid-scene/compile-scene.mjs \
+            mechanism-studio/scripts/compile-study.mjs \
+            mechanism-studio/templates/rigid-scene
+      - name: Run all Node mechanism, package, negative-security and proof-index tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test \
+            mechanism-studio/compatibility/*.test.mjs \
+            mechanism-studio/rigid-scene/*.test.mjs \
+            mechanism-studio/tests/*.test.mjs \
+            mechanism-studio/examples/slider-crank/model.test.mjs \
+            mechanism-studio/examples/geneva-indexer/model.test.mjs
+      - name: Compare five compiler fixtures byte-for-byte against frozen PR 32
+        shell: bash
+        run: |
+          set -euo pipefail
+          node mechanism-studio/compatibility/compiler-parity.mjs --baseline-dir .compat-baseline
