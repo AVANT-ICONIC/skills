@@ -48,3 +48,15 @@ The verifier emits `auditSignature: VERIFIED` only after the real GitHub/Sigstor
 - Re-running the verifier against altered audit bytes is rejected.
 - Do not merge automatically, change package writers or edit the 3b verifier. No new film CI.
 - **Remaining genuine build-origin work:** Add provenance attestation during the original package-producing workflow for **future** builds, ideally on a protected branch/reviewed workflow. Its subject should be a full package archive/digest, with restrictive signer/source identity policy; it cannot be inferred from this retrospective audit.
+
+
+## Confirmed execution, 2026-11-16
+
+- [Signer workflow run #43902571118](https://github.com/AVANT-ICONIC/skills/actions/runs/43902571118): **SUCCESS**, exact tested signer revision `bd858d2ba3b489d12fe80d2f4e4953f91aa08516`.
+- [GitHub keyless attestation #68199050](https://github.com/AVANT-ICONIC/skills/attestations/68199050): issued for the **audit receipt JSON**. The archived package manifests and films are *not* represented as original-build-attested subjects.
+- Frozen report guard: 3 original packages and 34 verified asset bytes, all 6 local negative/security unit tests PASS. Original build identity remains `UNATTESTED`.
+- The actual `gh attestation verify` call succeeded with pinned repository/workflow/source SHA/ref. Tampering with the signed subject or substituting an all-zero source SHA produced rejected verification.
+- [Separate read-only consumer run #43902951839](https://github.com/AVANT-ICONIC/skills/actions/runs/43902951839): **SUCCESS**. It downloaded the signed receipt from the original signer run, verified its frozen contents and the actual GitHub/Sigstore attestation on a **different runner**, with only `contents: read` and `actions: read`. No `id-token: write` or `attestations: write` was granted.
+- **No film rendering, legacy manifest migration, signed original build claim, release promotion or merge.**
+
+For any future build-output origin attestation, instrument the **original producing workflow** after the package has been generated, not this retrospective reviewer. Only accept a signer on an independently reviewed/protected source revision with an explicit certificate identity policy.
