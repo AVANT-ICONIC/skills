@@ -6,6 +6,9 @@ on:
       - 'mechanism-studio/templates/rigid-scene/**'
       - 'mechanism-studio/scripts/trusted-rigid-template.mjs'
       - 'mechanism-studio/compatibility/**'
+      # Phase-3b proof-index readers only inspect archived packages; no frame/film changes.
+      # Keep compiler parity and renderer changes on the full Chromium gate.
+      - '!mechanism-studio/compatibility/phase3b-*.mjs'
       - 'mechanism-studio/scripts/source-validation.mjs'
       - 'mechanism-studio/scripts/compiler-io.mjs'
       - 'mechanism-studio/scripts/compile-study.mjs'

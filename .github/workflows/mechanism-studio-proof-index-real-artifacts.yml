@@ -1,0 +1,47 @@
+name: Mechanism Studio Phase 3b genuine archived package acceptance
+
+on:
+  push:
+    branches:
+      - feat/mechanism-studio-proof-index-phase3b-20261116
+    paths:
+      - 'mechanism-studio/compatibility/phase3b-real-artifacts.mjs'
+      - '.github/workflows/mechanism-studio-proof-index-real-artifacts.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  archived_compat:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Retrieve original two-topology package from successful Phase 2 workflow
+        uses: actions/download-artifact@v4
+        with:
+          name: mechanism-studio-two-topologies-verified
+          run-id: 43441706721
+          github-token: ${{ github.token }}
+          path: .original-phase2/rigid
+      - name: Retrieve original reviewed-recipe package from successful Phase 2 workflow
+        uses: actions/download-artifact@v4
+        with:
+          name: mechanism-studio-sourced-film-package
+          run-id: 43436842938
+          github-token: ${{ github.token }}
+          path: .original-phase2/recipe
+      - name: Verify all original manifest/asset bytes and test detached proof binding
+        shell: bash
+        run: |
+          set -euo pipefail
+          node mechanism-studio/compatibility/phase3b-real-artifacts.mjs \
+            .original-phase2/rigid \
+            .original-phase2/recipe
