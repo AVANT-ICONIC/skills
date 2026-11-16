@@ -17,9 +17,32 @@ const MAX_REPORT_BYTES=1024*1024;
 const MAX_REFS=32;
 const ID=/^[a-z][a-z0-9-]{0,63}$/;
 const HASH=/^[0-9a-f]{64}$/;
+const CHECK_ID=/^[A-Za-z][A-Za-z0-9_.-]{0,79}$/;
 const DOMAINS=new Set(['package-integrity','model-consistency','render-reproducibility',
  'source-provenance','physical-safety','host-isolation']);
 const REPORT_FILES=new Set(['evidence/report.json','evidence/benchmark.json']);
+// A check's reported success must belong to its claimed domain. Unknown checks
+// are not promoted to arbitrary proof categories, even when the report says PASS.
+const REPORTED_CHECKS={
+ 'avant.mechanism-package/1':{
+  'render-reproducibility':new Set([
+   'T0.3-build-live-and-film','T0.4-seek-v8-film','T0.4-seek-cessna-film',
+   'T0.3-capture-v8-film','T0.3-capture-cessna-film',
+   'offline-browser-boot','nonsequential-frame-reproducibility',
+   'full-hd-layout-and-legibility','actual-cinematic-camera-storyboard',
+   'full-film-capture','film-decoder-and-decoded-frames',
+   'original-foley-and-final-film-mux']),
+  'model-consistency':new Set(['kinematics-source-agreement'])
+ },
+ 'avant.rigid-scene-package/1':{
+  'render-reproducibility':new Set([
+   'trusted-build-html','chromium-boot','replay-and-branch-interaction',
+   'six-unique-physical-poses','editorial-no-panel-overlap',
+   'offline-and-errors','real-full-film','decode-and-original-audio',
+   'prismatic-rail-and-closure']),
+  'model-consistency':new Set(['six-unique-physical-poses','prismatic-rail-and-closure'])
+ }
+};
 const EVIDENCE_FILES={
  'avant.mechanism-package/1':new Set([
   'evidence/benchmark.json','evidence/report.json','evidence/request.json',
@@ -31,8 +54,7 @@ const EVIDENCE_FILES={
 const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
 const keys=(value,allowed,label)=>{
  if(!value||typeof value!=='object'||Array.isArray(value)||
-  Object.keys(value).some(x=>!allowed.includes(x))||
-  allowed.some(x=>x.endsWith('!')&&!Object.hasOwn(value,x.slice(0,-1))))
+  Object.keys(value).some(x=>!allowed.includes(x)))
   throw Error('PROOF_INDEX_FIELDS_INVALID: '+label);
 };
 const exactly=(value,required,optional,label)=>{
@@ -129,8 +151,10 @@ function validateReference(ref,manifest,packageDirectory,used){
  }else if(ref.assessment==='REPORTED'){
   if(!REPORT_FILES.has(ref.assetPath)||ref.evaluator!=='legacy-report'||
      ref.method!=='manifest-hash-and-check-id'||typeof ref.legacyCheckId!=='string'||
-     !ID.test(ref.legacyCheckId))
+     !CHECK_ID.test(ref.legacyCheckId))
    throw Error('PROOF_INDEX_ASSESSMENT_INVALID');
+  if(!REPORTED_CHECKS[manifest.schema]?.[ref.domain]?.has(ref.legacyCheckId))
+   throw Error('PROOF_INDEX_CHECK_DOMAIN_MISMATCH');
   const report=parseUniqueJson(actual,'evidence report');
   if(!Array.isArray(report?.checks)||
      !report.checks.some(c=>c.id===ref.legacyCheckId&&c.status==='PASS'))
