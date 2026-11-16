@@ -27,7 +27,7 @@ const fixture=fn=>async()=>{
 function recipe(root,id='immutable-compat-preview'){
  for(const p of recipeFiles)put(root,p,'illustrative fixture: '+p+'\n');
  put(root,'evidence/benchmark.json',JSON.stringify({state:'PASS',checks:[
-  {id:'frame-verified',status:'PASS'}]},null,2)+'\n');
+  {id:'full-film-capture',status:'PASS'}]},null,2)+'\n');
  const manifest={schema:'avant.mechanism-package/1',packageId:id,tier:'compatibility-preview',
   releaseReady:false,generator:{revision:pin.revision,packageLockSha256:pin.packageLockSha256},
   timebase:{frameCount:36,fpsNumerator:6,fpsDenominator:1},
@@ -56,7 +56,7 @@ function rigid(root){
 function makeIndex(root,{asset,check}={}){
  const m=JSON.parse(readFileSync(join(root,'manifest.json')));
  const chosen=asset??(m.schema==='avant.mechanism-package/1'?'evidence/benchmark.json':'evidence/report.json');
- const legacyCheckId=check??(m.schema==='avant.mechanism-package/1'?'frame-verified':'chromium-boot');
+ const legacyCheckId=check??(m.schema==='avant.mechanism-package/1'?'full-film-capture':'chromium-boot');
  return {schema:'avant.mechanism-proof-index/1',
   subject:{sourceSchema:m.schema,packageId:m.packageId??m.id,
    manifestSha256:digest(readFileSync(join(root,'manifest.json'))),
@@ -152,7 +152,8 @@ test('unsupported replay assertions, safety claims and fake check identifiers fa
  for(const [edit,reason] of [
   [x=>{x.references[0].assessment='REPLAYED';},/REPLAY_NOT_IMPLEMENTED/],
   [x=>{x.references[0].domain='physical-safety';},/UNSUPPORTED_CERTIFICATION/],
-  [x=>{x.references[0].legacyCheckId='nonexistent-proof';},/REPORTED_CHECK_MISSING/],
+  [x=>{x.references[0].domain='model-consistency';},/CHECK_DOMAIN_MISMATCH/],
+  [x=>{x.references[0].legacyCheckId='nonexistent-proof';},/CHECK_DOMAIN_MISMATCH/],
   [x=>{x.references[0].assetPath='evidence/rigid-pose-core.mjs';},/EVIDENCE_UNSUPPORTED/],
   [x=>{x.references[0].assetSha256='0'.repeat(64);},/ASSET_BINDING_MISMATCH/]
  ]){
