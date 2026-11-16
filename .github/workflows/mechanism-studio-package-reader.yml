@@ -1,0 +1,72 @@
+name: Mechanism Studio Phase 3a package-reader compatibility (Node only)
+
+on:
+  push:
+    branches:
+      - feat/mechanism-studio-package-reader-phase3a-20261113
+    paths:
+      - 'mechanism-studio/scripts/verify-portable.mjs'
+      - 'mechanism-studio/compatibility/phase3-package-reader.test.mjs'
+      - '.github/workflows/mechanism-studio-package-reader.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mechanism-package-reader-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  node_compat:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - name: Checkout proposed branch with trusted symlinks preserved
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Checkout immutable pre-consolidation golden baseline (PR 32)
+        uses: actions/checkout@v4
+        with:
+          ref: e952c699fe0f83ceb9b127a469db7bcb8930d667
+          path: .compat-baseline
+          persist-credentials: false
+      - name: Ensure existing package verifiers remain byte-identical to Phase 2
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --exit-code 32cc2431a590df84576ad85c9f93dcfcae337244 HEAD -- \
+            mechanism-studio/scripts/package-example.mjs \
+            mechanism-studio/rigid-scene/package-scene.mjs \
+            mechanism-studio/scripts/verify.mjs \
+            mechanism-studio/rigid-scene/compile-scene.mjs \
+            mechanism-studio/scripts/compile-study.mjs
+      - name: Execute all package-router, compiler, model and security unit tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test \
+            mechanism-studio/compatibility/*.test.mjs \
+            mechanism-studio/rigid-scene/*.test.mjs \
+            mechanism-studio/tests/*.test.mjs \
+            mechanism-studio/examples/slider-crank/model.test.mjs \
+            mechanism-studio/examples/geneva-indexer/model.test.mjs
+      - name: Recompile all five fixtures from frozen PR 32 and compare every output byte
+        shell: bash
+        run: |
+          set -euo pipefail
+          node mechanism-studio/compatibility/compiler-parity.mjs --baseline-dir .compat-baseline
+      - name: Independently compile both generic topologies using legacy CLI
+        shell: bash
+        run: |
+          set -euo pipefail
+          for name in scene slider-rail; do
+            node mechanism-studio/rigid-scene/compile-scene.mjs \
+              "mechanism-studio/rigid-scene/$name.json" \
+              "$RUNNER_TEMP/phase3a-$name"
+            test -s "$RUNNER_TEMP/phase3a-$name/scene-data.mjs"
+          done
