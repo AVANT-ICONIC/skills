@@ -33,5 +33,13 @@ test('signature is over TAR itself and source/workflow identity is verified',()=
  assert.match(signer,/--repo AVANT-ICONIC\/skills/);
  assert.match(signer,/--signer-workflow AVANT-ICONIC\/skills\/\.github\/workflows\/mechanism-studio-producer-signer\.yml/);
  assert.match(signer,/--source-digest "\$GITHUB_SHA"/);
+ assert.match(signer,/--signer-digest "\$GITHUB_SHA"/);
  assert.match(signer,/--source-ref "\$GITHUB_REF"/);
+});
+
+test('GitHub CLI signer identity check refuses known vulnerable versions before attesting',()=>{
+ const gate=signer.indexOf('node mechanism-studio/attestation/gh-cli-policy.mjs');
+ const signing=signer.indexOf('uses: actions/attest@v4');
+ assert.ok(gate>=0,'required gh version check absent');
+ assert.ok(signing>gate,'version gate must run before the signer gets a certificate');
 });
