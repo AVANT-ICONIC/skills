@@ -5,7 +5,7 @@
  * .tar subject from the original producing CI run with independently pinned policy.
  */
 import {createHash} from 'node:crypto';
-import {existsSync,lstatSync,mkdtempSync,mkdirSync,readFileSync,renameSync,rmSync,writeFileSync} from 'node:fs';
+import {existsSync,lstatSync,linkSync,mkdtempSync,mkdirSync,readFileSync,rmSync,writeFileSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {dirname,isAbsolute,join,relative,resolve,sep} from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -142,7 +142,10 @@ export async function createProducerArchive({family,packageDirs,out}){
  try{
   mkdirSync(dirname(output),{recursive:true});
   writeFileSync(stage,all,{flag:'wx',mode:0o600});
-  renameSync(stage,output);
+  // link() is atomic no-clobber: unlike rename(), it refuses an output file
+  // created concurrently after existsSync(). Stage and output share a directory.
+  linkSync(stage,output);
+  rmSync(stage);
   return {schema:'avant.mechanism-producer-archive/1',family,
    archiveSha256:HASH(all),bytes:all.length,packages:receipts.map(r=>r.packageId).sort(),
    originAssurance:'UNATTESTED',releaseReady:false};
