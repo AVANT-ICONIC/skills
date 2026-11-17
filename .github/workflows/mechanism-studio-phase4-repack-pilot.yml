@@ -144,3 +144,28 @@ jobs:
             echo 'FAIL: altered subject accepted'; exit 1
           fi
           echo 'PASS: lookalike signer, incorrect signer SHA and altered subject all rejected'
+
+
+      - name: Production consumer MUST reject this valid but UNAPPROVED pilot signature
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          # The TAR and Sigstore signature are both genuine. Its pilot signer and
+          # branch are NOT the protected-main producer workflow identities.
+          set +e
+          result=$(node mechanism-studio/attestation/verify-signed-producer.mjs \
+            rigid .pilot-consumer/producer-rigid.tar "$GITHUB_SHA" "$GITHUB_SHA" 2>&1)
+          status=$?
+          set -e
+          if [[ "$status" == 0 ]]; then
+            echo 'FAIL: protected-main policy accepted untrusted feature-branch pilot'
+            exit 1
+          fi
+          if ! grep -q 'PRODUCER_ATTESTATION_CRYPTOGRAPHIC_VERIFICATION_FAILED' <<< "$result"; then
+            echo "$result"
+            echo 'FAIL: expected genuine archive to reach cryptographic trust boundary'
+            exit 1
+          fi
+          echo 'PASS: genuine signed pilot TAR rejected by strict production consumer'
