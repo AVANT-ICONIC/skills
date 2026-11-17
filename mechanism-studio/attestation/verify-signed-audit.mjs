@@ -6,6 +6,7 @@ import {readFileSync} from 'node:fs';
 import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {checkArchiveAuditReceipt} from './check-archive-receipt.mjs';
+import {assertLocalSecureGhCli} from './gh-cli-policy.mjs';
 
 const REPO='AVANT-ICONIC/skills';
 const SIGNER='AVANT-ICONIC/skills/.github/workflows/mechanism-studio-phase3c-audit.yml';
@@ -24,10 +25,12 @@ export function verifySignedAuditReceipt(file,expectedSignerSha,expectedSignerRe
   throw Error('ARCHIVE_ATTESTATION_SIGNER_REF_UNTRUSTED');
  const path=resolve(file);
  checkArchiveAuditReceipt(path);
+ assertLocalSecureGhCli();
  const digest=createHash('sha256').update(readFileSync(path)).digest('hex');
  const argv=['attestation','verify',path,'--repo',REPO,
   '--signer-workflow',SIGNER,
-  '--source-digest',expectedSignerSha,'--source-ref',expectedSignerRef,
+  '--source-digest',expectedSignerSha,'--signer-digest',expectedSignerSha,
+  '--source-ref',expectedSignerRef,
   '--format','json'];
  // No shell. The installed gh binary and trust roots are part of the
  // verifier's trusted environment, not user-supplied package metadata.
