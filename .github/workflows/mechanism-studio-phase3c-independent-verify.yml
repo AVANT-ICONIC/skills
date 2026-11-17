@@ -1,0 +1,52 @@
+name: Mechanism Studio Phase 3c independent signed-audit verification
+
+on:
+  push:
+    branches:
+      - feat/mechanism-studio-audit-attestation-phase3c-20261116
+    paths:
+      - '.github/workflows/mechanism-studio-phase3c-independent-verify.yml'
+  workflow_dispatch:
+
+# IMPORTANT: this separate verification workflow cannot mint attestations.
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  independent_verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Download frozen signed-review subject from original signing run
+        uses: actions/download-artifact@v4
+        with:
+          name: mechanism-studio-phase3c-signed-audit-review
+          run-id: 43902571118
+          github-token: ${{ github.token }}
+          path: .independent-review
+      - name: Validate frozen source report without trusting bundled verifier output
+        run: |
+          set -euo pipefail
+          test -s .independent-review/phase2-review-receipt.json
+          node mechanism-studio/attestation/check-archive-receipt.mjs \
+            .independent-review/phase2-review-receipt.json
+      - name: Independently verify Sigstore signature against a pinned signer SHA
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          node mechanism-studio/attestation/verify-signed-audit.mjs \
+            .independent-review/phase2-review-receipt.json \
+            bd858d2ba3b489d12fe80d2f4e4953f91aa08516 \
+            refs/heads/feat/mechanism-studio-audit-attestation-phase3c-20261116
+      - name: Confirm no signing permission is required for verification
+        run: |
+          echo 'PASS: read-only workflow verified signed audit, no id-token or attestations:write'

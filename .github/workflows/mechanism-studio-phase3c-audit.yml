@@ -1,0 +1,103 @@
+name: Mechanism Studio Phase 3c signed archive review (no rendering)
+
+on:
+  push:
+    branches:
+      - feat/mechanism-studio-audit-attestation-phase3c-20261116
+    paths:
+      - 'mechanism-studio/attestation/**'
+      - '.github/workflows/mechanism-studio-phase3c-audit.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+  id-token: write
+  attestations: write
+
+concurrency:
+  group: mechanism-studio-phase3c-audit-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  attest_archived_review:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run separate frozen receipt policy tests
+        run: node --test mechanism-studio/attestation/audit-attestation.test.mjs
+      - name: Fetch only original Phase 2 generic package assets
+        uses: actions/download-artifact@v4
+        with:
+          name: mechanism-studio-two-topologies-verified
+          run-id: 43441706721
+          github-token: ${{ github.token }}
+          path: .original-phase2/rigid
+      - name: Fetch only original Phase 2 reviewed recipe assets
+        uses: actions/download-artifact@v4
+        with:
+          name: mechanism-studio-sourced-film-package
+          run-id: 43436842938
+          github-token: ${{ github.token }}
+          path: .original-phase2/recipe
+      - name: Re-run old verifiers and construct bounded frozen review receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .audit
+          node mechanism-studio/compatibility/phase3b-real-artifacts.mjs \
+            .original-phase2/rigid .original-phase2/recipe > .audit/phase2-review-receipt.json
+          node mechanism-studio/attestation/check-archive-receipt.mjs .audit/phase2-review-receipt.json
+          sha256sum .audit/phase2-review-receipt.json
+      - name: Sign THIS review receipt using GitHub OIDC and Sigstore
+        uses: actions/attest@v4
+        with:
+          subject-path: .audit/phase2-review-receipt.json
+      - name: Cryptographically verify signed review plus pinned workflow and commit
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          node mechanism-studio/attestation/verify-signed-audit.mjs \
+            .audit/phase2-review-receipt.json "$GITHUB_SHA" "$GITHUB_REF" \
+            > .audit/signer-verification.json
+          cat .audit/signer-verification.json
+      - name: Negative tests on real signed receipt (different subject and source SHA)
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          cp .audit/phase2-review-receipt.json "$RUNNER_TEMP/tampered-review.json"
+          node -e "const fs=require('fs');const p=process.argv[1];const x=JSON.parse(fs.readFileSync(p));x.status='FAIL';fs.writeFileSync(p,JSON.stringify(x));" "$RUNNER_TEMP/tampered-review.json"
+          if gh attestation verify "$RUNNER_TEMP/tampered-review.json" --repo AVANT-ICONIC/skills \
+             --signer-workflow AVANT-ICONIC/skills/.github/workflows/mechanism-studio-phase3c-audit.yml \
+             --source-digest "$GITHUB_SHA" --source-ref "$GITHUB_REF" --format json >/dev/null 2>&1; then
+            echo 'FAIL: altered receipt accepted by Sigstore verifier'
+            exit 1
+          fi
+          if gh attestation verify .audit/phase2-review-receipt.json --repo AVANT-ICONIC/skills \
+             --signer-workflow AVANT-ICONIC/skills/.github/workflows/mechanism-studio-phase3c-audit.yml \
+             --source-digest 0000000000000000000000000000000000000000 \
+             --source-ref "$GITHUB_REF" --format json >/dev/null 2>&1; then
+            echo 'FAIL: forged source SHA accepted'
+            exit 1
+          fi
+          echo 'PASS: altered subject and wrong source SHA were both rejected'
+      - name: Preserve signed REVIEW evidence (not a film-build attestation)
+        uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: mechanism-studio-phase3c-signed-audit-review
+          path: |
+            .audit/phase2-review-receipt.json
+            .audit/signer-verification.json
+          if-no-files-found: error
+          retention-days: 14
