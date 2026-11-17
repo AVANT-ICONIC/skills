@@ -47,6 +47,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Reject GH CLI signer-workflow prefix-match vulnerability before signing
+        run: node mechanism-studio/attestation/gh-cli-policy.mjs
       - name: Download exact package archive from THE SAME producer workflow run
         uses: actions/download-artifact@v4
         with:
@@ -85,6 +87,7 @@ jobs:
             --repo AVANT-ICONIC/skills \
             --signer-workflow AVANT-ICONIC/skills/.github/workflows/mechanism-studio-producer-signer.yml \
             --source-digest "$GITHUB_SHA" \
+            --signer-digest "$GITHUB_SHA" \
             --source-ref "$GITHUB_REF" \
             --format json > .producer/signer-verification.json
           test -s .producer/signer-verification.json
