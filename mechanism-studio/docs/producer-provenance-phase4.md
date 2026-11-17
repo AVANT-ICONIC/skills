@@ -100,3 +100,20 @@ For the generated reviewed recipe workflow, use family reviewed, the name mechan
 ## Nonclaims
 
 This phase does not retroactively authenticate the original historic build outputs, make engineering or physics claims, verify external source documents, certify host isolation/hardware GPU, set releaseReady=true or establish a cryptographically trusted release under an unprotected branch. Exact trust depends on the verified issuer/workflow identity **and** separately enforced source/ref policy.
+
+## Security addendum and real gates (2026-11-17)
+
+GitHub security advisory [GHSA-wjmr-j3rp-mh2g](https://github.com/cli/cli/security/advisories/GHSA-wjmr-j3rp-mh2g), published 2026-09-30, confirms `gh attestation verify --signer-workflow` used a **prefix match** in CLI versions 2.51.0 through 2.101.0. Version **2.102.0** fixed the signer-workflow identity bug. Therefore `attestation/gh-cli-policy.mjs` refuses all `gh` versions below 2.102.0, malformed output and prereleases. Both the reusable future signer and the inherited Phase-3c audit verification now call this gate before relying on cryptographic verification.
+
+The future reusable signer also explicitly sets **both** `--source-digest "$GITHUB_SHA"` and `--signer-digest "$GITHUB_SHA"`, along with exact workflow and ref. The separately implemented `verify-signed-producer.mjs` consumer requires **two independently supplied approved source and signer commits**, applies the patched CLI gate, verifies the original canonical TAR, enforces the expected signer, source ref and GitHub-hosted runner, and refuses to set `releaseReady=true`. Passing an untrusted self-declared commit from the package is **not** an approval policy. `governanceApproval` deliberately remains `NOT_EVALUATED`.
+
+**Confirmed [Node-only workflow #44074539384](https://github.com/AVANT-ICONIC/skills/actions/runs/44074539384):**
+- **157/157 tests PASS**, **five frozen golden fixtures PASS**; both original Phase-2 package families roundtrip to byte-stable canonical TARs and back.
+- Installed CI GitHub CLI **2.103.3** passed the >=2.102.0 security gate.
+- Previous real [Phase-3c Sigstore-signed audit receipt](https://github.com/AVANT-ICONIC/skills/attestations/68199050) passed again using the new CLI-version gate plus independently pinned **source and signer digests**.
+- The new future producer consumer rejected a *real, valid but unsigned* rigid TAR at the **actual GitHub CLI cryptographic verification** step, rather than accepting archive hash matches as provenance.
+- No rendering, publisher certificate for a fresh producer build, source approval, or merge was performed.
+
+The prior Phase-3c helper was patched on its own draft PR #39 and synchronized into draft PR #40 without changing any existing legacy package/verifier bytes. The suite evidence applies to the same implementation tree despite subsequent documentation-only commits.
+
+**Still missing:** Effective protection and independent review of `main` (GitHub currently reports `protected:false`, no rulesets); integration of this reusable signer into a genuine protected-main producing workflow; a newly emitted real producer TAR attestation; independent consumer verification of that newly produced signature. The branch protection change is a repository-governance operation and was **not** made through the available GitHub connector.
