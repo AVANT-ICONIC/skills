@@ -1,7 +1,8 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
-import {existsSync,mkdtempSync,mkdirSync,readFileSync,rmSync,symlinkSync,writeFileSync} from 'node:fs';
+import {spawn} from 'node:child_process';
+import {existsSync,mkdtempSync,mkdirSync,readFileSync,readdirSync,rmSync,symlinkSync,writeFileSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {dirname,join,resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -132,4 +133,26 @@ test('refuses overwrites and destinations nested inside source packages',withTem
  const existing=join(dir,'exists.tar');writeFileSync(existing,'existing');
  await assert.rejects(createProducerArchive({family:'reviewed',packageDirs:roots,out:existing}),/OUTPUT_UNSAFE/);
  assert.equal(readFileSync(existing,'utf8'),'existing');
+}));
+
+
+test('concurrent packers cannot replace each other or leave stale staging files',withTemp(async dir=>{
+ const roots=makeFixtures(dir,'reviewed'),archive=join(dir,'race.tar');
+ const program=fileURLToPath(new URL('./producer-archive.mjs',import.meta.url));
+ const command=()=>new Promise((resolve,reject)=>{
+  const p=spawn(process.execPath,[program,'pack','reviewed',archive,...roots],{stdio:['ignore','pipe','pipe']});
+  let stdout='',stderr='';
+  p.stdout.on('data',x=>{stdout+=x;});
+  p.stderr.on('data',x=>{stderr+=x;});
+  p.on('error',reject);
+  p.on('close',code=>resolve({code,stdout,stderr}));
+ });
+ const [first,second]=await Promise.all([command(),command()]);
+ assert.equal([first,second].filter(x=>x.code===0).length,1,
+  'exactly one writer must publish the archive');
+ assert.equal([first,second].filter(x=>x.code!==0).length,1,
+  'the second concurrent write must fail closed');
+ assert.equal((await verifyProducerArchive({family:'reviewed',archive})).status,'PASS');
+ assert.equal(readdirSync(dir).filter(x=>x.includes('.stage-')).length,0,
+  'failed writer must remove its staging file');
 }));
