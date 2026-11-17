@@ -130,3 +130,28 @@ jobs:
           node mechanism-studio/attestation/producer-archive.mjs verify reviewed \
             "$RUNNER_TEMP/producer-test/reviewed.tar"
           tar -tf "$RUNNER_TEMP/producer-test/reviewed.tar" | head -n 40
+
+      - name: Cryptographic fail-closed check on UNSIGNED genuine producer TAR
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          # This archive was produced from real legacy assets but was NEVER signed
+          # by an authenticated protected-main producer. The new consumer must reject it.
+          set +e
+          result=$(node mechanism-studio/attestation/verify-signed-producer.mjs \
+            rigid "$RUNNER_TEMP/producer-test/rigid.tar" \
+            "$GITHUB_SHA" "$GITHUB_SHA" 2>&1)
+          code=$?
+          set -e
+          if [[ "$code" == 0 ]]; then
+            echo 'FAIL: unsigned TAR incorrectly accepted as signed producer'
+            exit 1
+          fi
+          if ! grep -q 'PRODUCER_ATTESTATION_CRYPTOGRAPHIC_VERIFICATION_FAILED' <<< "$result"; then
+            echo "$result"
+            echo 'FAIL: unsigned TAR did not reach cryptographic verification gate'
+            exit 1
+          fi
+          echo 'PASS: genuine but unsigned producer TAR rejected by actual gh verifier'
