@@ -117,3 +117,17 @@ The future reusable signer also explicitly sets **both** `--source-digest "$GITH
 The prior Phase-3c helper was patched on its own draft PR #39 and synchronized into draft PR #40 without changing any existing legacy package/verifier bytes. The suite evidence applies to the same implementation tree despite subsequent documentation-only commits.
 
 **Still missing:** Effective protection and independent review of `main` (GitHub currently reports `protected:false`, no rulesets); integration of this reusable signer into a genuine protected-main producing workflow; a newly emitted real producer TAR attestation; independent consumer verification of that newly produced signature. The branch protection change is a repository-governance operation and was **not** made through the available GitHub connector.
+
+
+## Feature-branch signature pilot: genuinely executed, then removed (2026-11-17)
+
+Two temporary historical-repack signing runs are preserved as **external evidence**, not as an active workflow inside this PR:
+
+- [Pilot #44112144741](https://github.com/AVANT-ICONIC/skills/actions/runs/44112144741) issued the [Sigstore signature #68678777](https://github.com/AVANT-ICONIC/skills/attestations/68678777) for the *canonical rigid TAR*, SHA-256 `df61d95efb02f6051d02f3d727e9ccb5b7b4c1fdde0b33200646ee675a4d3858`.
+- [Extended pilot #44112576203](https://github.com/AVANT-ICONIC/skills/actions/runs/44112576203) issued [Sigstore signature #68679643](https://github.com/AVANT-ICONIC/skills/attestations/68679643). A **second runner with read-only permissions** independently verified the genuine signature with the exact feature-branch pilot workflow, source SHA and signer SHA. It rejected a lookalike workflow, false signer digest and modified TAR. Crucially, the **actual production consumer rejected the genuinely signed PILOT TAR** because it was not signed by the protected-main reusable production workflow.
+- Both runs only rewrapped *historical* Phase-2 packages (the two rigid scenes). They did **not** rerun the original films or cryptographically authenticate the original 2026 producer runs.
+- The temporary feature-branch workflow file was **deleted after the successful experiments**, so the draft PR does not leave an unnecessary workflow capable of issuing fresh pilot attestations. The immutable historic run logs, SHA and original Sigstore attestations remain inspectable.
+
+A separate concurrency defect in the producer TAR writer was also found and fixed: `renameSync()` could replace a path created between the initial nonexistence check and publication. The writer now uses same-directory hard-link publication (`linkSync`) for atomic **no-clobber**, followed by stage cleanup. [Final Node-only CI #44112936404](https://github.com/AVANT-ICONIC/skills/actions/runs/44112936404) passed **158/158 tests**, including two simultaneous subprocess writers of the same TAR: one succeeds, one fails, the original TAR verifies and no stage files remain. Frozen five-fixture compiler parity, both historical TAR families and the real previous audit-attestation verification also passed.
+
+**Current blocker:** `main` remains unprotected. No protected-main signed producer has run, no production trust roots have been approved, and the reusable protected-main signer has not been invoked. Only a separately reviewed branch-protection change plus approved producer workflow integration can enable that gate.
