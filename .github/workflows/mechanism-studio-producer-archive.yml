@@ -8,6 +8,8 @@ on:
       - 'mechanism-studio/attestation/producer-archive.mjs'
       - 'mechanism-studio/attestation/producer-archive.test.mjs'
       - 'mechanism-studio/attestation/producer-signer-contract.test.mjs'
+      - 'mechanism-studio/attestation/gh-cli-policy.mjs'
+      - 'mechanism-studio/attestation/gh-cli-policy.test.mjs'
       - '.github/workflows/mechanism-studio-producer-signer.yml'
       - '.github/workflows/mechanism-studio-producer-archive.yml'
   workflow_dispatch:
@@ -38,6 +40,8 @@ jobs:
           ref: e952c699fe0f83ceb9b127a469db7bcb8930d667
           path: .compat-baseline
           persist-credentials: false
+      - name: Check installed gh CLI is patched against signer-workflow prefix confusion
+        run: node mechanism-studio/attestation/gh-cli-policy.mjs
       - name: Ensure existing package creators/readers/renderer unchanged
         shell: bash
         run: |
