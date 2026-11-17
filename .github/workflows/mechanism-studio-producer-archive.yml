@@ -10,6 +10,9 @@ on:
       - 'mechanism-studio/attestation/producer-signer-contract.test.mjs'
       - 'mechanism-studio/attestation/gh-cli-policy.mjs'
       - 'mechanism-studio/attestation/gh-cli-policy.test.mjs'
+      - 'mechanism-studio/attestation/verify-signed-audit.mjs'
+      - 'mechanism-studio/attestation/verify-signed-producer.mjs'
+      - 'mechanism-studio/attestation/verify-signed-producer.test.mjs'
       - '.github/workflows/mechanism-studio-producer-signer.yml'
       - '.github/workflows/mechanism-studio-producer-archive.yml'
   workflow_dispatch:
@@ -87,6 +90,23 @@ jobs:
           run-id: 43436842938
           github-token: ${{ github.token }}
           path: .original-phase2/reviewed-fourbar
+      - name: Download the actual Phase 3c signed audit receipt
+        uses: actions/download-artifact@v4
+        with:
+          name: mechanism-studio-phase3c-signed-audit-review
+          run-id: 43902571118
+          github-token: ${{ github.token }}
+          path: .original-phase3c
+      - name: Verify original signed review with patched gh and both signer/source pins
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          node mechanism-studio/attestation/verify-signed-audit.mjs \
+            .original-phase3c/phase2-review-receipt.json \
+            bd858d2ba3b489d12fe80d2f4e4953f91aa08516 \
+            refs/heads/feat/mechanism-studio-audit-attestation-phase3c-20261116
       - name: Prepare and VERIFY canonical rigid archive from real historical packages
         shell: bash
         run: |
