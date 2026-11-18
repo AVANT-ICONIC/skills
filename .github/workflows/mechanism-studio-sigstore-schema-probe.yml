@@ -49,6 +49,7 @@ jobs:
             --format json > .signed/verified.json
           node --input-type=module <<'NODE'
           import {readFileSync} from 'node:fs';
+          import {assertVerifiedProducerAttestationResult as inspect} from './mechanism-studio/attestation/producer-provenance-result.mjs';
           const data=JSON.parse(readFileSync('.signed/verified.json','utf8'));
           if(!Array.isArray(data)||!data.length)throw Error('EXPECTED_ARRAY_OF_RESULTS');
           const v=data[0].verificationResult;
@@ -71,4 +72,21 @@ jobs:
           }));
           if(v?.statement?.subject?.[0]?.digest?.sha256!=='df61d95efb02f6051d02f3d727e9ccb5b7b4c1fdde0b33200646ee675a4d3858')
             throw Error('SUBJECT_DIGEST_MISSING');
+          const expected={
+            subjectSha256:'df61d95efb02f6051d02f3d727e9ccb5b7b4c1fdde0b33200646ee675a4d3858',
+            sourceCommit:'56fcc1e8f8a264782d8ba07ebd1101e051361d3b',
+            signerCommit:'56fcc1e8f8a264782d8ba07ebd1101e051361d3b',
+            sourceRef:'refs/heads/feat/mechanism-studio-producer-provenance-phase4-20261117',
+            signerWorkflowUri:'https://github.com/AVANT-ICONIC/skills/.github/workflows/mechanism-studio-phase4-repack-pilot.yml',
+            buildTrigger:'push'
+          };
+          const accepted=inspect(data,expected);
+          if(accepted.result!=='MATCHED'||accepted.releaseReady!==false)throw Error('PILOT_CLAIMS_NOT_ACCEPTED');
+          console.log('REAL_SIGSTORE_CLAIMS_CHECK PASS: certificate/source/signer/runner/subject match, no release permission');
+          const tampered=structuredClone(data);
+          tampered[0].verificationResult.signature.certificate.buildSignerDigest='0'.repeat(40);
+          try{inspect(tampered,expected);throw Error('ALTERED_SIGNER_CLAIMS_ACCEPTED');}
+          catch(e){if(e.message==='ALTERED_SIGNER_CLAIMS_ACCEPTED')throw e;}
+          console.log('REAL_SIGSTORE_MUTATED_CLAIMS_REJECTED PASS');
+
           NODE
