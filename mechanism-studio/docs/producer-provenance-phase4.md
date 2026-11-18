@@ -148,3 +148,15 @@ The production consumer `verify-signed-producer.mjs` now requires that second-la
 - The temporary read-only schema-inspection workflow was **removed after verification**. Its historical logs retain the confirmation. No fresh signature was issued, no original film was rebuilt, no production-main branch was modified.
 
 The real pilot is deliberately accepted **only** with an explicit pilot test identity. The separate production consumer retains its stronger fixed identity and will reject the valid but unapproved pilot signature. Current `main` governance remains the blocker.
+
+
+## Actual reusable-workflow signature acceptance, 2026-11-18
+
+The earlier pilot used a directly triggered signing workflow. Phase 4 now also has **positive, actual GitHub `workflow_call` coverage**. A temporary producer → reusable signer → read-only consumer pipeline:
+
+- [Full 3-job Actions run #44288756562](https://github.com/AVANT-ICONIC/skills/actions/runs/44288756562): **SUCCESS**. The first job downloaded the two frozen historical rigid-scene packages and repacked the exact canonical TAR; the second job invoked a **separate reusable signer workflow** through `jobs.<id>.uses` and signed the TAR with GitHub/Sigstore; the third job had only `contents:read` and `actions:read`, downloaded the identical signed TAR, and independently verified the genuine certificate through patched `gh`.
+- [Real reusable-workflow Sigstore attestation #69086461](https://github.com/AVANT-ICONIC/skills/attestations/69086461) applies to rigid TAR SHA-256 `df61d95efb02f6051d02f3d727e9ccb5b7b4c1fdde0b33200646ee675a4d3858`. Its **certificate `buildSignerURI` identifies the reusable workflow**, `buildSignerDigest` and `sourceRepositoryDigest` both equal the original caller's commit `c4c85478763435862bb6e3d43a763ee2b63aeb50`, and source ref/trigger are the feature branch/`push`, as expected.
+- The same second-layer `producer-provenance-result.mjs` that the protected-main consumer uses **successfully accepted the real verified reusable certificate with the independently pinned pilot parameters**. The strict production consumer **rejected this valid reusable pilot signature** because its signer is not the protected-main production signer. This rejects *trust-policy substitution*, not the genuine cryptography.
+- Both temporary pilot workflow files were subsequently **deleted** from the PR branch. The permanent `workflow_call`-only guarded producer signer remains unchanged; no extra unprotected signing-capable workflow remains active from the pilot.
+
+This verifies the actual reusable-signing **mechanics** and the observable GitHub signer certificate semantics. It **does not** attest the original Phase-2 producer runs, authorize unprotected feature branches for release, validate the protected-main governance gate, or certify physics/host isolation. Original package manifests and renderer files remain untouched, with `releaseReady=false`.
