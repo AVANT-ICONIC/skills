@@ -75,7 +75,7 @@ jobs:
         uses: actions/attest@v4
         with:
           subject-path: .producer/producer-${{ inputs.family }}.tar
-      - name: Verify signer certificate identity AND source revision, not merely a hash
+      - name: Independently validate signed TAR and exact SLSA certificate before publishing
         env:
           GH_TOKEN: ${{ github.token }}
           FAMILY: ${{ inputs.family }}
@@ -83,14 +83,16 @@ jobs:
         run: |
           set -euo pipefail
           target=".producer/producer-$FAMILY.tar"
-          gh attestation verify "$target" \
-            --repo AVANT-ICONIC/skills \
-            --signer-workflow AVANT-ICONIC/skills/.github/workflows/mechanism-studio-producer-signer.yml \
-            --source-digest "$GITHUB_SHA" \
-            --signer-digest "$GITHUB_SHA" \
-            --source-ref "$GITHUB_REF" \
-            --format json > .producer/signer-verification.json
-          test -s .producer/signer-verification.json
+          # Full production verifier, not an abbreviated second policy.
+          # Here GITHUB_SHA is the exact expected caller/signer revision;
+          # downstream consumers must independently pin approved SHAs.
+          node mechanism-studio/attestation/verify-signed-producer.mjs \
+            "$FAMILY" "$target" "$GITHUB_SHA" "$GITHUB_SHA" \
+            > .producer/signer-verification.json
+          grep -F '"signedProvenance": "VERIFIED"' .producer/signer-verification.json
+          grep -F '"certificateClaims": "MATCHED"' .producer/signer-verification.json
+          grep -F '"governanceApproval": "NOT_EVALUATED"' .producer/signer-verification.json
+          grep -F '"releaseReady": false' .producer/signer-verification.json
       - name: Export signed TAR and verification receipt for independent consumer
         uses: actions/upload-artifact@v4
         with:
