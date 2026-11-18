@@ -131,3 +131,20 @@ Two temporary historical-repack signing runs are preserved as **external evidenc
 A separate concurrency defect in the producer TAR writer was also found and fixed: `renameSync()` could replace a path created between the initial nonexistence check and publication. The writer now uses same-directory hard-link publication (`linkSync`) for atomic **no-clobber**, followed by stage cleanup. [Final Node-only CI #44112936404](https://github.com/AVANT-ICONIC/skills/actions/runs/44112936404) passed **158/158 tests**, including two simultaneous subprocess writers of the same TAR: one succeeds, one fails, the original TAR verifies and no stage files remain. Frozen five-fixture compiler parity, both historical TAR families and the real previous audit-attestation verification also passed.
 
 **Current blocker:** `main` remains unprotected. No protected-main signed producer has run, no production trust roots have been approved, and the reusable protected-main signer has not been invoked. Only a separately reviewed branch-protection change plus approved producer workflow integration can enable that gate.
+
+
+## Phase 4 certificate-claim binding (2026-11-18)
+
+An additional **read-only** Actions verification of a previously issued real historical-repack Sigstore attestation uncovered the exact GitHub CLI `2.103.3` verification result shape: `verificationResult.signature.certificate`, `verificationResult.verifiedTimestamps`, `verificationResult.verifiedIdentity`, and the SLSA `verificationResult.statement`. The certificate contains `buildSignerURI`, `buildSignerDigest`, `sourceRepositoryDigest`, `sourceRepositoryRef`, `sourceRepositoryURI`, `githubWorkflowRepository`, `githubWorkflowSHA`, `githubWorkflowRef`, `buildTrigger` and `runnerEnvironment`.
+
+`attestation/producer-provenance-result.mjs` now performs a **second-layer field-by-field check** on the real, already cryptographically verified CLI result. It binds, within **one complete signed statement** rather than different array entries, the exact SHA-256 TAR subject, repository URI/name, independently pinned source and signer commits, exact reusable workflow URI, source branch, manual-dispatch trigger, GitHub-hosted runner, signed SLSA predicate, certificate presence, and verified timestamp. It does not implement crypto itself and must **never** be treated as an independent certificate verifier or protected-branch approval.
+
+The production consumer `verify-signed-producer.mjs` now requires that second-layer check, alongside the existing `gh attestation verify` hard gates. Its hard-coded policy still requires `refs/heads/main`, manual `workflow_dispatch`, and the protected-main reusable producer signer, not the earlier pilot's unprotected workflow.
+
+**Evidence:**
+
+- [Permanent Node-only CI #44287738394](https://github.com/AVANT-ICONIC/skills/actions/runs/44287738394): **163/163 PASS**, 5 frozen compiler golden fixtures, no browser/film, no expiring historical artifact dependency. Tests reject altered signer URI/digest, source URI/digest/ref, branch/ref, workflow trigger, runner, subject digest, removed timestamp, wrong predicate, and mixed partially valid results.
+- [Real read-only Sigstore verification #44287816626](https://github.com/AVANT-ICONIC/skills/actions/runs/44287816626): **SUCCESS**, verifies the actual pilot TAR and prior Sigstore certificate with the exact pilot identity, then passes its authentic GitHub CLI JSON through the same new certificate-claims validator. A deliberately altered certificate signer digest was rejected.
+- The temporary read-only schema-inspection workflow was **removed after verification**. Its historical logs retain the confirmation. No fresh signature was issued, no original film was rebuilt, no production-main branch was modified.
+
+The real pilot is deliberately accepted **only** with an explicit pilot test identity. The separate production consumer retains its stronger fixed identity and will reject the valid but unapproved pilot signature. Current `main` governance remains the blocker.
