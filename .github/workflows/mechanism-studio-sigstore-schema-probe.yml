@@ -59,6 +59,7 @@ jobs:
             identityKeys:Object.keys(v?.verifiedIdentity??{}),
             identityValues:v?.verifiedIdentity,
             certificateKeys:Object.keys(v?.signature?.certificate??{}),
+            certificateSelect:Object.fromEntries(['subjectAlternativeName','githubWorkflowSHA','githubWorkflowRef','buildSignerURI','buildSignerDigest','runnerEnvironment','sourceRepositoryDigest','sourceRepositoryRef','sourceRepositoryURI','githubWorkflowRepository','buildTrigger'].map(k=>[k,v?.signature?.certificate?.[k]])),
             predicateKeys:Object.keys(v?.statement?.predicate??{}),
             signatureKeys:Object.keys(v?.signature??{}),
             hasCertificate:!!v?.signature?.certificate,
