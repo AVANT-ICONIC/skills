@@ -4,6 +4,7 @@ import {readFileSync} from 'node:fs';
 const signer=readFileSync(new URL('../../.github/workflows/mechanism-studio-producer-signer.yml',import.meta.url),'utf8');
 const generation=readFileSync(new URL('../../.github/workflows/mechanism-studio-generation.yml',import.meta.url),'utf8');
 const rigid=readFileSync(new URL('../../.github/workflows/mechanism-studio-rigid-scene.yml',import.meta.url),'utf8');
+const consumer=readFileSync(new URL('./verify-signed-producer.mjs',import.meta.url),'utf8');
 test('reusable signer is not directly invokable by PR, push or untrusted workflow event',()=>{
  assert.match(signer,/^on:\n  workflow_call:/m);
  assert.doesNotMatch(signer,/^  (pull_request|pull_request_target|push|workflow_dispatch):/m);
@@ -26,15 +27,26 @@ test('signer takes only same-run named artifact and enforces static family/name 
  assert.match(signer,/reviewed:mechanism-studio-producer-reviewed/);
  assert.match(signer,/producer-archive\.mjs verify/);
 });
-test('signature is over TAR itself and source/workflow identity is verified',()=>{
+test('signer invokes full strict package/certificate consumer, not a weaker parallel check',()=>{
  assert.match(signer,/subject-path: \.producer\/producer-/);
  assert.match(signer,/actions\/attest@v4/);
- assert.match(signer,/gh attestation verify/);
- assert.match(signer,/--repo AVANT-ICONIC\/skills/);
- assert.match(signer,/--signer-workflow AVANT-ICONIC\/skills\/\.github\/workflows\/mechanism-studio-producer-signer\.yml/);
- assert.match(signer,/--source-digest "\$GITHUB_SHA"/);
- assert.match(signer,/--signer-digest "\$GITHUB_SHA"/);
- assert.match(signer,/--source-ref "\$GITHUB_REF"/);
+ assert.match(signer,/node mechanism-studio\/attestation\/verify-signed-producer\.mjs/);
+ assert.match(signer,/\$FAMILY" "\$target" "\$GITHUB_SHA" "\$GITHUB_SHA"/);
+ assert.match(signer,/certificateClaims": "MATCHED"/);
+ assert.match(signer,/governanceApproval": "NOT_EVALUATED"/);
+ assert.match(signer,/releaseReady": false/);
+ const strictStep=signer.indexOf('node mechanism-studio/attestation/verify-signed-producer.mjs');
+ const issue=signer.indexOf('uses: actions/attest@v4');
+ const publish=signer.indexOf('name: Export signed TAR and verification receipt');
+ assert.ok(issue>=0&&strictStep>issue&&publish>strictStep,
+  'full cryptographic+claims verification must run after signing and before publishing');
+ assert.match(consumer,/--repo',REPO,'--signer-workflow',SIGNER/);
+ assert.match(consumer,/--source-digest',approvedSourceCommit/);
+ assert.match(consumer,/--signer-digest',approvedSignerCommit/);
+ assert.match(consumer,/--source-ref',SOURCE_REF/);
+ assert.match(consumer,/--deny-self-hosted-runners/);
+ assert.match(consumer,/--predicate-type','https:\/\/slsa\.dev\/provenance\/v1'/);
+ assert.match(consumer,/assertVerifiedProducerAttestationResult/);
 });
 
 test('GitHub CLI signer identity check refuses known vulnerable versions before attesting',()=>{
