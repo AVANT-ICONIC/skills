@@ -13,6 +13,8 @@ on:
       - 'mechanism-studio/attestation/verify-signed-audit.mjs'
       - 'mechanism-studio/attestation/verify-signed-producer.mjs'
       - 'mechanism-studio/attestation/verify-signed-producer.test.mjs'
+      - 'mechanism-studio/attestation/producer-provenance-result.mjs'
+      - 'mechanism-studio/attestation/producer-provenance-result.test.mjs'
       - '.github/workflows/mechanism-studio-producer-signer.yml'
       - '.github/workflows/mechanism-studio-producer-archive.yml'
   # Explicit historical rechecks only while the original short-retention
