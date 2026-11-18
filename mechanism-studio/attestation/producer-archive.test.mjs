@@ -156,3 +156,26 @@ test('concurrent packers cannot replace each other or leave stale staging files'
  assert.equal(readdirSync(dir).filter(x=>x.includes('.stage-')).length,0,
   'failed writer must remove its staging file');
 }));
+
+
+test('symlinked destination directory cannot route output inside either original package',withTemp(async dir=>{
+ const roots=makeFixtures(dir,'reviewed');
+ const before=roots.map(receiptForTree);
+ const alias=join(dir,'looks-external');
+ symlinkSync(roots[0],alias,'dir');
+ for(const path of [join(alias,'injected.tar'),join(alias,'new','nested','injected.tar')]){
+  await assert.rejects(createProducerArchive({family:'reviewed',packageDirs:roots,out:path}),
+   /PRODUCER_OUTPUT_UNSAFE/);
+  assert.equal(existsSync(path),false);
+ }
+ roots.forEach((root,i)=>assert.deepEqual(receiptForTree(root),before[i]));
+}));
+test('resolved real destination outside original packages may still use a benign directory alias',withTemp(async dir=>{
+ const roots=makeFixtures(dir,'reviewed'),safe=join(dir,'real-output'),alias=join(dir,'safe-alias');
+ mkdirSync(safe);
+ symlinkSync(safe,alias,'dir');
+ const output=join(alias,'new-folder','producer-reviewed.tar');
+ const result=await createProducerArchive({family:'reviewed',packageDirs:roots,out:output});
+ assert.equal(result.originAssurance,'UNATTESTED');
+ assert.equal((await verifyProducerArchive({family:'reviewed',archive:output})).status,'PASS');
+}));
