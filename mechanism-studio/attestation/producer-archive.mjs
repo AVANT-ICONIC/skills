@@ -5,9 +5,9 @@
  * .tar subject from the original producing CI run with independently pinned policy.
  */
 import {createHash} from 'node:crypto';
-import {existsSync,lstatSync,linkSync,mkdtempSync,mkdirSync,readFileSync,rmSync,writeFileSync} from 'node:fs';
+import {existsSync,lstatSync,linkSync,mkdtempSync,mkdirSync,readFileSync,realpathSync,rmSync,statSync,writeFileSync} from 'node:fs';
 import {tmpdir} from 'node:os';
-import {dirname,isAbsolute,join,relative,resolve,sep} from 'node:path';
+import {basename,dirname,isAbsolute,join,relative,resolve,sep} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {verifyPortablePackage} from '../scripts/verify-portable.mjs';
 import {receiptForTree} from '../scripts/portable-receipt.mjs';
@@ -25,6 +25,28 @@ const inside=(parent,child)=>{
  const rel=relative(parent,child);
  return rel===''||(!rel.startsWith('..'+sep)&&rel!=='..'&&!isAbsolute(rel));
 };
+/**
+ * Resolve the ACTUAL destination even when the intended directory does not yet
+ * exist. A symlinked ancestor must not route a nominally external TAR into an
+ * original package, where even a no-clobber creation would mutate source data.
+ */
+function canonicalDestination(output){
+ let dir=dirname(output),missing=[];
+ while(!existsSync(dir)){
+  const upper=dirname(dir);
+  if(upper===dir)throw Error('PRODUCER_OUTPUT_UNSAFE');
+  missing.unshift(basename(dir));dir=upper;
+ }
+ if(!statSync(dir).isDirectory())throw Error('PRODUCER_OUTPUT_UNSAFE');
+ return resolve(realpathSync(dir),...missing,basename(output));
+}
+function assertSafeOutput(roots,output){
+ if(existsSync(output))throw Error('PRODUCER_OUTPUT_UNSAFE');
+ const target=canonicalDestination(output);
+ const realRoots=roots.map(root=>realpathSync(root));
+ if(realRoots.some(root=>inside(root,target)||inside(target,root)))
+  throw Error('PRODUCER_OUTPUT_UNSAFE');
+}
 function familySpec(family){
  if(!Object.hasOwn(EXPECTED,family))throw Error('PRODUCER_FAMILY_UNSUPPORTED');
  return EXPECTED[family];
@@ -109,9 +131,9 @@ export async function createProducerArchive({family,packageDirs,out}){
  if(!Array.isArray(packageDirs)||packageDirs.length!==target.ids.length||
     typeof out!=='string'||!out.trim())throw Error('PRODUCER_PACKAGE_ARGUMENTS_INVALID');
  const output=resolve(out),roots=packageDirs.map(x=>resolve(x));
- if(new Set(roots).size!==roots.length||existsSync(output)||
-    roots.some(root=>inside(root,output)||inside(output,root)))
+ if(new Set(roots).size!==roots.length)
   throw Error('PRODUCER_OUTPUT_UNSAFE');
+ assertSafeOutput(roots,output);
  const receipts=[],entries=[];
  for(const root of roots){
   const legacy=await verifyPortablePackage(root),tree=sourceFiles(root,legacy);
@@ -141,6 +163,9 @@ export async function createProducerArchive({family,packageDirs,out}){
  if(existsSync(stage))throw Error('PRODUCER_STAGE_EXISTS');
  try{
   mkdirSync(dirname(output),{recursive:true});
+  // Recheck after mkdir: a pre-existing parent link may have changed while
+  // verifying source packages. This is not an adversarial-filesystem sandbox.
+  assertSafeOutput(roots,output);
   writeFileSync(stage,all,{flag:'wx',mode:0o600});
   // link() is atomic no-clobber: unlike rename(), it refuses an output file
   // created concurrently after existsSync(). Stage and output share a directory.
