@@ -11,9 +11,11 @@ import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {verifyProducerArchive} from './producer-archive.mjs';
 import {assertLocalSecureGhCli} from './gh-cli-policy.mjs';
+import {assertVerifiedProducerAttestationResult} from './producer-provenance-result.mjs';
 
 const REPO='AVANT-ICONIC/skills';
 const SIGNER=REPO+'/.github/workflows/mechanism-studio-producer-signer.yml';
+const SIGNER_URI='https://github.com/'+SIGNER;
 const SOURCE_REF='refs/heads/main';
 const COMMIT=/^[0-9a-f]{40}$/;
 
@@ -48,19 +50,21 @@ export async function verifySignedProducer({
  try{data=JSON.parse(out.stdout)}catch{
   throw Error('PRODUCER_ATTESTATION_OUTPUT_INVALID');
  }
- if(!Array.isArray(data)||!data.length||!data.some(x=>
-  x?.verificationResult?.signature?.certificate&&
-  Array.isArray(x.verificationResult.verifiedTimestamps)&&
-  x.verificationResult.verifiedTimestamps.length>0&&
-  x.verificationResult.statement?.predicateType==='https://slsa.dev/provenance/v1'&&
-  x.verificationResult.statement?.subject?.some(y=>y.digest?.sha256===digest)))
-  throw Error('PRODUCER_ATTESTATION_VERIFIED_SUBJECT_MISSING');
+ const checked=assertVerifiedProducerAttestationResult(data,{
+  subjectSha256:digest,
+  sourceCommit:approvedSourceCommit,
+  signerCommit:approvedSignerCommit,
+  sourceRef:SOURCE_REF,
+  signerWorkflowUri:SIGNER_URI,
+  buildTrigger:'workflow_dispatch'
+ });
  return Object.freeze({schema:'avant.mechanism-signed-producer-check/1',
   archiveSha256:digest,family,packages:oldArchive.packages,
   subject:'CANONICAL_PRODUCER_TAR',signedProvenance:'VERIFIED',
   sourceCommit:approvedSourceCommit,signerCommit:approvedSignerCommit,
   signerWorkflow:SIGNER,signerSourceRef:SOURCE_REF,
-  cliVersion:cli.ghVersion,governanceApproval:'NOT_EVALUATED',
+  cliVersion:cli.ghVersion,certificateClaims:checked.result,
+  governanceApproval:'NOT_EVALUATED',
   physicalCertification:'NOT_EVALUATED',releaseReady:false});
 }
 if(process.argv[1]&&fileURLToPath(import.meta.url)===resolve(process.argv[1])){
