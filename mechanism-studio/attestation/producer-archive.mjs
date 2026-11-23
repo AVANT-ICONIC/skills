@@ -190,20 +190,28 @@ export async function createProducerArchive({family,packageDirs,out}){
  if(all.length>MAX_ARCHIVE)throw Error('PRODUCER_TAR_SIZE_INVALID');
  const stage=output+'.stage-'+process.pid;
  if(existsSync(stage))throw Error('PRODUCER_STAGE_EXISTS');
+ let ownsStage=false;
  try{
   mkdirSync(dirname(output),{recursive:true});
   // Recheck after mkdir: a pre-existing parent link may have changed while
   // verifying source packages. This is not an adversarial-filesystem sandbox.
   assertSafeOutput(roots,output);
   writeFileSync(stage,all,{flag:'wx',mode:0o600});
+  ownsStage=true;
   // link() is atomic no-clobber: unlike rename(), it refuses an output file
   // created concurrently after existsSync(). Stage and output share a directory.
   linkSync(stage,output);
   rmSync(stage);
+  ownsStage=false;
   return {schema:'avant.mechanism-producer-archive/1',family,
    archiveSha256:HASH(all),bytes:all.length,packages:receipts.map(r=>r.packageId).sort(),
    originAssurance:'UNATTESTED',releaseReady:false};
- }catch(e){rmSync(stage,{force:true});throw e;}
+ }catch(e){
+  // A dangling stage symlink is not caught by existsSync(). An O_EXCL write
+  // rejects it; never clean up a stage file this invocation did not create.
+  if(ownsStage)rmSync(stage,{force:true});
+  throw e;
+ }
 }
 export async function verifyProducerArchive({family,archive}){
  familySpec(family);
