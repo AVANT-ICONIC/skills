@@ -2,7 +2,7 @@ import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {spawn} from 'node:child_process';
-import {existsSync,mkdtempSync,mkdirSync,readFileSync,readdirSync,rmSync,symlinkSync,writeFileSync} from 'node:fs';
+import {existsSync,mkdtempSync,mkdirSync,readFileSync,readdirSync,rmSync,symlinkSync,truncateSync,writeFileSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {dirname,join,resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -119,7 +119,7 @@ test('unexpected files, symlinks, duplicate packages and wrong family fail befor
  rmSync(join(roots[0],'unsafe-extra.js'));
  symlinkSync(join(roots[0],'NOTICE'),join(roots[0],'unsafe-link'));
  await assert.rejects(createProducerArchive({family:'reviewed',packageDirs:roots,out:archive}),
-  /RECEIPT_UNSAFE_ENTRY/);assert.equal(existsSync(archive),false);
+  /PRODUCER_SOURCE_NONREGULAR|RECEIPT_UNSAFE_ENTRY/);assert.equal(existsSync(archive),false);
  rmSync(join(roots[0],'unsafe-link'));
  await assert.rejects(createProducerArchive({family:'reviewed',packageDirs:[roots[0],roots[0]],out:archive}),
   /OUTPUT_UNSAFE/);
@@ -178,4 +178,37 @@ test('resolved real destination outside original packages may still use a benign
  const result=await createProducerArchive({family:'reviewed',packageDirs:roots,out:output});
  assert.equal(result.originAssurance,'UNATTESTED');
  assert.equal((await verifyProducerArchive({family:'reviewed',archive:output})).status,'PASS');
+}));
+
+
+test('large sparse source file is rejected by metadata before legacy hashing',withTemp(async dir=>{
+ const roots=makeFixtures(dir,'reviewed'),archive=join(dir,'not-built.tar');
+ const huge=join(roots[0],'unlisted-huge.bin');
+ writeFileSync(huge,'');
+ truncateSync(huge,128*1024*1024+1);
+ await assert.rejects(
+  createProducerArchive({family:'reviewed',packageDirs:roots,out:archive}),
+  /PRODUCER_SOURCE_FILE_TOO_LARGE/
+ );
+ assert.equal(existsSync(archive),false);
+ assert.deepEqual(readdirSync(dir).filter(name=>name.includes('.stage-')),[]);
+}));
+test('source entry count is bounded before unlisted assets get hashed',withTemp(async dir=>{
+ const roots=makeFixtures(dir,'reviewed'),archive=join(dir,'not-built.tar');
+ for(let i=0;i<90;i++)writeFileSync(join(roots[0],'extra-'+i+'.txt'),'x');
+ await assert.rejects(
+  createProducerArchive({family:'reviewed',packageDirs:roots,out:archive}),
+  /PRODUCER_SOURCE_ENTRIES_EXCEEDED/
+ );
+ assert.equal(existsSync(archive),false);
+}));
+test('source directory nesting is bounded before the legacy verifier runs',withTemp(async dir=>{
+ const roots=makeFixtures(dir,'reviewed'),archive=join(dir,'not-built.tar');
+ let nested=roots[0];
+ for(let i=0;i<25;i++){nested=join(nested,'deep');mkdirSync(nested);}
+ await assert.rejects(
+  createProducerArchive({family:'reviewed',packageDirs:roots,out:archive}),
+  /PRODUCER_SOURCE_DEPTH_EXCEEDED/
+ );
+ assert.equal(existsSync(archive),false);
 }));
