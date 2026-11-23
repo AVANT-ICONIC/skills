@@ -1,0 +1,117 @@
+name: Mechanism Studio Phase 4 trusted producer archive signer
+
+# Reusable only. Never trigger directly from untrusted PR paths.
+on:
+  workflow_call:
+    inputs:
+      family:
+        required: true
+        type: string
+      artifact-name:
+        required: true
+        type: string
+
+jobs:
+  sign_produced_package:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 6
+    permissions:
+      contents: read
+      actions: read
+      id-token: write
+      attestations: write
+    steps:
+      - name: Reject any unprotected ref, PR run or unexpected artifact
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          REF_NAME: ${{ github.ref }}
+          REF_PROTECTED: ${{ github.ref_protected }}
+          CALLER_REPOSITORY: ${{ github.repository }}
+          CALLER_WORKFLOW_REF: ${{ github.workflow_ref }}
+          CALLER_WORKFLOW_SHA: ${{ github.workflow_sha }}
+          SOURCE_SHA: ${{ github.sha }}
+          INPUT_FAMILY: ${{ inputs.family }}
+          INPUT_ARTIFACT: ${{ inputs['artifact-name'] }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "$EVENT_NAME" != workflow_dispatch || "$REF_NAME" != refs/heads/main ||
+                "$REF_PROTECTED" != true ]]; then
+            echo 'SIGNER_BLOCKED: only explicit workflow_dispatch from protected main'
+            exit 1
+          fi
+          # github.workflow_ref identifies the ORIGINAL caller for reusable jobs.
+          # The signer itself is separately pinned by the Sigstore certificate.
+          if [[ "$CALLER_REPOSITORY" != AVANT-ICONIC/skills ||
+                "$CALLER_WORKFLOW_SHA" != "$SOURCE_SHA" ||
+                ! "$SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            echo 'SIGNER_BLOCKED: caller repository or workflow revision mismatch'
+            exit 1
+          fi
+          case "$INPUT_FAMILY:$INPUT_ARTIFACT:$CALLER_WORKFLOW_REF" in
+            rigid:mechanism-studio-producer-rigid:AVANT-ICONIC/skills/.github/workflows/mechanism-studio-rigid-scene.yml@refs/heads/main) ;;
+            reviewed:mechanism-studio-producer-reviewed:AVANT-ICONIC/skills/.github/workflows/mechanism-studio-generation.yml@refs/heads/main) ;;
+            *) echo 'SIGNER_BLOCKED: unapproved producer caller workflow'; exit 1 ;;
+          esac
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Reject GH CLI signer-workflow prefix-match vulnerability before signing
+        run: node mechanism-studio/attestation/gh-cli-policy.mjs
+      - name: Download exact package archive from THE SAME producer workflow run
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ inputs['artifact-name'] }}
+          path: .producer
+      - name: Verify untrusted TAR bytes and both legacy package schemas
+        shell: bash
+        env:
+          FAMILY: ${{ inputs.family }}
+        run: |
+          set -euo pipefail
+          case "$FAMILY" in
+            rigid|reviewed) ;;
+            *) exit 1 ;;
+          esac
+          target=".producer/producer-$FAMILY.tar"
+          test -s "$target"
+          node mechanism-studio/attestation/producer-archive.mjs verify "$FAMILY" "$target" \
+            > .producer/local-verification.json
+          grep -F '"status": "PASS"' .producer/local-verification.json
+          grep -F '"originAssurance": "UNATTESTED"' .producer/local-verification.json
+          grep -F '"releaseReady": false' .producer/local-verification.json
+      - name: Sign exact canonical producer TAR with GitHub OIDC/Sigstore
+        uses: actions/attest@v4
+        with:
+          subject-path: .producer/producer-${{ inputs.family }}.tar
+      - name: Independently validate signed TAR and exact SLSA certificate before publishing
+        env:
+          GH_TOKEN: ${{ github.token }}
+          FAMILY: ${{ inputs.family }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          target=".producer/producer-$FAMILY.tar"
+          # Full production verifier, not an abbreviated second policy.
+          # Here GITHUB_SHA is the exact expected caller/signer revision;
+          # downstream consumers must independently pin approved SHAs.
+          node mechanism-studio/attestation/verify-signed-producer.mjs \
+            "$FAMILY" "$target" "$GITHUB_SHA" "$GITHUB_SHA" \
+            > .producer/signer-verification.json
+          grep -F '"signedProvenance": "VERIFIED"' .producer/signer-verification.json
+          grep -F '"certificateClaims": "MATCHED"' .producer/signer-verification.json
+          grep -F '"governanceApproval": "NOT_EVALUATED"' .producer/signer-verification.json
+          grep -F '"releaseReady": false' .producer/signer-verification.json
+      - name: Export signed TAR and verification receipt for independent consumer
+        uses: actions/upload-artifact@v4
+        with:
+          name: mechanism-studio-signed-producer-${{ inputs.family }}
+          path: |
+            .producer/producer-${{ inputs.family }}.tar
+            .producer/local-verification.json
+            .producer/signer-verification.json
+          if-no-files-found: error
+          retention-days: 14

@@ -1,0 +1,169 @@
+name: Mechanism Studio Phase 4 producer-archive compatibility (Node only)
+
+on:
+  push:
+    branches:
+      - feat/mechanism-studio-producer-provenance-phase4-20261117
+    paths:
+      - 'mechanism-studio/attestation/producer-archive.mjs'
+      - 'mechanism-studio/attestation/producer-archive.test.mjs'
+      - 'mechanism-studio/attestation/producer-signer-contract.test.mjs'
+      - 'mechanism-studio/attestation/gh-cli-policy.mjs'
+      - 'mechanism-studio/attestation/gh-cli-policy.test.mjs'
+      - 'mechanism-studio/attestation/verify-signed-audit.mjs'
+      - 'mechanism-studio/attestation/verify-signed-producer.mjs'
+      - 'mechanism-studio/attestation/verify-signed-producer.test.mjs'
+      - 'mechanism-studio/attestation/producer-provenance-result.mjs'
+      - 'mechanism-studio/attestation/producer-provenance-result.test.mjs'
+      - '.github/workflows/mechanism-studio-producer-signer.yml'
+      - '.github/workflows/mechanism-studio-producer-archive.yml'
+  # Explicit historical rechecks only while the original short-retention
+  # Phase-2/3c Actions artifacts still exist. Push CI remains durable.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: mechanism-producer-archive-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  archive_compat:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Checkout frozen PR 32 golden baseline (no runtime install)
+        uses: actions/checkout@v4
+        with:
+          ref: e952c699fe0f83ceb9b127a469db7bcb8930d667
+          path: .compat-baseline
+          persist-credentials: false
+      - name: Check installed gh CLI is patched against signer-workflow prefix confusion
+        run: node mechanism-studio/attestation/gh-cli-policy.mjs
+      - name: Ensure existing package creators/readers/renderer unchanged
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --exit-code 3b2fc157b31652daa8c5eb9230a344c671d4cba3 HEAD -- \
+            mechanism-studio/scripts/verify-portable.mjs \
+            mechanism-studio/scripts/package-example.mjs \
+            mechanism-studio/rigid-scene/package-scene.mjs \
+            mechanism-studio/scripts/verify-proof-index.mjs \
+            mechanism-studio/scripts/compile-study.mjs \
+            mechanism-studio/templates/rigid-scene
+      - name: All cheap Node model, package, proof and producer archive tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test \
+            mechanism-studio/attestation/*.test.mjs \
+            mechanism-studio/compatibility/*.test.mjs \
+            mechanism-studio/rigid-scene/*.test.mjs \
+            mechanism-studio/tests/*.test.mjs \
+            mechanism-studio/examples/slider-crank/model.test.mjs \
+            mechanism-studio/examples/geneva-indexer/model.test.mjs
+      - name: Exact compiler parity against pre-consolidation PR 32
+        run: node mechanism-studio/compatibility/compiler-parity.mjs --baseline-dir .compat-baseline
+      - name: Download original Phase 2 rigid-scene packages
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/download-artifact@v4
+        with:
+          name: mechanism-studio-two-topologies-verified
+          run-id: 43441706721
+          github-token: ${{ github.token }}
+          path: .original-phase2/rigid
+      - name: Download original Phase 2 generated slider-crank package
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/download-artifact@v4
+        with:
+          name: mechanism-studio-sourced-film-package
+          run-id: 43436842938
+          github-token: ${{ github.token }}
+          path: .original-phase2/reviewed-slider
+      - name: Download original Phase 2 generated four-bar package
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/download-artifact@v4
+        with:
+          name: mechanism-studio-fourbar-cinematic-package
+          run-id: 43436842938
+          github-token: ${{ github.token }}
+          path: .original-phase2/reviewed-fourbar
+      - name: Download the actual Phase 3c signed audit receipt
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/download-artifact@v4
+        with:
+          name: mechanism-studio-phase3c-signed-audit-review
+          run-id: 43902571118
+          github-token: ${{ github.token }}
+          path: .original-phase3c
+      - name: Verify original signed review with patched gh and both signer/source pins
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          node mechanism-studio/attestation/verify-signed-audit.mjs \
+            .original-phase3c/phase2-review-receipt.json \
+            bd858d2ba3b489d12fe80d2f4e4953f91aa08516 \
+            refs/heads/feat/mechanism-studio-audit-attestation-phase3c-20261116
+      - name: Prepare and VERIFY canonical rigid archive from real historical packages
+        if: github.event_name == 'workflow_dispatch'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/producer-test"
+          node mechanism-studio/attestation/producer-archive.mjs pack rigid \
+            "$RUNNER_TEMP/producer-test/rigid.tar" \
+            .original-phase2/rigid/dual-drive-linkage-study-004 \
+            .original-phase2/rigid/single-drive-rail-study-005
+          node mechanism-studio/attestation/producer-archive.mjs verify rigid \
+            "$RUNNER_TEMP/producer-test/rigid.tar"
+          tar -tf "$RUNNER_TEMP/producer-test/rigid.tar" | head -n 40
+      - name: Prepare and VERIFY canonical reviewed archive from real historical packages
+        if: github.event_name == 'workflow_dispatch'
+        shell: bash
+        run: |
+          set -euo pipefail
+          node mechanism-studio/attestation/producer-archive.mjs pack reviewed \
+            "$RUNNER_TEMP/producer-test/reviewed.tar" \
+            .original-phase2/reviewed-slider \
+            .original-phase2/reviewed-fourbar
+          node mechanism-studio/attestation/producer-archive.mjs verify reviewed \
+            "$RUNNER_TEMP/producer-test/reviewed.tar"
+          tar -tf "$RUNNER_TEMP/producer-test/reviewed.tar" | head -n 40
+
+      - name: Cryptographic fail-closed check on UNSIGNED genuine producer TAR
+        if: github.event_name == 'workflow_dispatch'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          # This archive was produced from real legacy assets but was NEVER signed
+          # by an authenticated protected-main producer. The new consumer must reject it.
+          set +e
+          result=$(node mechanism-studio/attestation/verify-signed-producer.mjs \
+            rigid "$RUNNER_TEMP/producer-test/rigid.tar" \
+            "$GITHUB_SHA" "$GITHUB_SHA" 2>&1)
+          code=$?
+          set -e
+          if [[ "$code" == 0 ]]; then
+            echo 'FAIL: unsigned TAR incorrectly accepted as signed producer'
+            exit 1
+          fi
+          if ! grep -q 'PRODUCER_ATTESTATION_CRYPTOGRAPHIC_VERIFICATION_FAILED' <<< "$result"; then
+            echo "$result"
+            echo 'FAIL: unsigned TAR did not reach cryptographic verification gate'
+            exit 1
+          fi
+          echo 'PASS: genuine but unsigned producer TAR rejected by actual gh verifier'
