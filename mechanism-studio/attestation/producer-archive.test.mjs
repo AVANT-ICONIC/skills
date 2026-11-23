@@ -2,7 +2,7 @@ import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {spawn} from 'node:child_process';
-import {existsSync,mkdtempSync,mkdirSync,readFileSync,readdirSync,rmSync,symlinkSync,truncateSync,writeFileSync} from 'node:fs';
+import {existsSync,lstatSync,mkdtempSync,mkdirSync,readFileSync,readdirSync,rmSync,symlinkSync,truncateSync,writeFileSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {dirname,join,resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -210,5 +210,31 @@ test('source directory nesting is bounded before the legacy verifier runs',withT
   createProducerArchive({family:'reviewed',packageDirs:roots,out:archive}),
   /PRODUCER_SOURCE_DEPTH_EXCEEDED/
  );
+ assert.equal(existsSync(archive),false);
+}));
+
+test('aggregate sparse source size bound rejects several individually permitted files',withTemp(async dir=>{
+ const roots=makeFixtures(dir,'reviewed'),archive=join(dir,'not-built.tar');
+ for(const [name,megabytes] of [['extra-one.bin',110],['extra-two.bin',110],['extra-three.bin',50]]){
+  const path=join(roots[0],name);
+  writeFileSync(path,'');
+  truncateSync(path,megabytes*1024*1024);
+ }
+ await assert.rejects(
+  createProducerArchive({family:'reviewed',packageDirs:roots,out:archive}),
+  /PRODUCER_SOURCE_TOTAL_TOO_LARGE/
+ );
+ assert.equal(existsSync(archive),false);
+}));
+test('preexisting dangling stage symlink is never deleted by failed producer cleanup',withTemp(async dir=>{
+ const roots=makeFixtures(dir,'reviewed'),archive=join(dir,'new.tar');
+ const stage=archive+'.stage-'+process.pid;
+ symlinkSync(join(dir,'absent-target'),stage);
+ assert.equal(lstatSync(stage).isSymbolicLink(),true);
+ await assert.rejects(
+  createProducerArchive({family:'reviewed',packageDirs:roots,out:archive}),
+  /EEXIST/
+ );
+ assert.equal(lstatSync(stage).isSymbolicLink(),true);
  assert.equal(existsSync(archive),false);
 }));
