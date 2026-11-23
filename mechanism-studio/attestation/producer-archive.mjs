@@ -5,7 +5,7 @@
  * .tar subject from the original producing CI run with independently pinned policy.
  */
 import {createHash} from 'node:crypto';
-import {existsSync,lstatSync,linkSync,mkdtempSync,mkdirSync,readFileSync,realpathSync,rmSync,statSync,writeFileSync} from 'node:fs';
+import {existsSync,lstatSync,linkSync,mkdtempSync,mkdirSync,readdirSync,readFileSync,realpathSync,rmSync,statSync,writeFileSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {basename,dirname,isAbsolute,join,relative,resolve,sep} from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -50,6 +50,34 @@ function assertSafeOutput(roots,output){
 function familySpec(family){
  if(!Object.hasOwn(EXPECTED,family))throw Error('PRODUCER_FAMILY_UNSUPPORTED');
  return EXPECTED[family];
+}
+/**
+ * Metadata-only preflight BEFORE legacy verifiers read/hashes package assets.
+ * Otherwise a valid-looking manifest with an enormous or unlisted sparse file
+ * could exhaust memory before the MAX_ARCHIVE check at TAR serialization.
+ * Counts both packages together, including manifests, but not directories.
+ */
+function preflightSourceFolders(roots){
+ let files=0,folders=0,tarBytes=BLOCK*2;
+ function visit(path,depth){
+  if(depth>24)throw Error('PRODUCER_SOURCE_DEPTH_EXCEEDED');
+  const stat=lstatSync(path);
+  if(stat.isSymbolicLink())throw Error('PRODUCER_SOURCE_NONREGULAR');
+  if(stat.isDirectory()){
+   folders++;
+   if(folders>MAX_ENTRIES*8)throw Error('PRODUCER_SOURCE_DIRS_EXCEEDED');
+   for(const name of readdirSync(path))visit(join(path,name),depth+1);
+   return;
+  }
+  if(!stat.isFile())throw Error('PRODUCER_SOURCE_NONREGULAR');
+  if(stat.size>MAX_FILE)throw Error('PRODUCER_SOURCE_FILE_TOO_LARGE');
+  files++;
+  if(files>MAX_ENTRIES)throw Error('PRODUCER_SOURCE_ENTRIES_EXCEEDED');
+  tarBytes+=BLOCK+Math.ceil(stat.size/BLOCK)*BLOCK;
+  if(tarBytes>MAX_ARCHIVE)throw Error('PRODUCER_SOURCE_TOTAL_TOO_LARGE');
+ }
+ for(const root of roots)visit(root,0);
+ return Object.freeze({files,tarBytes});
 }
 function sourceFiles(root,legacy){
  const tree=receiptForTree(root);
@@ -134,6 +162,7 @@ export async function createProducerArchive({family,packageDirs,out}){
  if(new Set(roots).size!==roots.length)
   throw Error('PRODUCER_OUTPUT_UNSAFE');
  assertSafeOutput(roots,output);
+ preflightSourceFolders(roots);
  const receipts=[],entries=[];
  for(const root of roots){
   const legacy=await verifyPortablePackage(root),tree=sourceFiles(root,legacy);
