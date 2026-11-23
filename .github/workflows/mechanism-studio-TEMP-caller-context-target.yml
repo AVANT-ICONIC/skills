@@ -1,0 +1,28 @@
+name: TEMP Phase4 caller context test TARGET read-only
+on:
+  workflow_call:
+jobs:
+  probe:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - name: Verify live GitHub reusable caller identity semantics (no signing)
+        env:
+          CALLER_WORKFLOW_REF: ${{ github.workflow_ref }}
+          CALLER_WORKFLOW_SHA: ${{ github.workflow_sha }}
+          SOURCE_SHA: ${{ github.sha }}
+          CALLER_REPOSITORY: ${{ github.repository }}
+          CURRENT_REF: ${{ github.ref }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "CALLER_WORKFLOW_REF=$CALLER_WORKFLOW_REF"
+          echo "CALLER_WORKFLOW_SHA=$CALLER_WORKFLOW_SHA"
+          echo "SOURCE_SHA=$SOURCE_SHA"
+          echo "CALLER_REPOSITORY=$CALLER_REPOSITORY"
+          expected="AVANT-ICONIC/skills/.github/workflows/mechanism-studio-TEMP-caller-context-caller.yml@refs/heads/feat/mechanism-studio-producer-provenance-phase4-20261117"
+          test "$CALLER_WORKFLOW_REF" = "$expected"
+          test "$CALLER_WORKFLOW_SHA" = "$SOURCE_SHA"
+          test "$CALLER_REPOSITORY" = AVANT-ICONIC/skills
+          echo 'PASS: real reusable GitHub context identifies the CALLER workflow and matching commit'
