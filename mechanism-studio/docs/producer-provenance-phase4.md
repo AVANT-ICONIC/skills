@@ -181,3 +181,26 @@ A second input-safety review found the former TAR size cap was applied only **af
 A related no-clobber cleanup issue was fixed: an **already-existing dangling stage symlink** is invisible to `existsSync()` but makes `writeFileSync(..., 'wx')` fail. The old error handler removed that foreign path. Cleanup now unlinks the stage **only when this invocation actually created it**. The finished archive still uses atomic hard-link no-clobber publication.
 
 **[Full permanent Node-only CI #45156678957](https://github.com/AVANT-ICONIC/skills/actions/runs/45156678957): SUCCESS, 170/170 tests, 5/5 frozen golden fixtures.** Five additional regressions verified oversized sparse source, too many source files, overly deep directories, aggregate sparse-size exhaustion and preservation of a foreign dangling stage symlink. No film generation, legacy manifest rewrite, new signature or merge.
+
+
+## Exact caller identity allowlist, 2026-11-23
+
+An additional authority gap existed in the prepared `workflow_call` signer: it accepted the right artifact family/name on manual protected `main` but did not bind that family to the **specific calling producer workflow**. A different manual workflow running on the same branch could potentially submit the expected artifact name. Cryptographic signing would identify the signer but not by itself establish which originally approved producing workflow supplied the bytes.
+
+The **first signer step** now explicitly checks native GitHub caller-context variables:
+
+- `github.repository === AVANT-ICONIC/skills`
+- `github.ref === refs/heads/main`, `github.event_name === workflow_dispatch`, `github.ref_protected === true` (existing protection)
+- `github.workflow_sha === github.sha` with a complete 40-character lowercase source SHA
+- **`rigid / mechanism-studio-producer-rigid`** requires `github.workflow_ref === AVANT-ICONIC/skills/.github/workflows/mechanism-studio-rigid-scene.yml@refs/heads/main`
+- **`reviewed / mechanism-studio-producer-reviewed`** requires `github.workflow_ref === AVANT-ICONIC/skills/.github/workflows/mechanism-studio-generation.yml@refs/heads/main`
+
+The allowed caller paths are not inputs and are matched literally. The signer certificate is still independently verified against the approved *called* reusable workflow. Thus producer caller and signer identities have separate guards.
+
+**Evidence:**
+
+- [Node-only CI #45213207108](https://github.com/AVANT-ICONIC/skills/actions/runs/45213207108): **173/173 tests PASS** and 5/5 frozen compiler fixtures. New tests extract and execute the **actual first-step Bash guard** with the entire native GitHub context simulated. Both permitted family/caller pairs pass; 15 wrong trigger/ref/protection/repo/SHA/filename/lookalike combinations and two cross-family substitutions fail closed.
+- [Actual, no-signing GitHub reusable-workflow pilot #45213527841](https://github.com/AVANT-ICONIC/skills/actions/runs/45213527841): **SUCCESS**, GitHub returned `github.workflow_ref` as the precise **caller** file `mechanism-studio-TEMP-caller-context-caller.yml@refs/heads/feat/mechanism-studio-producer-provenance-phase4-20261117`, and `github.workflow_sha === github.sha === b7210b791087d26c5c72723a410d371be8918755`. `github.repository` was the expected repository. This verified the real reusable-workflow context semantics.
+- Both temporary read-only caller-context YAML files were **deleted** after the successful pilot; no new signing-capable workflow, real protected-main producer run or film rendering was executed.
+
+This is still not a release authority: `main` was unprotected at last API inspection, with zero rulesets, and the production signer cannot be activated while that remains true.
