@@ -1,0 +1,14 @@
+name: TEMP Phase4 caller context test (NO signing)
+on:
+  push:
+    branches:
+      - feat/mechanism-studio-producer-provenance-phase4-20261117
+    paths:
+      - '.github/workflows/mechanism-studio-TEMP-caller-context-caller.yml'
+permissions:
+  contents: read
+jobs:
+  probe:
+    uses: ./.github/workflows/mechanism-studio-TEMP-caller-context-target.yml
+    permissions:
+      contents: read
